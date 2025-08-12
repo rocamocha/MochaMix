@@ -100,7 +100,6 @@ public final class SongPicker {
 
 
     public static void tickEventMap() {
-        Map<SongpackEventType, Boolean> map = new HashMap<>();
 
         currentBiomeName = "";
         currentDimName = "";
@@ -293,7 +292,7 @@ public final class SongPicker {
 
         // Plugin logic — IMPORTANT: same key type (SongpackEventType)
         for (SongpackEventPlugin p : PLUGINS) {
-            p.tick(player, world, map);
+            p.tick(player, world, songpackEventMap);
         }
     }
 
@@ -418,13 +417,9 @@ public final class SongPicker {
 
 
     public static void initialize() {
-        // Let plugins register new types
-        for (var p : PLUGINS) {
-            p.register(); // plugins do SongpackEventType.register("...") here
-        }
-
         // Rebuild string->type map from the internal registry
         songpackEventMap.clear();
+        for (var p : PLUGINS) p.register();
         for (SongpackEventType t : SongpackEventType.values()) {
             songpackEventMap.put(t, false);
         }
