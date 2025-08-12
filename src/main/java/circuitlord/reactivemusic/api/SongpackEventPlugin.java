@@ -1,0 +1,16 @@
+package circuitlord.reactivemusic.api;
+
+import circuitlord.reactivemusic.SongpackEventType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
+
+import java.util.Map;
+
+public interface SongpackEventPlugin {
+    // Plugins call SongpackEventType.register("NEW_ID") here.
+    void register();
+
+    // Plugins add per-tick results keyed by SongpackEventType.
+    void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> map);
+}
+

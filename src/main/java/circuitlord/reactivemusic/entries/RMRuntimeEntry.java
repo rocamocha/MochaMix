@@ -167,7 +167,7 @@ public class RMRuntimeEntry {
                     try {
                         // try to cast to SongpackEvent
                         // needs uppercase for enum names
-                        SongpackEventType eventType = Enum.valueOf(SongpackEventType.class, eventSection.toUpperCase());
+                        SongpackEventType eventType = SongpackEventType.valueOf(eventSection);
 
                         // it's a songpack event
                         if (eventType != SongpackEventType.NONE) {

@@ -1,6 +1,7 @@
 package circuitlord.reactivemusic;
 
 
+import circuitlord.reactivemusic.api.SongpackEventPlugin;
 import circuitlord.reactivemusic.config.ModConfig;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import circuitlord.reactivemusic.mixin.BossBarHudAccessor;
@@ -15,6 +16,7 @@ import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.HorseEntity;
 import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 
@@ -36,7 +38,10 @@ public final class SongPicker {
 
 
 
-    public static Map<SongpackEventType, Boolean> songpackEventMap = new EnumMap<>(SongpackEventType.class);
+    public static Map<SongpackEventType, Boolean> songpackEventMap = new HashMap<>();
+
+    // Cache the loader so we don’t rescan every tick
+    private static final ServiceLoader<SongpackEventPlugin> PLUGINS = ServiceLoader.load(SongpackEventPlugin.class);
 
     public static Map<TagKey<Biome>, Boolean> biomeTagEventMap = new HashMap<>();
 
@@ -95,6 +100,7 @@ public final class SongPicker {
 
 
     public static void tickEventMap() {
+        Map<SongpackEventType, Boolean> map = new HashMap<>();
 
         currentBiomeName = "";
         currentDimName = "";
@@ -284,6 +290,11 @@ public final class SongPicker {
 
 
         songpackEventMap.put(SongpackEventType.GENERIC, true);
+
+        // Plugin logic — IMPORTANT: same key type (SongpackEventType)
+        for (SongpackEventPlugin p : PLUGINS) {
+            p.tick(player, world, map);
+        }
     }
 
 
@@ -407,11 +418,15 @@ public final class SongPicker {
 
 
     public static void initialize() {
+        // Let plugins register new types
+        for (var p : PLUGINS) {
+            p.register(); // plugins do SongpackEventType.register("...") here
+        }
 
+        // Rebuild string->type map from the internal registry
         songpackEventMap.clear();
-
-        for (SongpackEventType eventType : SongpackEventType.values()) {
-            songpackEventMap.put(eventType, false);
+        for (SongpackEventType t : SongpackEventType.values()) {
+            songpackEventMap.put(t, false);
         }
     }
 
