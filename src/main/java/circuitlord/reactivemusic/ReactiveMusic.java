@@ -9,6 +9,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.CreditsScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.sound.SoundInstance;
@@ -89,10 +90,17 @@ public class ReactiveMusic implements ModInitializer {
 
 		LOGGER.info("Initializing Reactive Music...");
 
+		if (circuitlord.reactivemusic.api.ReactiveMusicUtils.isClientEnv()) {
+			try {
+				Class.forName("circuitlord.reactivemusic.ClientBootstrap")
+					.getMethod("install").invoke(null);
+			} catch (Throwable ignored) {
+				// leave delegate null on failure; API calls will return false
+			}
+		}
+
 		ModConfig.GSON.load();
 		config = ModConfig.getConfig();
-
-
 
 		SongPicker.initialize();
 
@@ -216,14 +224,8 @@ public class ReactiveMusic implements ModInitializer {
 				mc.options.write();
 			}
 		}
-
-
-		// always tick this
-		SongPicker.tickBlockCounterMap();
-
-		slowTickUpdateCounter++;
-		if (slowTickUpdateCounter > 20) {
-
+		
+		{
 			currentDimBlacklisted = false;
 
 			// see if the dimension we're in is blacklisted -- update at same time as event map to keep them in sync
@@ -239,8 +241,6 @@ public class ReactiveMusic implements ModInitializer {
 			}
 
 			SongPicker.tickEventMap();
-
-			slowTickUpdateCounter = 0;
 		}
 
 
@@ -574,6 +574,8 @@ public class ReactiveMusic implements ModInitializer {
 				return 900;
 			case LONG:
 				return 2400;
+			default:
+				break;
 		}
 
 		return 100;
@@ -601,6 +603,8 @@ public class ReactiveMusic implements ModInitializer {
 				return 900;
 			case LONG:
 				return 2400;
+			default:
+				break;
 		}
 
 		return 100;

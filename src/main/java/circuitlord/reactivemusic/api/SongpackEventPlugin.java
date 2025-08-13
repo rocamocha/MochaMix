@@ -7,7 +7,11 @@ import net.minecraft.world.World;
 import java.util.Map;
 
 public interface SongpackEventPlugin {
+    default int tickInterval() { return 20; }
+
+    // Plugins register event ids as SongpackEventType
     void register();
+
     // Plugins add per-tick results keyed by SongpackEventType.
     void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> map);
 }
