@@ -17,7 +17,7 @@ import java.util.UUID;
 public final class ClientBootstrap {
     private ClientBootstrap() {}
 
-    /** Called only on client to wire the delegate. */
+    /** Called only on client to wire the delegate in ReactiveMusicUtils. */
     public static void install() {
         ReactiveMusicUtils.setClientDelegate(new ReactiveMusicUtils.ClientDelegate() {
             @Override public boolean isBossBarActive() {

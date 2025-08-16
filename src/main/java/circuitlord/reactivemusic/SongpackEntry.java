@@ -1,12 +1,5 @@
 package circuitlord.reactivemusic;
 
-import net.minecraft.loot.entry.TagEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.world.biome.Biome;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class SongpackEntry {
 
 

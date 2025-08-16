@@ -3,8 +3,6 @@ package circuitlord.reactivemusic;
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
 
-import java.nio.file.Path;
-
 public class SongpackConfig {
 
     public String name;
