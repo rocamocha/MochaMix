@@ -8,10 +8,11 @@ import net.minecraft.world.World;
 import java.util.Map;
 
 public final class TimeOfDayPlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Time of Day (Built-In)"; }
     private static SongpackEventType DAY, NIGHT, SUNSET, SUNRISE;
 
     @Override
-    public void register() {
+    public void init() {
         DAY     = SongpackEventType.register("DAY");
         NIGHT   = SongpackEventType.register("NIGHT");
         SUNSET  = SongpackEventType.register("SUNSET");
@@ -19,7 +20,7 @@ public final class TimeOfDayPlugin implements SongpackEventPlugin {
     }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         long time = world.getTimeOfDay() % 24000L;

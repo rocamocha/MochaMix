@@ -10,10 +10,11 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.registry.entry.RegistryEntry;
 
 public final class BiomeIdentityPlugin implements SongpackEventPlugin {
-    @Override public void register() { /* no-op */ }
+    @Override public String getId() { return "Biomes (Built-In)"; }
+    @Override public void init() { /* no-op */ }
 
     @Override
-    public void tick(PlayerEntity player, World world, java.util.Map<SongpackEventType, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, java.util.Map<SongpackEventType, Boolean> out) {
         if (player == null || world == null) return;
 
         BlockPos pos = player.getBlockPos();

@@ -30,4 +30,19 @@ public interface RMPlayer extends AutoCloseable {
     void onError(java.util.function.Consumer<Throwable> c);
 
     @Override void close();              // same as stop(); also unregister
+    
+    void fade(float target, int tickDuration);
+    float fadeTarget();
+    int fadeDuration();
+    float fadePercent();
+    void setFadePercent(float p);
+    boolean stopOnFadeOut();
+    void stopOnFadeOut(boolean b);
+    boolean resetOnFadeOut();
+    void resetOnFadeOut(boolean b);
+    void reset();
+    boolean overlayFade();
+    void overlayFade(boolean set);
+    boolean fadingOut();
+    void fadingOut(boolean b);
 }

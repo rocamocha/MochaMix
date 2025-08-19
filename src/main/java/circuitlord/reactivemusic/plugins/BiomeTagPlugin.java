@@ -14,10 +14,10 @@ import net.minecraft.registry.tag.TagKey;
 import java.util.List;
 
 public final class BiomeTagPlugin implements SongpackEventPlugin {
-    @Override public void register() { /* no-op (SongPicker already builds BIOME_TAGS/map) */ }
+    @Override public String getId() { return "Biome Tags (Built-In)"; }
+    @Override public void init() { /* no-op (SongPicker already builds BIOME_TAGS/map) */ }
 
-    @Override
-    public void tick(PlayerEntity player, World world, java.util.Map<SongpackEventType, Boolean> out) {
+    @Override public void gameTick(PlayerEntity player, World world, java.util.Map<SongpackEventType, Boolean> out) {
         if (player == null || world == null) return;
 
         BlockPos pos = player.getBlockPos();

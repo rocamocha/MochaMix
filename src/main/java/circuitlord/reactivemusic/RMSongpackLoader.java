@@ -12,6 +12,19 @@ import java.util.*;
 
 public class RMSongpackLoader {
 
+    /**
+    * Allows relative paths in the songpack, for folders other than "music"
+    * this is useful for songpack makers who want to use a different folder structure
+    * potentially for letting songpacks replace plugin assets as well, if the plugin dev
+    * implements loading from the songpack
+    */
+    static String normalizeSongPath(String song) {
+        String withExt = song.endsWith(".mp3") ? song : (song + ".mp3");
+        // If caller provided a path (contains '/'), use it as-is.
+        // Otherwise default to the "music/" subfolder.
+        return (song.startsWith("/") || song.startsWith("\\")) ? withExt : ("music/" + withExt);
+    }
+
     public static List<SongpackZip> availableSongpacks = new ArrayList<>();
 
     public static MusicPackResource getInputStream(Path dirPath, String fileName, boolean embedded) {
@@ -240,7 +253,7 @@ public class RMSongpackLoader {
 
             for (int j = 0; j < songpackZip.config.entries[i].songs.length; j++) {
                 String song = songpackZip.config.entries[i].songs[j];
-                var inputStream = getInputStream(songpackZip.path, "music/" + song + ".mp3", songpackZip.embedded);
+                var inputStream = getInputStream(songpackZip.path, normalizeSongPath(song), songpackZip.embedded);
 
                 if (inputStream == null) {
                     StringBuilder eventName = new StringBuilder();

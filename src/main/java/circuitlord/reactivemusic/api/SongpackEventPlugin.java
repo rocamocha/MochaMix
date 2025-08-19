@@ -1,19 +1,84 @@
 package circuitlord.reactivemusic.api;
 
 import circuitlord.reactivemusic.SongpackEventType;
+import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Your plugin class should implement this interface, as it hooks into the flow of Reactive Music's core programming.
+ * For your plugin to be recognized and loaded by Reactive Music, create a plaintext file with the class' full
+ * package path (ex. <code>circuitlord.reactivemusic.plugins.WeatherAltitudePlugin</code>) on it's own line in
+ * <code>resources/META-INF/services</code> 
+ */
 public interface SongpackEventPlugin {
-    // default tick throttling interval, configurable through override
-    default int tickInterval() { return 20; }
+    /** Override this method and return a string. */
+    String getId();
 
-    // Plugins register event ids as SongpackEventType
-    void register();
+    /** 
+     * Freezes the plugin, disallowing its tick functions to be called from Reactive Music's newTick().
+     * Override if you want to disallow your plugin's logic being stopped from outside calls.
+     * This is 100% not recommended for future-proofing compatibility with other plugins.
+     * But sure, if you want to force everyone else to work around your code, sure then - go for it.
+     */
+    default void freeze() { ReactiveMusicAPI.logicFreeze.put(getId(), true); }
 
-    // Plugins add per-tick results keyed by SongpackEventType.
-    void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> map);
+    /**
+     * Removes the plugin from the frozen state, allowing its tick functions to be called from Reactive Music's newTick() again.
+     */
+    default void unfreeze() { ReactiveMusicAPI.logicFreeze.put(getId(), false); }
+
+    /**
+     * Called during ModInitialize()
+     * <p>Use this method to register your new events to the Reactive Music event system.
+     * Songpack creators can use these events in their YAML files, it is up to the logic in
+     * the overrideable tick methods to set the event states.</p>
+     * @see #tickSchedule()
+     * @see #gameTick(PlayerEntity, World, Map)
+     * @see #newTick()
+     * @see #onValid(RMRuntimeEntry)
+     * @see #onInvalid(RMRuntimeEntry)
+     */
+    default void init() {};
+    
+    /**
+     * Override this method to set a different schedule, or to schedule dynamically.
+     * @return The number of ticks that must pass before gameTick() is called each loop.
+     */
+    default int tickSchedule() { return 20; }; // per-plugin configurable tick throttling
+
+    /**
+     * Called when scheduled. Default schedule is 20 ticks, and can be configured.
+     * Provides player, world, and Reactive Music's eventMap for convenience.
+     * @param player
+     * @param world
+     * @param eventMap
+     * @see #tickSchedule()
+     */
+    default void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {};
+
+    /**
+     * Called every tick.
+     */
+    default void newTick() {}; // does not use schedule, called every tick
+
+    /**
+     * FIXME: Why isn't this getting called??? Help!
+     * Calls when <code>entry</code> flips from invalid -> valid.
+     * @param entry
+     */
+    default void onValid(RMRuntimeEntry entry) {};
+    
+    /**
+     * FIXME: Why isn't this getting called??? Help!
+     * Calls when <code>entry</code> flips from valid -> invalid.
+     * @param entry
+     */
+    default void onInvalid(RMRuntimeEntry entry) {};
 }
 

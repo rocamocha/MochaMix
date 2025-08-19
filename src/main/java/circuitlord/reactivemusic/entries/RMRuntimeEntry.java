@@ -7,6 +7,7 @@ import circuitlord.reactivemusic.SongpackZip;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class RMRuntimeEntry {
@@ -17,22 +18,32 @@ public class RMRuntimeEntry {
     public String songpack;
 
     public boolean allowFallback = false;
+    public boolean useOverlay = false;
 
     public boolean forceStopMusicOnValid = false;
     public boolean forceStopMusicOnInvalid = false;
-
     public boolean forceStartMusicOnValid = false;
-
     public float forceChance = 1.0f;
 
     public List<String> songs = new ArrayList<>();
 
     public String eventString = "";
-
     public String errorString = "";
 
     public float cachedRandomChance = 1.0f;
 
+    public HashMap<String, Object> entryMap = new HashMap<>();
+
+    // should import values in the yaml that are *NOT* predefined
+        // this means plugin devs can create custom options for events
+        // that live in the YAML
+    private void setExternalOptions(SongpackEntry songpackEntry) {
+        if (!songpackEntry.entryMap.keySet().isEmpty()) {
+            for (String key : songpackEntry.entryMap.keySet()) {
+                entryMap.put(key, songpackEntry.entryMap.get(key));
+            }
+        }
+    }
 
     public static RMRuntimeEntry create(SongpackZip songpack, SongpackEntry songpackEntry) {
 
@@ -40,6 +51,7 @@ public class RMRuntimeEntry {
         Entry.songpack = songpack.config.name;// songpackName;
 
         Entry.allowFallback = songpackEntry.allowFallback;
+        Entry.useOverlay = songpackEntry.useOverlay;
 
         Entry.forceStopMusicOnValid = songpackEntry.forceStopMusicOnValid || songpackEntry.forceStopMusicOnChanged;
         Entry.forceStopMusicOnInvalid = songpackEntry.forceStopMusicOnInvalid || songpackEntry.forceStopMusicOnChanged;
@@ -47,6 +59,8 @@ public class RMRuntimeEntry {
         Entry.forceStartMusicOnValid = songpackEntry.forceStartMusicOnValid;
 
         Entry.forceChance = songpackEntry.forceChance;
+
+        Entry.setExternalOptions(songpackEntry);
 
         if (songpackEntry.songs != null) {
             Entry.songs = Arrays.stream(songpackEntry.songs).toList();

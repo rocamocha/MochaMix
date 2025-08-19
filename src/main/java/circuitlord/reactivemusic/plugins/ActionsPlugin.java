@@ -1,7 +1,7 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongpackEventType;
-import circuitlord.reactivemusic.api.SongpackEventPlugin;
+import circuitlord.reactivemusic.api.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseEntity;
 import net.minecraft.entity.passive.PigEntity;
@@ -12,10 +12,18 @@ import net.minecraft.world.World;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class ActionsPlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Actions (Built-In)"; }
+    Logger LOGGER = LoggerFactory.getLogger(getId());
+
     private static SongpackEventType FISHING, MINECART, BOAT, HORSE, PIG;
 
-    @Override public void register() {
+    @Override public void init() {
+        LOGGER.info("Initializing " + getId() + " songpack event plugin");
+
         FISHING = SongpackEventType.register("FISHING");
         MINECART = SongpackEventType.register("MINECART");
         BOAT = SongpackEventType.register("BOAT");
@@ -24,7 +32,7 @@ public final class ActionsPlugin implements SongpackEventPlugin {
     }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
         if (player == null) return;
 
         eventMap.put(FISHING, player.fishHook != null);

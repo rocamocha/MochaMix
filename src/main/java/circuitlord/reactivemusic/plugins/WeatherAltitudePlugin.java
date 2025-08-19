@@ -10,9 +10,10 @@ import net.minecraft.world.World;
 import java.util.Map;
 
 public final class WeatherAltitudePlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Weather & Altitude (Built-In)"; }
     private static SongpackEventType RAIN, SNOW, STORM, UNDERWATER, UNDERGROUND, DEEP_UNDERGROUND, HIGH_UP;
 
-    @Override public void register() {
+    @Override public void init() {
         RAIN = SongpackEventType.register("RAIN");
         SNOW = SongpackEventType.register("SNOW");
         STORM = SongpackEventType.register("STORM");
@@ -23,7 +24,7 @@ public final class WeatherAltitudePlugin implements SongpackEventPlugin {
     }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
         if (player == null || world == null) return;
         BlockPos pos = player.getBlockPos();
 

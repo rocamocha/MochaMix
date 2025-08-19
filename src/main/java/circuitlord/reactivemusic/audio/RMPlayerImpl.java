@@ -2,6 +2,7 @@ package circuitlord.reactivemusic.audio;
 
 import circuitlord.reactivemusic.api.RMPlayer;
 import circuitlord.reactivemusic.api.RMPlayerOptions;
+import circuitlord.reactivemusic.api.ReactiveMusicAPI;
 import circuitlord.reactivemusic.RMSongpackLoader;               // or RMSongpackLoader you use to resolve music/<name>.mp3
 import circuitlord.reactivemusic.ReactiveMusic;
 import circuitlord.reactivemusic.MusicPackResource;
@@ -43,6 +44,13 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
     private volatile float gainPercent;        // user layer (your old gainPercentage)
     private volatile float duckPercent;        // per-player duck
     private final Supplier<Float> groupDuckSupplier; // from manager: returns 1.0f unless group ducked
+    private volatile float fadePercent;
+    private volatile float fadeTarget;
+    private volatile int fadeDuration;
+    private volatile boolean stopOnFadeOut = true;
+    private volatile boolean resetOnFadeOut = true;
+    private volatile boolean overlayFade = false;
+    private volatile boolean fadingOut = false;
 
     // ----- source -----
     private volatile String songId;                          // resolved via songpack (e.g., "music/Foo")
@@ -122,29 +130,30 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
 
     @Override public void setSong(String songId) {
         this.songId = songId;
+        this.fileId = null;
         this.streamSupplier = null;
-        queueStart();
     }
 
     @Override public void setStream(Supplier<InputStream> stream) {
-        this.streamSupplier = stream;
         this.songId = null;
-        queueStart();
+        this.fileId = null;
+        this.streamSupplier = stream;
     }
 
-    @Override public void setFile(String filename) {
-        this.fileId = fileId;
+    @Override public void setFile(String fileName) {
+        this.songId = null;
+        this.fileId = fileName;
         this.streamSupplier = null;
-        queueStart();
     }
 
     @Override public void play() {
         // restart from beginning of current source
+        requestGainRecompute();
         queueStart();
     }
 
     @Override public void stop() {
-        ReactiveMusic.LOGGER.info("Stopping player...");
+        LOGGER.info("Stopping player...");
         if(player != null) {
             player.close();
             queuedToStop = true;
@@ -154,37 +163,60 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
 		if (currentResource != null && currentResource.fileSystem != null) {
             try {
 				currentResource.close();
-                ReactiveMusic.LOGGER.info("Resource closed!");
+                LOGGER.info("Resource closed!");
             } catch (Exception e) {
-                ReactiveMusic.LOGGER.error("Failed to close file system/input stream " + e.getMessage());
+                LOGGER.error("Failed to close file system/input stream " + e.getMessage());
             }
         }
 		currentResource = null;
     }
 
+    @Override public void fade(float target, int tickDuration) {
+        fadeTarget = target;
+        fadeDuration = tickDuration;
+    }
+
+    @Override public float fadeTarget() { return fadeTarget; }
+    @Override public int fadeDuration() { return fadeDuration; }
+    @Override public float fadePercent() { return fadePercent; }
+    
+    @Override public boolean fadingOut() { return fadingOut; }
+    @Override public void fadingOut(boolean set) { fadingOut = set; }
+
+    @Override public boolean stopOnFadeOut() { return stopOnFadeOut; }
+    @Override public void stopOnFadeOut(boolean set) { stopOnFadeOut = set; }
+
+    @Override public boolean overlayFade() { return overlayFade; }
+    @Override public void overlayFade(boolean set) { overlayFade = set; }
+
+    @Override public boolean resetOnFadeOut() { return resetOnFadeOut; }
+    @Override public void resetOnFadeOut(boolean set) { resetOnFadeOut = set; }
+
     @Override public boolean isIdle() {
         // Idle when we have no active/queued playback work
         return !playing && !queued;
     }
-
+    
     @Override public void pause() { paused = true; }
-
     @Override public void resume() { paused = false; }
 
+    @Override public void reset() {
+        fadePercent = 1f;
+        fadeTarget = 1f;
+    }
+    
     @Override public void setGainPercent(float p) { gainPercent = clamp01(p); requestGainRecompute(); }
-
     @Override public void setDuckPercent(float p) { duckPercent = clamp01(p); requestGainRecompute(); }
-
+    @Override public void setFadePercent(float p) { fadePercent = clamp01(p); requestGainRecompute(); }
+    
     @Override public void setMute(boolean v) { mute = v; requestGainRecompute(); }
 
     @Override public float getRealGainDb() { return realGainDb; }
 
     @Override public void setGroup(String group) { this.group = group; requestGainRecompute(); }
-
     @Override public String getGroup() { return group; }
 
     @Override public void onComplete(Runnable r) { if (r != null) completeHandlers.add(r); }
-
     @Override public void onError(Consumer<Throwable> c) { if (c != null) errorHandlers.add(c); }
 
     @Override public void close() {
@@ -215,7 +247,12 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
                             in = streamSupplier.get();
                             currentResource = null; // external stream, nothing to close here
                         } else if (fileId != null) {
+                            LOGGER.info(this.id + " -> playing from custom resource: " + fileId);
                             currentResource = openFromFile(fileId); // use a custom file found in the songpack
+                            if (currentResource == null || currentResource.inputStream == null) {
+                                queued = false;
+                                continue;
+                            }
                         } else {
                             currentResource = openFromSongpack(songId);
                             if (currentResource == null || currentResource.inputStream == null) {
@@ -238,7 +275,7 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
                         }
                     } finally {
                         // Cleanup player & audio
-                        LOGGER.info("RM:[runLoop]: Closing player: " + this.namespace + ":" + this.group);
+                        LOGGER.info("[runLoop]: Closing player: " + this.namespace + ":" + this.group);
                         closeQuiet(player);
                         player = null;
                         audio = null;
@@ -295,26 +332,30 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
             fileName = "music/" + logicalId + ".mp3";
         }
 
-        LOGGER.info("RM:[openFromSongpack]:" + fileName);
+        LOGGER.info("[openFromSongpack]:" + fileName);
 
         return RMSongpackLoader.getInputStream(
-            ReactiveMusic.currentSongpack.path,
+            ReactiveMusicAPI.currentSongpack.path,
             fileName,
-            ReactiveMusic.currentSongpack.embedded
+            ReactiveMusicAPI.currentSongpack.embedded
         ); // loader returns MusicPackResource{ inputStream, fileSystem? }.
     }
 
-    private MusicPackResource openFromFile(String filename) {
-        if (filename == null) return null;
-        if (filename.endsWith(".mp3")) {
-            // use this
+    private MusicPackResource openFromFile(String fileId) {
+        String fileName;
+        if (fileId == null) return null;
+        if (fileId.endsWith(".mp3")) {
+            fileName = fileId;
         } else {
-            filename = filename + ".mp3";
+            fileName = fileId + ".mp3";
         }
+
+        LOGGER.info("[openFromFile]: " + fileName);
+
         return RMSongpackLoader.getInputStream(
-            ReactiveMusic.currentSongpack.path,
-            filename,
-            ReactiveMusic.currentSongpack.embedded
+            ReactiveMusicAPI.currentSongpack.path,
+            fileName,
+            ReactiveMusicAPI.currentSongpack.embedded
         );
     }
 
@@ -336,7 +377,7 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
             quietPct = 0.7f; 
         }
 
-        float effective = (mute ? 0f : gainPercent) * duckPercent * groupDuckSupplier.get() * quietPct * minecraftGain;
+        float effective = (mute ? 0f : gainPercent) * duckPercent * fadePercent * groupDuckSupplier.get() * quietPct * minecraftGain;
         float db = (minecraftGain == 0f || effective == 0f)
                 ? MIN_POSSIBLE_GAIN
                 : (MIN_GAIN + (MAX_GAIN - MIN_GAIN) * clamp01(effective));

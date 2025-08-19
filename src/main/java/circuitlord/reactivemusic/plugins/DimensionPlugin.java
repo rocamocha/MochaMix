@@ -9,17 +9,18 @@ import net.minecraft.world.World;
 import java.util.Map;
 
 public final class DimensionPlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Dimensions (Built-In)"; }
     private static SongpackEventType OVERWORLD, NETHER, END;
 
     @Override
-    public void register() {
+    public void init() {
         OVERWORLD = SongpackEventType.register("OVERWORLD");
         NETHER    = SongpackEventType.register("NETHER");
         END       = SongpackEventType.register("END");
     }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
         if (world == null) return;
 
         var indimension = world.getRegistryKey();

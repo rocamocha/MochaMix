@@ -9,3 +9,4 @@ circuitlord.reactivemusic.plugins.DimensionPlugin
 circuitlord.reactivemusic.plugins.ProximityPlugin
 circuitlord.reactivemusic.plugins.TimeOfDayPlugin
 circuitlord.reactivemusic.plugins.WeatherAltitudePlugin
+circuitlord.reactivemusic.plugins.OverlayTrackPlugin

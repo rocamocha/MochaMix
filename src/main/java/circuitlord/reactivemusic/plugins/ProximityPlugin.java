@@ -11,15 +11,16 @@ import net.minecraft.world.World;
 import java.util.Map;
 
 public final class ProximityPlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Proximity (Built-In)"; }
     private static SongpackEventType NEARBY_MOBS, VILLAGE;
 
-    @Override public void register() {
+    @Override public void init() {
         NEARBY_MOBS = SongpackEventType.register("NEARBY_MOBS");
         VILLAGE     = SongpackEventType.register("VILLAGE");
     }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         // Nearby mobs

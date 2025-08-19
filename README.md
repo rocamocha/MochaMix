@@ -3,3 +3,5 @@ Reactive Music trades Minecraft's default music for something dynamic, reactive,
 Reactive Music is based off a music pack I originally made for the Ambience mod back in 1.12. Now rebuilt to be a standalone mod for modern minecraft.
 
 Discord: https://discord.gg/vJ6BCjPR3R
+
+

@@ -15,6 +15,7 @@ import net.minecraft.block.Block;
 import java.util.*;
 
 public final class BlockCounterPlugin implements SongpackEventPlugin {
+    @Override public String getId() { return "Block Counter (Built-In)"; }
 
     // --- config (mirrors your current setup) ---
     private static final int RADIUS = 25;
@@ -26,11 +27,11 @@ public final class BlockCounterPlugin implements SongpackEventPlugin {
     private static int currentBlockCounterX = 99999; // start out-of-range to force snap to origin on first wrap
     // Note: your Y sweep is commented-out in the original; we keep the same single-axis sweep.
 
-    @Override public void register() { /* no-op */ }
-    @Override public int tickInterval() { return 1; }
+    @Override public void init() { /* no-op */ }
+    @Override public int tickSchedule() { return 1; }
 
     @Override
-    public void tick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> out) {
         if (!(player instanceof ClientPlayerEntity) || world == null) return;
 
         // lazily initialize origin

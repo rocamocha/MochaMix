@@ -16,4 +16,6 @@ public interface RMPlayerManager {
     // Lifecycle
     void closeAllForPlugin(String pluginNamespace);
     void closeAll();                                    // on shutdown
+
+    void tick();
 }

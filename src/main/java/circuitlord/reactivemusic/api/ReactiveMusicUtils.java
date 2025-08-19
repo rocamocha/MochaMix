@@ -13,6 +13,9 @@ import net.minecraft.world.biome.Biome;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +32,7 @@ public final class ReactiveMusicUtils {
     private ReactiveMusicUtils() {}
 
     /* =========================================================
-       ===============  ENV & CLIENT BRIDGE  ===================
+       XXX============  ENV & CLIENT BRIDGE  ===================
        ========================================================= */
 
     /** True if running in a client environment. */
@@ -40,12 +43,21 @@ public final class ReactiveMusicUtils {
     /**
      * Client-only delegate. Set this from your CLIENT initializer (or mixin)
      * so plugins can ask for client data without linking client classes here.
+     * 
+     * TODO: The client delegate is currently unimplemented for the most part.
+     * Its purpose is to make development for server-side bridging plugins easier in the future.
+     * This way, Reactive Music can stay client-side only, while any multiplayer functionality
+     * or server based operation can be implemented by a plugin, encouraging a less restricted
+     * ecosystem of plugins for the base mod.  
      *
-     * Example (client init):
+     * <p>Example (client init):
+     * <pre>
      * ReactiveMusicReactiveMusicUtils.setClientDelegate(new ReactiveMusicReactiveMusicUtils.ClientDelegate() {
      *   public boolean isMainMenu() { return MinecraftClient.getInstance().player == null; }
      *   public boolean isCredits()  { return MinecraftClient.getInstance().currentScreen instanceof CreditsScreen; }
      * });
+     * </pre>
+     * </p>
      */
     public interface ClientDelegate {
         boolean isMainMenu();
@@ -60,16 +72,76 @@ public final class ReactiveMusicUtils {
         clientDelegate = delegate;
     }
 
-    /** Safe wrappers (server returns false). */
     public static boolean isMainMenu(){ ClientDelegate d = clientDelegate; return d != null && d.isMainMenu(); }
     public static boolean isCredits(){ ClientDelegate d = clientDelegate; return d != null && d.isCredits(); }
     public static boolean isBossBarActive(){ ClientDelegate d = clientDelegate; return d != null && d.isBossBarActive(); }
 
     /* =========================================================
-       ===================  WORLD HELPERS  =====================
+       XXX================  SONG SELECTION  ====================
+       ========================================================= */  
+
+    private static final Random rand = new Random();
+
+    public static boolean hasSongNotPlayedRecently(List<String> songs) {
+        for (String song : songs) {
+            if (!ReactiveMusicAPI.recentlyPickedSongs.contains(song)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public static List<String> getNotRecentlyPlayedSongs(String[] songs) {
+        List<String> notRecentlyPlayed = new ArrayList<>(Arrays.asList(songs));
+        notRecentlyPlayed.removeAll(ReactiveMusicAPI.recentlyPickedSongs);
+        return notRecentlyPlayed;
+    }
+
+
+    public static String pickRandomSong(List<String> songs) {
+
+        if (songs.isEmpty()) {
+            return null;
+        }
+
+        List<String> cleanedSongs = new ArrayList<>(songs);
+
+        cleanedSongs.removeAll(ReactiveMusicAPI.recentlyPickedSongs);
+
+
+        String picked;
+
+        // If there's remaining songs, pick one of those
+        if (!cleanedSongs.isEmpty()) {
+            int randomIndex = rand.nextInt(cleanedSongs.size());
+            picked = cleanedSongs.get(randomIndex);
+        }
+
+        // Else we've played all these recently so just pick a new random one
+        else {
+            int randomIndex = rand.nextInt(songs.size());
+            picked = songs.get(randomIndex);
+        }
+
+        // only track the past X songs
+        if (ReactiveMusicAPI.recentlyPickedSongs.size() >= 8) {
+            ReactiveMusicAPI.recentlyPickedSongs.remove(0);
+        }
+        ReactiveMusicAPI.recentlyPickedSongs.add(picked);
+
+        return picked;
+    }
+
+
+    public static String getSongName(String song) {
+        return song == null ? "" : song.replaceAll("([^A-Z])([A-Z])", "$1 $2");
+    }
+
+    /* =========================================================
+       XXX================  WORLD HELPERS  =====================
        ========================================================= */
 
-    /** Axis-aligned box around any entity; server-safe. */
     public static Box boxAround(Entity e, float radiusXZ, float radiusY) {
         double x = e.getX(), y = e.getY(), z = e.getZ();
         return new Box(
@@ -78,7 +150,6 @@ public final class ReactiveMusicUtils {
         );
     }
 
-    /** Simple altitude checks you use for HIGH_UP / UNDERGROUND, tweak thresholds as needed. */
     public static boolean isHighUp(BlockPos pos, int minY) { return pos.getY() >= minY; }
     public static boolean isUnderground(World w, BlockPos pos, int maxY) { return pos.getY() <= maxY && !w.isSkyVisible(pos); }
     public static boolean isDeepUnderground(World w, BlockPos pos, int maxY){ return pos.getY() <= maxY && !w.isSkyVisible(pos); }
@@ -88,7 +159,7 @@ public final class ReactiveMusicUtils {
     public static boolean isStorm(World w) { return w.isThundering(); }
 
     /* =========================================================
-       =================  DAMAGE TRACKING  =====================
+       XXX==============  DAMAGE TRACKING  =====================
        ========================================================= */
 
     /**
@@ -120,7 +191,7 @@ public final class ReactiveMusicUtils {
     }
 
     /* =========================================================
-       ==============  ENTITY / VEHICLE HELPERS  ===============
+       XXX===========  ENTITY / VEHICLE HELPERS  ===============
        ========================================================= */
 
     /** Root vehicle (handles seat entities); returns null if player is not mounted on another entity. */
@@ -145,7 +216,7 @@ public final class ReactiveMusicUtils {
     }
 
     /* =========================================================
-       ===============  SPHERICAL ENTITY QUERIES  ==============
+       XXX============  SPHERICAL ENTITY QUERIES  ==============
        ========================================================= */
 
     /**
@@ -217,7 +288,7 @@ public final class ReactiveMusicUtils {
 
 
     /* =========================================================
-       =====================  GUARDS  ==========================
+       XXX==================  GUARDS  ==========================
        ========================================================= */
 
     /** Run a supplier and swallow exceptions; useful around plugin hooks. */
