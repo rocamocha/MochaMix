@@ -22,15 +22,18 @@ import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 
+/**
+ * TODO:
+ * There's something wrong with the song switcher right now,
+ * it doesn't change to a new song when the song is done... so my logic
+ * is messed up somewhere.
+ */
 public final class ReactiveMusicCore {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
     public static final int FADE_DURATION = 150;
 	public static final int SILENCE_DURATION = 100;
 
-    static String currentSong = null;
-	static RMRuntimeEntry currentEntry = null;
-    static List<RMRuntimeEntry> previousValidEntries = new ArrayList<>();
     static boolean queuedToPlayMusic = false;
 	static boolean queuedToStopMusic = false;
     static int waitForStopTicks = 0;
@@ -52,6 +55,13 @@ public final class ReactiveMusicCore {
 			newEntry = ReactiveMusicAPI.validEntries.get(0);
 		}
 
+        for (RMPlayer player : players) {
+            if (finishedPlaying(player)) {
+                ReactiveMusicAPI.currentEntry = null;
+                ReactiveMusicAPI.currentSong = null;
+            }
+        }
+
 
 		if (ReactiveMusicAPI.currentDimBlacklisted)
 			newEntry = null;
@@ -62,13 +72,13 @@ public final class ReactiveMusicCore {
 			List<String> selectedSongs = ReactiveMusicAPI.getSelectedSongs(newEntry, ReactiveMusicAPI.validEntries);
 
 			// wants to switch if our current entry doesn't exist -- or is not the same as the new one
-			boolean wantsToSwitch = currentEntry == null || !java.util.Objects.equals(currentEntry.eventString, newEntry.eventString);
+			boolean wantsToSwitch = ReactiveMusicAPI.currentEntry == null || !java.util.Objects.equals(ReactiveMusicAPI.currentEntry.eventString, newEntry.eventString);
 
 			// if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
-			if (wantsToSwitch && currentSong != null && newEntry.songs.contains(currentSong) && !queuedToStopMusic) {
+			if (wantsToSwitch && ReactiveMusicAPI.currentSong != null && newEntry.songs.contains(ReactiveMusicAPI.currentSong) && !queuedToStopMusic) {
 				LOGGER.info("doing fake swap to new event: " + newEntry.eventString);
 				// do a fake swap
-				currentEntry = newEntry;
+				ReactiveMusicAPI.currentEntry = newEntry;
 				wantsToSwitch = false;
 				// if this happens, also clear the queued state since we essentially did a switch
 				queuedToPlayMusic = false;
@@ -162,7 +172,7 @@ public final class ReactiveMusicCore {
         return validEntries;
     }
     
-    public static void processValidEvents(List<RMRuntimeEntry> validEntries, List<RMRuntimeEntry> previousValidEntries) {
+    public final static void processValidEvents(List<RMRuntimeEntry> validEntries, List<RMRuntimeEntry> previousValidEntries) {
 
         for (var entry : previousValidEntries) {
             // if this event was valid before and is invalid now
@@ -227,19 +237,19 @@ public final class ReactiveMusicCore {
     
     public static void changeCurrentSong(String song, RMRuntimeEntry newEntry, RMPlayer player) {
         // No change? Do nothing.
-        if (java.util.Objects.equals(currentSong, song)) {
+        if (java.util.Objects.equals(ReactiveMusicAPI.currentSong, song)) {
             queuedToPlayMusic = false;
             return;
         }
     
         // Stop only if we’re switching tracks (not just metadata)
-        final boolean switchingTrack = !java.util.Objects.equals(currentSong, song);
+        final boolean switchingTrack = !java.util.Objects.equals(ReactiveMusicAPI.currentSong, song);
         if (switchingTrack && player != null && player.isPlaying()) {
             player.stop(); // RMPlayerImpl stops underlying AdvancedPlayer.play()
         }
     
-        currentSong = song;
-        currentEntry = newEntry;
+        ReactiveMusicAPI.currentSong = song;
+        ReactiveMusicAPI.currentEntry = newEntry;
     
         if (player != null && song != null) {
             // if you do a fade-in elsewhere, set 0 here; otherwise set 1
@@ -254,7 +264,7 @@ public final class ReactiveMusicCore {
     
     
     
-    public static void setActiveSongpack(SongpackZip songpackZip) {
+    public static final void setActiveSongpack(SongpackZip songpackZip) {
     
         // TODO: Support more than one songpack?
         if (ReactiveMusicAPI.currentSongpack != null) {
@@ -274,7 +284,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public static void deactivateSongpack(SongpackZip songpackZip) {
+    public static final void deactivateSongpack(SongpackZip songpackZip) {
     
         // remove all entries that match that name
         for (int i = ReactiveMusicAPI.loadedEntries.size() - 1; i >= 0; i--) {
@@ -285,7 +295,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public static int getMusicStopSpeed(SongpackZip songpack) {
+    public final static int getMusicStopSpeed(SongpackZip songpack) {
     
         MusicSwitchSpeed speed = ReactiveMusicAPI.modConfig.musicSwitchSpeed2;
     
@@ -314,7 +324,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public static int getMusicDelay(SongpackZip songpack) {
+    public final static int getMusicDelay(SongpackZip songpack) {
     
         MusicDelayLength delay = ReactiveMusicAPI.modConfig.musicDelayLength2;
     
@@ -342,14 +352,21 @@ public final class ReactiveMusicCore {
         return 100;
     
     }
+
+    public static final boolean finishedPlaying(RMPlayer player) {
+        if ((player.fadePercent() == 0 && player.fadingOut()) || !player.isPlaying()) {
+            return true;
+        }
+        return false;
+    }
     
-    static void resetPlayer(RMPlayer player) {
+    public static final void resetPlayer(RMPlayer player) {
         if (player != null && player.isPlaying()) {
             player.stop();
             player.reset();
         }
-        currentEntry = null;
-        currentSong = null;
+        ReactiveMusicAPI.currentEntry = null;
+        ReactiveMusicAPI.currentSong = null;
     }
 
 }

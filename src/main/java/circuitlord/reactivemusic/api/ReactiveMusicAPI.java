@@ -34,6 +34,10 @@ public final class ReactiveMusicAPI {
     public static Map<String, Boolean>            logicFreeze      = new HashMap<>();
     public static Map<SongpackEventType, Boolean> songpackEventMap = new HashMap<>();
     
+    // TODO: Instance these? My Java inexperience is showing...
+    public static RMRuntimeEntry       currentEntry         = null;
+    public static String               currentSong          = null;
+
     public static List<RMRuntimeEntry> validEntries         = new ArrayList<>();
     public static List<RMRuntimeEntry> loadedEntries        = new ArrayList<>();
     public static List<RMRuntimeEntry> previousValidEntries = new ArrayList<>();

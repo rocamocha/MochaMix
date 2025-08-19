@@ -174,6 +174,15 @@ public class ReactiveMusic implements ModInitializer {
 						})
 				)
 
+				.then(ClientCommandManager.literal("skip")
+						.executes(context -> {
+							ReactiveMusicAPI.currentEntry = null;
+							ReactiveMusicAPI.currentSong = null;
+							
+							return 1;
+						})
+				)
+
 			)
 		);
 	}
