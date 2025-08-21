@@ -148,7 +148,6 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
 
     @Override public void play() {
         // restart from beginning of current source
-        requestGainRecompute();
         queueStart();
     }
 
@@ -262,13 +261,14 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
                             in = currentResource.inputStream; // like your original PlayerThread
                         }
 
-                        audio = new JavaSoundAudioDevice();
+                        audio = new FirstWritePrimerAudioDevice(250, () -> requestGainRecompute());
                         player = new AdvancedPlayer(in, audio);
+                        
+                        
                         queued = false;
                         playing = true;
                         complete = false;
 
-                        requestGainRecompute();
 
                         if (player.getAudioDevice() != null && !queuedToStop) {
                             player.play();
@@ -360,8 +360,8 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
     }
 
     /** Force a recompute of real dB gain using your existing math. */
-    public void requestGainRecompute() {
-        if (audio == null) return;
+    public float requestGainRecompute() {
+        if (audio == null) return 0f;
         float minecraftGain = 1.0f;
 
         if (linkToMcVolumes) {
@@ -392,6 +392,8 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
             ((JavaSoundAudioDevice) audio).setGain(db);
             realGainDb = db;
         } catch (Throwable ignored) {}
+
+        return db;
     }
 
     private static float clamp01(float f) { return f < 0 ? 0 : Math.min(f, 1); }
@@ -420,4 +422,131 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
         float music  = (float) mc.options.getSoundVolume(net.minecraft.sound.SoundCategory.MUSIC);
         return master * music;
     }
+
+
+
+    /**
+     * XXX
+     * Full disclosure I have no f***ing idea how this next part works, but it fixes the bug where the audio was
+     * blasting for the first bit since gain wasn't getting set before the audio device recieved samples,
+     * especially when running a lot of mods.
+     * 
+     * Thanks, AI. 
+     */
+
+    // -------- DROP-IN: put this inside RMPlayerImpl --------
+    private final class FirstWritePrimerAudioDevice extends rm_javazoom.jl.player.JavaSoundAudioDevice {
+        private final int primeMs;
+        private final java.util.function.Supplier<Float> initialDbSupplier;
+
+        private volatile boolean opened = false;
+        private volatile boolean primed = false;
+        private volatile boolean hwGainApplied = false;
+
+        private javax.sound.sampled.AudioFormat fmt;
+
+        // software gain fallback
+        private boolean swGainEnabled = false;
+        private float swGainScalar = 1.0f; // multiply samples by this if enabled
+
+        FirstWritePrimerAudioDevice(int primeMs, java.util.function.Supplier<Float> initialDbSupplier) {
+            this.primeMs = Math.max(0, primeMs);
+            this.initialDbSupplier = initialDbSupplier;
+        }
+
+        @Override
+        public void open(javax.sound.sampled.AudioFormat format)
+                throws rm_javazoom.jl.decoder.JavaLayerException {
+            super.open(format);
+            this.fmt = format;
+            this.opened = true;
+            System.err.println("[RMPlayer] open(): fmt=" + format + ", primeMs=" + primeMs);
+
+            // Try to apply initial HW gain now that the line exists
+            applyInitialGainOrEnableSoftwareFallback();
+        }
+
+        @Override
+        public void write(short[] samples, int offs, int len)
+                throws rm_javazoom.jl.decoder.JavaLayerException {
+            // If mixer didn't call open(AudioFormat) before first write (some forks do this),
+            // do best-effort: synthesize a sensible format just for primer sizing.
+            if (!opened && fmt == null) {
+                fmt = new javax.sound.sampled.AudioFormat(44100f, 16, 2, true, false);
+            }
+
+            // Inject primer BEFORE forwarding the very first audible samples.
+            if (!primed && primeMs > 0) {
+                primed = true;
+                int channels = fmt != null ? Math.max(1, fmt.getChannels()) : 2;
+                float rate   = fmt != null ? Math.max(8000f, fmt.getSampleRate()) : 44100f;
+                int totalSamples = Math.max(channels, Math.round((primeMs / 1000f) * rate) * channels);
+
+                final int CHUNK = 4096;
+                short[] zeros = new short[Math.min(totalSamples, CHUNK)];
+                int remain = totalSamples;
+                System.err.println("[RMPlayer] primer: injecting " + primeMs + "ms silence (" + totalSamples + " samples)");
+                while (remain > 0) {
+                    int n = Math.min(remain, zeros.length);
+                    super.write(zeros, 0, n);
+                    remain -= n;
+                }
+
+                // If we somehow reached here before open(), try gain now as well.
+                if (!hwGainApplied) {
+                    applyInitialGainOrEnableSoftwareFallback();
+                }
+            }
+
+            if (len <= 0) return;
+
+            if (swGainEnabled) {
+                // Software-attenuate the buffer on the way out (don’t mutate caller’s array)
+                short[] tmp = new short[len];
+                for (int i = 0; i < len; i++) {
+                    float v = samples[offs + i] * swGainScalar;
+                    // clamp to 16-bit
+                    if (v > 32767f) v = 32767f;
+                    if (v < -32768f) v = -32768f;
+                    tmp[i] = (short) v;
+                }
+                super.write(tmp, 0, len);
+            } else {
+                super.write(samples, offs, len);
+            }
+        }
+
+        private void applyInitialGainOrEnableSoftwareFallback() {
+            if (hwGainApplied) return;
+            Float db = null;
+            try {
+                db = (initialDbSupplier != null) ? initialDbSupplier.get() : null;
+                if (db != null) {
+                    // Try hardware gain
+                    this.setGain(db);
+                    hwGainApplied = true;
+                    swGainEnabled = false; // no need for SW gain
+                    // reflect to outer field to keep your UI/state in sync
+                    try { RMPlayerImpl.this.realGainDb = db; } catch (Throwable ignored) {}
+                    System.err.println("[RMPlayer] HW gain applied: " + db + " dB");
+                    return;
+                }
+            } catch (Throwable t) {
+                // Hardware control missing or mixer refused it. Fall back to SW.
+                System.err.println("[RMPlayer] HW gain failed, enabling SW gain. Reason: " + t);
+            }
+
+            // If we get here, enable SW attenuation only if we actually need attenuation
+            // (db < 0). If db is null or >= 0, we don’t attenuate in software.
+            if (db != null && db < 0f) {
+                swGainEnabled = true;
+                swGainScalar = (float) Math.pow(10.0, db / 20.0); // dB -> linear
+                System.err.println("[RMPlayer] SW gain enabled: " + db + " dB (scalar=" + swGainScalar + ")");
+            } else {
+                swGainEnabled = false;
+            }
+        }
+    }
+    // -------- END DROP-IN --------
 }
+

@@ -27,7 +27,7 @@ public final class ReactiveMusicAPI {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
     
-    public static ModConfig   modConfig;
+    public static ModConfig modConfig;
     public static SongpackZip currentSongpack = null;
     public static Boolean currentDimBlacklisted = false;
     
