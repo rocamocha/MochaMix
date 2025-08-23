@@ -1,12 +1,10 @@
 package circuitlord.reactivemusic.audio;
 
+import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.api.RMPlayer;
 import circuitlord.reactivemusic.api.RMPlayerOptions;
-import circuitlord.reactivemusic.api.ReactiveMusicAPI;
-import circuitlord.reactivemusic.RMSongpackLoader;               // or RMSongpackLoader you use to resolve music/<name>.mp3
-import circuitlord.reactivemusic.ReactiveMusic;
-import circuitlord.reactivemusic.MusicPackResource;
-
+import circuitlord.reactivemusic.songpack.MusicPackResource;
+import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -335,9 +333,9 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
         LOGGER.info("[openFromSongpack]:" + fileName);
 
         return RMSongpackLoader.getInputStream(
-            ReactiveMusicAPI.currentSongpack.path,
+            ReactiveMusicState.currentSongpack.path,
             fileName,
-            ReactiveMusicAPI.currentSongpack.embedded
+            ReactiveMusicState.currentSongpack.embedded
         ); // loader returns MusicPackResource{ inputStream, fileSystem? }.
     }
 
@@ -353,9 +351,9 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
         LOGGER.info("[openFromFile]: " + fileName);
 
         return RMSongpackLoader.getInputStream(
-            ReactiveMusicAPI.currentSongpack.path,
+            ReactiveMusicState.currentSongpack.path,
             fileName,
-            ReactiveMusicAPI.currentSongpack.embedded
+            ReactiveMusicState.currentSongpack.embedded
         );
     }
 

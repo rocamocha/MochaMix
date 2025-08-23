@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic;
+package circuitlord.reactivemusic.songpack;
 
 import net.minecraft.entity.player.PlayerEntity;
 

@@ -1,5 +1,6 @@
-package circuitlord.reactivemusic;
+package circuitlord.reactivemusic.songpack;
 
+import circuitlord.reactivemusic.ReactiveMusic;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import net.fabricmc.loader.api.FabricLoader;
 import org.rm_yaml.snakeyaml.Yaml;

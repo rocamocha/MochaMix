@@ -1,9 +1,9 @@
 package circuitlord.reactivemusic.audio;
 
+import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.api.RMPlayer;
 import circuitlord.reactivemusic.api.RMPlayerManager;
 import circuitlord.reactivemusic.api.RMPlayerOptions;
-import circuitlord.reactivemusic.api.ReactiveMusicAPI;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,11 +62,11 @@ public final class RMPlayerManagerImpl implements RMPlayerManager {
             player.setFadePercent(next);
             if (fp != ft) {
                 if (fp == 0 && step > 0) {
-                    ReactiveMusicAPI.LOGGER.info(player.id() + " is fading in");
+                    ReactiveMusicState.LOGGER.info(player.id() + " is fading in");
                 }
 
                 if (fp == 1 && step < 0) {
-                    ReactiveMusicAPI.LOGGER.info(player.id() + " is fading out");
+                    ReactiveMusicState.LOGGER.info(player.id() + " is fading out");
                 }
             }
 

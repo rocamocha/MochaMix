@@ -2,12 +2,12 @@ package circuitlord.reactivemusic;
 
 import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.songpack.SongpackEventState;
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.CreditsScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
-
 //import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.math.BlockPos;
@@ -18,13 +18,13 @@ import net.minecraft.world.biome.Biome;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public final class SongPicker {
 
     static int pluginTickCounter = 0;
 
     public static Map<TagKey<Biome>, Boolean> biomeTagEventMap = new HashMap<>();
-
-    public static Map<Entity, Long> recentEntityDamageSources = new HashMap<>();
 
     public static boolean queuedToPrintBlockCounter = false;
     public static BlockPos cachedBlockCounterOrigin;
@@ -75,8 +75,8 @@ public final class SongPicker {
         
         for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) {
             
-            if (ReactiveMusicAPI.logicFreeze.computeIfAbsent(plugin.getId(), k -> false)) {
-                ReactiveMusicAPI.LOGGER.info("Skipping execution for " + plugin.getId());
+            if (ReactiveMusicState.logicFreeze.computeIfAbsent(plugin.getId(), k -> false)) {
+                ReactiveMusicState.LOGGER.info("Skipping execution for " + plugin.getId());
                 continue;
             }
 
@@ -90,24 +90,24 @@ public final class SongPicker {
             // throttled tick
             int interval = plugin.tickSchedule();
             if (interval <= 1 || (pluginTickCounter % interval) == 0L) {
-                plugin.gameTick(player, world, ReactiveMusicAPI.songpackEventMap);              
+                plugin.gameTick(player, world, ReactiveMusicState.songpackEventMap);              
             }
         }
 
         if (player == null || world == null) initialize();
 
-        ReactiveMusicAPI.songpackEventMap.put(SongpackEventType.GENERIC, true);
-        ReactiveMusicAPI.songpackEventMap.put(SongpackEventType.MAIN_MENU, player == null || world == null);
-        ReactiveMusicAPI.songpackEventMap.put(SongpackEventType.CREDITS, mc.currentScreen instanceof CreditsScreen);
+        ReactiveMusicState.songpackEventMap.put(SongpackEventType.GENERIC, true);
+        ReactiveMusicState.songpackEventMap.put(SongpackEventType.MAIN_MENU, player == null || world == null);
+        ReactiveMusicState.songpackEventMap.put(SongpackEventType.CREDITS, mc.currentScreen instanceof CreditsScreen);
         
-        SongpackEventState.updateForPlayer(player, ReactiveMusicAPI.songpackEventMap);
+        SongpackEventState.updateForPlayer(player, ReactiveMusicState.songpackEventMap);
     }
 
     public static void initialize() {
         // build string -> type map from the internal registry
-        ReactiveMusicAPI.songpackEventMap.clear();
+        ReactiveMusicState.songpackEventMap.clear();
         for (SongpackEventType set : SongpackEventType.values()) {
-            ReactiveMusicAPI.songpackEventMap.put(set, false);
+            ReactiveMusicState.songpackEventMap.put(set, false);
         }
     }
 
@@ -121,7 +121,7 @@ public final class SongPicker {
 
             boolean songpackEventsValid = false;
             for (SongpackEventType songpackEvent : condition.songpackEvents) {
-                if (ReactiveMusicAPI.songpackEventMap.containsKey(songpackEvent) && ReactiveMusicAPI.songpackEventMap.get(songpackEvent)) {
+                if (ReactiveMusicState.songpackEventMap.containsKey(songpackEvent) && ReactiveMusicState.songpackEventMap.get(songpackEvent)) {
                     songpackEventsValid = true;
                     break;
                 }
@@ -174,12 +174,23 @@ public final class SongPicker {
         
     }
 
-
-
-
-
-
-
-
-
+    public static @NotNull List<String> getSelectedSongs(RMRuntimeEntry newEntry, List<RMRuntimeEntry> validEntries) {
+		// if we have non-recent songs then just return those
+		if (ReactiveMusicUtils.hasSongNotPlayedRecently(newEntry.songs)) {
+			return newEntry.songs;
+		}
+		// Fallback behaviour
+		if (newEntry.allowFallback) {
+			for (int i = 1; i < ReactiveMusicState.validEntries.size(); i++) {
+				if (ReactiveMusicState.validEntries.get(i) == null)
+					continue;
+				// check if we have songs not played recently and early out
+				if (ReactiveMusicUtils.hasSongNotPlayedRecently(ReactiveMusicState.validEntries.get(i).songs)) {
+					return ReactiveMusicState.validEntries.get(i).songs;
+				}
+			}
+		}
+		// we've played everything recently, just give up and return this event's songs
+		return newEntry.songs;
+	}
 }

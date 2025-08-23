@@ -1,11 +1,12 @@
 package circuitlord.reactivemusic.api;
 
-import circuitlord.reactivemusic.SongpackEventType;
-import circuitlord.reactivemusic.SongpackEventState;
 import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.Collections;
 import java.util.Map;
+
+import circuitlord.reactivemusic.songpack.SongpackEventState;
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 
 /** Public read-only surface for event conditions. */
 public final class SongpackEventAPI {

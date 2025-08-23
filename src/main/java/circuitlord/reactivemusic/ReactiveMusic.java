@@ -1,7 +1,9 @@
 package circuitlord.reactivemusic;
 
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.audio.RMPlayerManagerImpl;
 import circuitlord.reactivemusic.config.ModConfig;
+import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -36,14 +38,18 @@ public class ReactiveMusic implements ModInitializer {
 	boolean doSilenceForNextQueuedSong = true;
 	public static final List<SoundInstance> trackedSoundsMuteMusic = new ArrayList<SoundInstance>();
 
-
+	/**
+     * Audio subsystem (player creation, grouping, ducking).
+     * @return The core Reactive Music audio player manager. Unless you are doing something
+     * very complicated, you should not need to instance a new manager. 
+     */
+    public static RMPlayerManager audio() { return RMPlayerManagerImpl.get(); }
 
 	@Override public void onInitialize() {
 		ModConfig.GSON.load();
 		modConfig = ModConfig.getConfig();
-		ReactiveMusicAPI.modConfig = modConfig;
 		
-		ReactiveMusicAPI.logicFreeze.put("ReactiveMusicCore", false);
+		ReactiveMusicState.logicFreeze.put("ReactiveMusicCore", false);
 		LOGGER.info("Initializing Reactive Music");
 		
 		if (circuitlord.reactivemusic.api.ReactiveMusicUtils.isClientEnv()) {
@@ -55,12 +61,8 @@ public class ReactiveMusic implements ModInitializer {
 			}
 		}
 		
-		
-		// Create the audio Manager
-		RMPlayerManager audioManager = ReactiveMusicAPI.audio();
-		
 		// Create the primary audio player
-		musicPlayer = audioManager.create(
+		musicPlayer = audio().create(
 			"reactive:music",
 			RMPlayerOptions.create()
 			.namespace("reactive")
@@ -78,11 +80,11 @@ public class ReactiveMusic implements ModInitializer {
 			boolean loadedUserSongpack = false;
 			
 			// try to load a saved songpack
-		if (!ReactiveMusicAPI.modConfig.loadedUserSongpack.isEmpty()) {
+		if (!modConfig.loadedUserSongpack.isEmpty()) {
 			LOGGER.info("Initialization is attempting to load user songpack.");
 			for (var songpack : RMSongpackLoader.availableSongpacks) {
 				if (songpack.config == null) continue;
-				if (!songpack.config.name.equals(ReactiveMusicAPI.modConfig.loadedUserSongpack)) continue;
+				if (!songpack.config.name.equals(modConfig.loadedUserSongpack)) continue;
 
 				// something is broken in this songpack, don't load it
 				if (songpack.blockLoading)
@@ -132,14 +134,14 @@ public class ReactiveMusic implements ModInitializer {
 
 							String key = context.getSource().getClient().world.getRegistryKey().getValue().toString();
 
-							if (ReactiveMusicAPI.modConfig.blacklistedDimensions.contains(key)) {
+							if (modConfig.blacklistedDimensions.contains(key)) {
 								context.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was already in blacklist."));
 								return 1;
 							}
 
 							context.getSource().sendFeedback(Text.literal("ReactiveMusic: Added " + key + " to blacklist."));
 
-							ReactiveMusicAPI.modConfig.blacklistedDimensions.add(key);
+							modConfig.blacklistedDimensions.add(key);
 							ModConfig.saveConfig();
 
 							return 1;
@@ -150,14 +152,14 @@ public class ReactiveMusic implements ModInitializer {
 						.executes(context -> {
 							String key = context.getSource().getClient().world.getRegistryKey().getValue().toString();
 
-							if (!ReactiveMusicAPI.modConfig.blacklistedDimensions.contains(key)) {
+							if (!modConfig.blacklistedDimensions.contains(key)) {
 								context.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was not in blacklist."));
 								return 1;
 							}
 
 							context.getSource().sendFeedback(Text.literal("ReactiveMusic: Removed " + key + " from blacklist."));
 
-							ReactiveMusicAPI.modConfig.blacklistedDimensions.remove(key);
+							modConfig.blacklistedDimensions.remove(key);
 							ModConfig.saveConfig();
 
 							return 1;
@@ -176,8 +178,8 @@ public class ReactiveMusic implements ModInitializer {
 
 				.then(ClientCommandManager.literal("skip")
 						.executes(context -> {
-							ReactiveMusicAPI.currentEntry = null;
-							ReactiveMusicAPI.currentSong = null;
+							ReactiveMusicState.currentEntry = null;
+							ReactiveMusicState.currentSong = null;
 							
 							return 1;
 						})
@@ -190,16 +192,16 @@ public class ReactiveMusic implements ModInitializer {
 	public static void newTick() {
 
 		if (musicPlayer == null) return;
-		if (ReactiveMusicAPI.currentSongpack == null) return;
-		if (ReactiveMusicAPI.loadedEntries.isEmpty()) return;
+		if (ReactiveMusicState.currentSongpack == null) return;
+		if (ReactiveMusicState.loadedEntries.isEmpty()) return;
 
 		MinecraftClient mc = MinecraftClient.getInstance();
 		if (mc == null) return;
 
 
 		// force a reasonable volume once on mod install, if you have full 100% everything it's way too loud
-		if (!ReactiveMusicAPI.modConfig.hasForcedInitialVolume) {
-			ReactiveMusicAPI.modConfig.hasForcedInitialVolume = true;
+		if (!modConfig.hasForcedInitialVolume) {
+			modConfig.hasForcedInitialVolume = true;
 			ModConfig.saveConfig();
 
 			if (mc.options.getSoundVolume(SoundCategory.MASTER) > 0.5) {
@@ -212,15 +214,15 @@ public class ReactiveMusic implements ModInitializer {
 		}
 		
 		{
-			ReactiveMusicAPI.currentDimBlacklisted = false;
+			ReactiveMusicState.currentDimBlacklisted = false;
 
 			// see if the dimension we're in is blacklisted -- update at same time as event map to keep them in sync
 			if (mc != null && mc.world != null) {
 				String curDim = mc.world.getRegistryKey().getValue().toString();
 
-				for (String dim : ReactiveMusicAPI.modConfig.blacklistedDimensions) {
+				for (String dim : modConfig.blacklistedDimensions) {
 					if (dim.equals(curDim)) {
-						ReactiveMusicAPI.currentDimBlacklisted = true;
+						ReactiveMusicState.currentDimBlacklisted = true;
 						break;
 					}
 				}
@@ -228,23 +230,23 @@ public class ReactiveMusic implements ModInitializer {
 
 		}
 
-		ReactiveMusicAPI.validEntries = ReactiveMusicCore.getValidEntries();
+		ReactiveMusicState.validEntries = ReactiveMusicCore.getValidEntries();
 
-		if (!ReactiveMusicAPI.logicFreeze.get("ReactiveMusicCore")) {
-			ReactiveMusicCore.newTick(ReactiveMusicAPI.audio().getByGroup("music"));
+		if (!ReactiveMusicState.logicFreeze.get("ReactiveMusicCore")) {
+			ReactiveMusicCore.newTick(audio().getByGroup("music"));
 		}
 		
 		// TODO: Priority system for logic calls?
 		SongPicker.tickEventMap(); // ticks after core audio, so that plugin logic happens later
 		
-		ReactiveMusicAPI.audio().tick();
+		audio().tick();
 		
 		processTrackedSoundsMuteMusic();
 
 		// Previously, this was in the core tick logic.
 		// Extracted so that the core logic can be frozen, but onValid and onInvalid can still trigger.
-		ReactiveMusicAPI.previousValidEntries = new java.util.ArrayList<>(ReactiveMusicAPI.validEntries);
-        ReactiveMusicCore.processValidEvents(ReactiveMusicAPI.validEntries, ReactiveMusicAPI.previousValidEntries);
+		ReactiveMusicState.previousValidEntries = new java.util.ArrayList<>(ReactiveMusicState.validEntries);
+        ReactiveMusicCore.processValidEvents(ReactiveMusicState.validEntries, ReactiveMusicState.previousValidEntries);
 	}
 
 	// TODO: Add querying foundSoundInstance from API

@@ -1,11 +1,12 @@
 package circuitlord.reactivemusic.entries;
 
-import circuitlord.reactivemusic.SongpackEventType;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.world.biome.Biome;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 
 public class RMEntryCondition {
 

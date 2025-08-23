@@ -5,7 +5,7 @@
  * It is now included in the API package so that plugin developers have convenient access to
  * some functions that relate to parsing the data in songpack entries during runtime.
  */
-package circuitlord.reactivemusic.api;
+package circuitlord.reactivemusic;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,12 +15,14 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import circuitlord.reactivemusic.ReactiveMusic;
-import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.SongpackZip;
+import circuitlord.reactivemusic.api.RMPlayer;
+import circuitlord.reactivemusic.api.RMPlayerManager;
+import circuitlord.reactivemusic.api.ReactiveMusicUtils;
+import circuitlord.reactivemusic.api.SongpackEventPlugin;
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.songpack.SongpackZip;
 
 /**
  * TODO:
@@ -51,34 +53,39 @@ public final class ReactiveMusicCore {
         RMRuntimeEntry newEntry = null;
 
 		// Pick the highest priority one
-		if (!ReactiveMusicAPI.validEntries.isEmpty()) {
-			newEntry = ReactiveMusicAPI.validEntries.get(0);
+		if (!ReactiveMusicState.validEntries.isEmpty()) {
+            for (RMRuntimeEntry entry : ReactiveMusicState.validEntries) {
+                if (!entry.useOverlay) { 
+                    newEntry = entry;
+                    break;
+                }
+            }
 		}
 
         for (RMPlayer player : players) {
             if (finishedPlaying(player)) {
-                ReactiveMusicAPI.currentEntry = null;
-                ReactiveMusicAPI.currentSong = null;
+                ReactiveMusicState.currentEntry = null;
+                ReactiveMusicState.currentSong = null;
             }
         }
 
 
-		if (ReactiveMusicAPI.currentDimBlacklisted)
+		if (ReactiveMusicState.currentDimBlacklisted)
 			newEntry = null;
 
 
 		if (newEntry != null) {
 
-			List<String> selectedSongs = ReactiveMusicAPI.getSelectedSongs(newEntry, ReactiveMusicAPI.validEntries);
+			List<String> selectedSongs = SongPicker.getSelectedSongs(newEntry, ReactiveMusicState.validEntries);
 
 			// wants to switch if our current entry doesn't exist -- or is not the same as the new one
-			boolean wantsToSwitch = ReactiveMusicAPI.currentEntry == null || !java.util.Objects.equals(ReactiveMusicAPI.currentEntry.eventString, newEntry.eventString);
+			boolean wantsToSwitch = ReactiveMusicState.currentEntry == null || !java.util.Objects.equals(ReactiveMusicState.currentEntry.eventString, newEntry.eventString);
 
 			// if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
-			if (wantsToSwitch && ReactiveMusicAPI.currentSong != null && newEntry.songs.contains(ReactiveMusicAPI.currentSong) && !queuedToStopMusic) {
+			if (wantsToSwitch && ReactiveMusicState.currentSong != null && newEntry.songs.contains(ReactiveMusicState.currentSong) && !queuedToStopMusic) {
 				LOGGER.info("doing fake swap to new event: " + newEntry.eventString);
 				// do a fake swap
-				ReactiveMusicAPI.currentEntry = newEntry;
+				ReactiveMusicState.currentEntry = newEntry;
 				wantsToSwitch = false;
 				// if this happens, also clear the queued state since we essentially did a switch
 				queuedToPlayMusic = false;
@@ -104,7 +111,7 @@ public final class ReactiveMusicCore {
 				waitForStopTicks++;
 				boolean shouldFadeOutMusic = false;
 				// handle fade-out if something's playing when a new event becomes valid
-				if (waitForStopTicks > getMusicStopSpeed(ReactiveMusicAPI.currentSongpack)) {
+				if (waitForStopTicks > getMusicStopSpeed(ReactiveMusicState.currentSongpack)) {
 					shouldFadeOutMusic = true;
 				}
 				// if we're queued to force stop the music, do so here
@@ -128,7 +135,7 @@ public final class ReactiveMusicCore {
 			if ((wantsToSwitch || queuedToPlayMusic) && !isPlaying) {
 				waitForNewSongTicks++;
 				boolean shouldStartNewSong = false;
-				if (waitForNewSongTicks > getMusicDelay(ReactiveMusicAPI.currentSongpack)) {
+				if (waitForNewSongTicks > getMusicDelay(ReactiveMusicState.currentSongpack)) {
 					shouldStartNewSong = true;
 				}
 				// if we're queued to start a new song and we're not playing anything, do it
@@ -160,7 +167,7 @@ public final class ReactiveMusicCore {
     public static List<RMRuntimeEntry> getValidEntries() {
         List<RMRuntimeEntry> validEntries = new ArrayList<>();
     
-        for (RMRuntimeEntry loadedEntry : ReactiveMusicAPI.loadedEntries) {
+        for (RMRuntimeEntry loadedEntry : ReactiveMusicState.loadedEntries) {
     
             boolean isValid = SongPicker.isEntryValid(loadedEntry);
     
@@ -237,19 +244,19 @@ public final class ReactiveMusicCore {
     
     public static void changeCurrentSong(String song, RMRuntimeEntry newEntry, RMPlayer player) {
         // No change? Do nothing.
-        if (java.util.Objects.equals(ReactiveMusicAPI.currentSong, song)) {
+        if (java.util.Objects.equals(ReactiveMusicState.currentSong, song)) {
             queuedToPlayMusic = false;
             return;
         }
     
         // Stop only if we’re switching tracks (not just metadata)
-        final boolean switchingTrack = !java.util.Objects.equals(ReactiveMusicAPI.currentSong, song);
+        final boolean switchingTrack = !java.util.Objects.equals(ReactiveMusicState.currentSong, song);
         if (switchingTrack && player != null && player.isPlaying()) {
             player.stop(); // RMPlayerImpl stops underlying AdvancedPlayer.play()
         }
     
-        ReactiveMusicAPI.currentSong = song;
-        ReactiveMusicAPI.currentEntry = newEntry;
+        ReactiveMusicState.currentSong = song;
+        ReactiveMusicState.currentEntry = newEntry;
     
         if (player != null && song != null) {
             // if you do a fade-in elsewhere, set 0 here; otherwise set 1
@@ -267,17 +274,17 @@ public final class ReactiveMusicCore {
     public static final void setActiveSongpack(SongpackZip songpackZip) {
     
         // TODO: Support more than one songpack?
-        if (ReactiveMusicAPI.currentSongpack != null) {
-            deactivateSongpack(ReactiveMusicAPI.currentSongpack);
+        if (ReactiveMusicState.currentSongpack != null) {
+            deactivateSongpack(ReactiveMusicState.currentSongpack);
         }
     
-        for (RMPlayer player : ReactiveMusicAPI.audio().getAll())
+        for (RMPlayer player : ReactiveMusic.audio().getAll())
             resetPlayer(player);
             
     
-        ReactiveMusicAPI.currentSongpack = songpackZip;
+        ReactiveMusicState.currentSongpack = songpackZip;
     
-        ReactiveMusicAPI.loadedEntries = songpackZip.runtimeEntries;
+        ReactiveMusicState.loadedEntries = songpackZip.runtimeEntries;
     
         // always start new music immediately
         queuedToPlayMusic = true;
@@ -287,9 +294,9 @@ public final class ReactiveMusicCore {
     public static final void deactivateSongpack(SongpackZip songpackZip) {
     
         // remove all entries that match that name
-        for (int i = ReactiveMusicAPI.loadedEntries.size() - 1; i >= 0; i--) {
-            if (ReactiveMusicAPI.loadedEntries.get(i).songpack == songpackZip.config.name) {
-                ReactiveMusicAPI.loadedEntries.remove(i);
+        for (int i = ReactiveMusicState.loadedEntries.size() - 1; i >= 0; i--) {
+            if (ReactiveMusicState.loadedEntries.get(i).songpack == songpackZip.config.name) {
+                ReactiveMusicState.loadedEntries.remove(i);
             }
         }
     
@@ -297,13 +304,13 @@ public final class ReactiveMusicCore {
     
     public final static int getMusicStopSpeed(SongpackZip songpack) {
     
-        MusicSwitchSpeed speed = ReactiveMusicAPI.modConfig.musicSwitchSpeed2;
+        MusicSwitchSpeed speed = ReactiveMusic.modConfig.musicSwitchSpeed2;
     
-        if (ReactiveMusicAPI.modConfig.musicSwitchSpeed2 == MusicSwitchSpeed.SONGPACK_DEFAULT) {
+        if (ReactiveMusic.modConfig.musicSwitchSpeed2 == MusicSwitchSpeed.SONGPACK_DEFAULT) {
             speed = songpack.config.musicSwitchSpeed;
         }
     
-        if (ReactiveMusicAPI.modConfig.debugModeEnabled) {
+        if (ReactiveMusic.modConfig.debugModeEnabled) {
             speed = MusicSwitchSpeed.INSTANT;
         }
     
@@ -326,13 +333,13 @@ public final class ReactiveMusicCore {
     
     public final static int getMusicDelay(SongpackZip songpack) {
     
-        MusicDelayLength delay = ReactiveMusicAPI.modConfig.musicDelayLength2;
+        MusicDelayLength delay = ReactiveMusic.modConfig.musicDelayLength2;
     
-        if (ReactiveMusicAPI.modConfig.musicDelayLength2 == MusicDelayLength.SONGPACK_DEFAULT) {
+        if (ReactiveMusic.modConfig.musicDelayLength2 == MusicDelayLength.SONGPACK_DEFAULT) {
             delay = songpack.config.musicDelayLength;
         }
     
-        if (ReactiveMusicAPI.modConfig.debugModeEnabled) {
+        if (ReactiveMusic.modConfig.debugModeEnabled) {
             delay = MusicDelayLength.NONE;
         }
     
@@ -365,8 +372,8 @@ public final class ReactiveMusicCore {
             player.stop();
             player.reset();
         }
-        ReactiveMusicAPI.currentEntry = null;
-        ReactiveMusicAPI.currentSong = null;
+        ReactiveMusicState.currentEntry = null;
+        ReactiveMusicState.currentSong = null;
     }
 
 }

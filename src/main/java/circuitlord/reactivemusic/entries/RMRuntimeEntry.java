@@ -1,9 +1,9 @@
 package circuitlord.reactivemusic.entries;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.SongpackEntry;
-import circuitlord.reactivemusic.SongpackEventType;
-import circuitlord.reactivemusic.SongpackZip;
+import circuitlord.reactivemusic.songpack.SongpackEntry;
+import circuitlord.reactivemusic.songpack.SongpackEventType;
+import circuitlord.reactivemusic.songpack.SongpackZip;
 
 import java.util.ArrayList;
 import java.util.Arrays;

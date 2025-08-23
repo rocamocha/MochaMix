@@ -1,14 +1,12 @@
 package circuitlord.reactivemusic.api;
 
-import circuitlord.reactivemusic.SongpackEventType;
+import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Your plugin class should implement this interface, as it hooks into the flow of Reactive Music's core programming.
@@ -26,12 +24,12 @@ public interface SongpackEventPlugin {
      * This is 100% not recommended for future-proofing compatibility with other plugins.
      * But sure, if you want to force everyone else to work around your code, sure then - go for it.
      */
-    default void freeze() { ReactiveMusicAPI.logicFreeze.put(getId(), true); }
+    default void freeze() { ReactiveMusicState.logicFreeze.put(getId(), true); }
 
     /**
      * Removes the plugin from the frozen state, allowing its tick functions to be called from Reactive Music's newTick() again.
      */
-    default void unfreeze() { ReactiveMusicAPI.logicFreeze.put(getId(), false); }
+    default void unfreeze() { ReactiveMusicState.logicFreeze.put(getId(), false); }
 
     /**
      * Called during ModInitialize()

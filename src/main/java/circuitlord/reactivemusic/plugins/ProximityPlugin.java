@@ -1,7 +1,7 @@
 package circuitlord.reactivemusic.plugins;
 
-import circuitlord.reactivemusic.SongpackEventType;
 import circuitlord.reactivemusic.api.SongpackEventPlugin;
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 import circuitlord.reactivemusic.api.ReactiveMusicUtils;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.VillagerEntity;

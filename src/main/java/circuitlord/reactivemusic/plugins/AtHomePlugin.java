@@ -1,10 +1,9 @@
 package circuitlord.reactivemusic.plugins;
 
-import circuitlord.reactivemusic.SongpackEventType;
-import circuitlord.reactivemusic.api.ReactiveMusicAPI;
+import circuitlord.reactivemusic.ReactiveMusic;
 import circuitlord.reactivemusic.api.SongpackEventPlugin;
 import circuitlord.reactivemusic.config.ModConfig;
-
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
@@ -48,8 +47,8 @@ public final class AtHomePlugin implements SongpackEventPlugin {
         // On sleep edge, save both base and dimension-specific homes
         if (!wasSleeping && player.isSleeping()) {
             var pos = player.getPos();
-            ReactiveMusicAPI.modConfig.savedHomePositions.put(baseKey, pos);
-            ReactiveMusicAPI.modConfig.savedHomePositions.put(dimKey, pos);
+            ReactiveMusic.modConfig.savedHomePositions.put(baseKey, pos);
+            ReactiveMusic.modConfig.savedHomePositions.put(dimKey, pos);
             ModConfig.saveConfig();
         }
         wasSleeping = player.isSleeping();
@@ -82,7 +81,7 @@ public final class AtHomePlugin implements SongpackEventPlugin {
     // --- helpers ---
 
     private static boolean isWithinHome(World world, PlayerEntity player, String key) {
-        var map = ReactiveMusicAPI.modConfig.savedHomePositions;
+        var map = ReactiveMusic.modConfig.savedHomePositions;
         if (!map.containsKey(key)) return false;
         Vec3d dist = player.getPos().subtract(map.get(key));
         return dist.length() < RADIUS;

@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic;
+package circuitlord.reactivemusic.songpack;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -1,9 +1,8 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.SongpackEventType;
 import circuitlord.reactivemusic.api.SongpackEventPlugin;
-
+import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.Registries;

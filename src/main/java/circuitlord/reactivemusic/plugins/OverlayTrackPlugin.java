@@ -1,12 +1,11 @@
 package circuitlord.reactivemusic.plugins;
 
-import java.util.Map;
-
-import circuitlord.reactivemusic.SongpackEventType;
+import circuitlord.reactivemusic.ReactiveMusic;
+import circuitlord.reactivemusic.ReactiveMusicCore;
+import circuitlord.reactivemusic.ReactiveMusicState;
+import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
 
 public final class OverlayTrackPlugin implements SongpackEventPlugin {
     @Override public String getId() { return "Overlay Track (Built-In)"; }
@@ -15,10 +14,10 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
     RMPlayer overlayPlayer;
 
     @Override public void init() {
-        ReactiveMusicAPI.LOGGER.info("Initializing " + getId() + " songpack event plugin");
-        musicPlayer = ReactiveMusicAPI.audio().get("reactive:music");
+        ReactiveMusicState.LOGGER.info("Initializing " + getId() + " songpack event plugin");
+        musicPlayer = ReactiveMusic.audio().get("reactive:music");
 
-        ReactiveMusicAPI.audio().create(
+        ReactiveMusic.audio().create(
             "reactive:overlay",
             RMPlayerOptions.create()
             .namespace("reactive")
@@ -30,7 +29,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
         );
             
         
-        overlayPlayer = ReactiveMusicAPI.audio().get("reactive:overlay");
+        overlayPlayer = ReactiveMusic.audio().get("reactive:overlay");
     }
     
     @Override public void newTick() {
@@ -41,9 +40,9 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
         
         if (usingOverlay) {
             if (!overlayPlayer.isPlaying()) {
-                if (!ReactiveMusicAPI.validEntries.isEmpty()) {
-                    RMRuntimeEntry newEntry = ReactiveMusicAPI.validEntries.get(0);
-                    overlayPlayer.setSong(ReactiveMusicUtils.pickRandomSong(ReactiveMusicAPI.getSelectedSongs(newEntry, ReactiveMusicAPI.validEntries)));
+                if (!ReactiveMusicState.validEntries.isEmpty()) {
+                    RMRuntimeEntry newEntry = ReactiveMusicState.validEntries.get(0);
+                    overlayPlayer.setSong(ReactiveMusicUtils.pickRandomSong(SongPicker.getSelectedSongs(newEntry, ReactiveMusicState.validEntries)));
                 }
                 overlayPlayer.setFadePercent(0);
                 overlayPlayer.play();
@@ -91,7 +90,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * @return
      */
     private static boolean usingOverlay() {
-        for (RMRuntimeEntry entry : ReactiveMusicAPI.validEntries) {
+        for (RMRuntimeEntry entry : ReactiveMusicState.validEntries) {
             if (entry.useOverlay) {
                 return true;
             }

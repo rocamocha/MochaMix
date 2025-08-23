@@ -1,10 +1,10 @@
 package circuitlord.reactivemusic.config;
 
 
-import circuitlord.reactivemusic.RMSongpackLoader;
-import circuitlord.reactivemusic.SongpackZip;
-import circuitlord.reactivemusic.api.ReactiveMusicAPI;
-import circuitlord.reactivemusic.api.ReactiveMusicCore;
+import circuitlord.reactivemusic.ReactiveMusicCore;
+import circuitlord.reactivemusic.ReactiveMusicState;
+import circuitlord.reactivemusic.songpack.RMSongpackLoader;
+import circuitlord.reactivemusic.songpack.SongpackZip;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
@@ -120,9 +120,9 @@ public class ModConfig {
 
                 boolean isLoaded = false;
 
-                if (ReactiveMusicAPI.currentSongpack != null) {
+                if (ReactiveMusicState.currentSongpack != null) {
 
-                    isLoaded = Objects.equals(ReactiveMusicAPI.currentSongpack.config.name, songpackZip.config.name);
+                    isLoaded = Objects.equals(ReactiveMusicState.currentSongpack.config.name, songpackZip.config.name);
                 }
 
                 if (songpackZip.blockLoading) {

@@ -1,7 +1,7 @@
 package circuitlord.reactivemusic.mixin;
 
 import circuitlord.reactivemusic.ReactiveMusic;
-import circuitlord.reactivemusic.api.ReactiveMusicAPI;
+import circuitlord.reactivemusic.ReactiveMusicState;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.client.sound.SoundManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,7 +32,7 @@ public class SoundManagerMixin {
         }
 
 
-        for (String muteSound : ReactiveMusicAPI.modConfig.soundsMuteMusic) {
+        for (String muteSound : ReactiveMusic.modConfig.soundsMuteMusic) {
             if (path.contains(muteSound)) {
                 ReactiveMusic.trackedSoundsMuteMusic.add(soundInstance);
                 break;

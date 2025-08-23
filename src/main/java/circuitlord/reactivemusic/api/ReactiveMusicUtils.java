@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+
+import circuitlord.reactivemusic.ReactiveMusicState;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 
@@ -84,7 +87,7 @@ public final class ReactiveMusicUtils {
 
     public static boolean hasSongNotPlayedRecently(List<String> songs) {
         for (String song : songs) {
-            if (!ReactiveMusicAPI.recentlyPickedSongs.contains(song)) {
+            if (!ReactiveMusicState.recentlyPickedSongs.contains(song)) {
                 return true;
             }
         }
@@ -94,7 +97,7 @@ public final class ReactiveMusicUtils {
 
     public static List<String> getNotRecentlyPlayedSongs(String[] songs) {
         List<String> notRecentlyPlayed = new ArrayList<>(Arrays.asList(songs));
-        notRecentlyPlayed.removeAll(ReactiveMusicAPI.recentlyPickedSongs);
+        notRecentlyPlayed.removeAll(ReactiveMusicState.recentlyPickedSongs);
         return notRecentlyPlayed;
     }
 
@@ -107,7 +110,7 @@ public final class ReactiveMusicUtils {
 
         List<String> cleanedSongs = new ArrayList<>(songs);
 
-        cleanedSongs.removeAll(ReactiveMusicAPI.recentlyPickedSongs);
+        cleanedSongs.removeAll(ReactiveMusicState.recentlyPickedSongs);
 
 
         String picked;
@@ -125,10 +128,10 @@ public final class ReactiveMusicUtils {
         }
 
         // only track the past X songs
-        if (ReactiveMusicAPI.recentlyPickedSongs.size() >= 8) {
-            ReactiveMusicAPI.recentlyPickedSongs.remove(0);
+        if (ReactiveMusicState.recentlyPickedSongs.size() >= 8) {
+            ReactiveMusicState.recentlyPickedSongs.remove(0);
         }
-        ReactiveMusicAPI.recentlyPickedSongs.add(picked);
+        ReactiveMusicState.recentlyPickedSongs.add(picked);
 
         return picked;
     }
