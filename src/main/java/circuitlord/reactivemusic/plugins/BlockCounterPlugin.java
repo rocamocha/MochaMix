@@ -1,8 +1,7 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.api.SongpackEventPlugin;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
+import circuitlord.reactivemusic.api.*;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.Registries;
@@ -30,7 +29,7 @@ public final class BlockCounterPlugin implements SongpackEventPlugin {
     @Override public int tickSchedule() { return 1; }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> out) {
         if (!(player instanceof ClientPlayerEntity) || world == null) return;
 
         // lazily initialize origin

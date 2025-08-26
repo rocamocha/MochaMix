@@ -1,7 +1,6 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseEntity;
 import net.minecraft.entity.passive.PigEntity;
@@ -19,20 +18,20 @@ public final class ActionsPlugin implements SongpackEventPlugin {
     @Override public String getId() { return "Actions (Built-In)"; }
     Logger LOGGER = LoggerFactory.getLogger(getId());
 
-    private static SongpackEventType FISHING, MINECART, BOAT, HORSE, PIG;
+    private static SongpackEvent FISHING, MINECART, BOAT, HORSE, PIG;
 
     @Override public void init() {
         LOGGER.info("Initializing " + getId() + " songpack event plugin");
 
-        FISHING = SongpackEventType.register("FISHING");
-        MINECART = SongpackEventType.register("MINECART");
-        BOAT = SongpackEventType.register("BOAT");
-        HORSE = SongpackEventType.register("HORSE");
-        PIG = SongpackEventType.register("PIG");
+        FISHING = SongpackEvent.register("FISHING");
+        MINECART = SongpackEvent.register("MINECART");
+        BOAT = SongpackEvent.register("BOAT");
+        HORSE = SongpackEvent.register("HORSE");
+        PIG = SongpackEvent.register("PIG");
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
         if (player == null) return;
 
         eventMap.put(FISHING, player.fishHook != null);

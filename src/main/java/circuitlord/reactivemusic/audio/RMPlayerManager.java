@@ -1,9 +1,9 @@
 package circuitlord.reactivemusic.audio;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.api.RMPlayer;
-import circuitlord.reactivemusic.api.RMPlayerManager;
-import circuitlord.reactivemusic.api.RMPlayerOptions;
+import circuitlord.reactivemusic.api.ReactivePlayer;
+import circuitlord.reactivemusic.api.ReactivePlayerManager;
+import circuitlord.reactivemusic.api.ReactivePlayerOptions;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,44 +14,44 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class RMPlayerManagerImpl implements RMPlayerManager {
+public final class RMPlayerManager implements ReactivePlayerManager {
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
 
-    private static final RMPlayerManagerImpl INSTANCE = new RMPlayerManagerImpl();
-    public static RMPlayerManager get() { return INSTANCE; }
+    private static final RMPlayerManager INSTANCE = new RMPlayerManager();
+    public static ReactivePlayerManager get() { return INSTANCE; }
 
-    private final Map<String, RMPlayerImpl> players = new ConcurrentHashMap<>();
+    private final Map<String, RMPlayer> players = new ConcurrentHashMap<>();
     private final Map<String, Float> groupDuck = new ConcurrentHashMap<>();
 
-    private RMPlayerManagerImpl() {}
+    private RMPlayerManager() {}
 
     @Override
-    public RMPlayer create(String id, RMPlayerOptions opts) {
+    public ReactivePlayer create(String id, ReactivePlayerOptions opts) {
         if (players.containsKey(id)) throw new IllegalArgumentException("Player id exists: " + id);
-        RMPlayerImpl p = new RMPlayerImpl(id, opts, () -> groupDuck.getOrDefault(opts.group(), 1f));
+        RMPlayer p = new RMPlayer(id, opts, () -> groupDuck.getOrDefault(opts.group(), 1f));
         players.put(id, p);
         if (opts.autostart()) p.play();
         return p;
     }
 
-    @Override public RMPlayer get(String id) { return players.get(id); }
+    @Override public ReactivePlayer get(String id) { return players.get(id); }
 
     @Override public void tick() {
-        for (RMPlayer player : players.values()) {
+        for (ReactivePlayer player : players.values()) {
 
             float fp = player.fadePercent();    // current
             float ft = player.fadeTarget();     // target
             int   dur = player.fadeDuration() > 0 ? player.fadeDuration() : 150;
             if (ft < fp) { player.fadingOut(true); }
 
-            if (fp == 0 && player.stopOnFadeOut() && player.fadingOut()) {
+            if (fp == 0f && player.stopOnFadeOut() && player.fadingOut()) {
                 // reached target – run arrival side effects
                 LOGGER.info(player.id() + " has stopped on fadeout");
                 if (fp == 0f && player.stopOnFadeOut()) player.stop();
                 if (fp == 0f && player.resetOnFadeOut()) player.reset();
-                player.fadingOut(false);
             }
-
+            player.fadingOut(false);
+            
             float step = (ft > fp ? 1f : -1f) * (1f / dur);
             float next = fp + step;
 
@@ -73,14 +73,14 @@ public final class RMPlayerManagerImpl implements RMPlayerManager {
         }
     }
 
-    @Override public Collection<RMPlayer> getAll() {
+    @Override public Collection<ReactivePlayer> getAll() {
         return Collections.unmodifiableCollection(players.values());
     }
 
-    @Override public Collection<RMPlayer> getByGroup(String group) {
+    @Override public Collection<ReactivePlayer> getByGroup(String group) {
         return players.values().stream()
                 .filter(p -> group.equals(p.getGroup()))
-                .map(p -> (RMPlayer) p)
+                .map(p -> (ReactivePlayer) p)
                 .collect(Collectors.toList()); // use .toList() if you're on Java 16+ / 21
     }
 
@@ -104,7 +104,7 @@ public final class RMPlayerManagerImpl implements RMPlayerManager {
     }
 
     @Override public void closeAll() {
-        players.values().forEach(RMPlayer::close);
+        players.values().forEach(ReactivePlayer::close);
         players.clear();
         groupDuck.clear();
     }

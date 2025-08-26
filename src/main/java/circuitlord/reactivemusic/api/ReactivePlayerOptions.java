@@ -1,7 +1,7 @@
 package circuitlord.reactivemusic.api;
 
 /** Builder-style options for creating RMPlayers. */
-public final class RMPlayerOptions {
+public final class ReactivePlayerOptions {
     // --- sensible defaults ---
     private String pluginNamespace = "default";
     private String group = "default";
@@ -14,26 +14,26 @@ public final class RMPlayerOptions {
     private float initialGainPercent = 1.0f;        // 0..1
     private float initialDuckPercent = 1.0f;        // 0..1
 
-    private RMPlayerOptions() {}
+    private ReactivePlayerOptions() {}
 
     /** Start a new options object with defaults. */
-    public static RMPlayerOptions create() { return new RMPlayerOptions(); }
+    public static ReactivePlayerOptions create() { return new ReactivePlayerOptions(); }
 
     // --- fluent setters (all return this) ---
-    public RMPlayerOptions namespace(String ns) { this.pluginNamespace = ns; return this; }
-    public RMPlayerOptions group(String g) { this.group = g; return this; }
-    public RMPlayerOptions loop(boolean v) { this.loop = v; return this; }
-    public RMPlayerOptions autostart(boolean v) { this.autostart = v; return this; }
+    public ReactivePlayerOptions namespace(String ns) { this.pluginNamespace = ns; return this; }
+    public ReactivePlayerOptions group(String g) { this.group = g; return this; }
+    public ReactivePlayerOptions loop(boolean v) { this.loop = v; return this; }
+    public ReactivePlayerOptions autostart(boolean v) { this.autostart = v; return this; }
 
-    public RMPlayerOptions linkToMinecraftVolumes(boolean v) { this.linkToMinecraftVolumes = v; return this; }
-    public RMPlayerOptions quietWhenGamePaused(boolean v) { this.quietWhenGamePaused = v; return this; }
-    public RMPlayerOptions gainRefreshIntervalTicks(int ticks) { this.gainRefreshIntervalTicks = Math.max(0, ticks); return this; }
+    public ReactivePlayerOptions linkToMinecraftVolumes(boolean v) { this.linkToMinecraftVolumes = v; return this; }
+    public ReactivePlayerOptions quietWhenGamePaused(boolean v) { this.quietWhenGamePaused = v; return this; }
+    public ReactivePlayerOptions gainRefreshIntervalTicks(int ticks) { this.gainRefreshIntervalTicks = Math.max(0, ticks); return this; }
 
     /** Initial volume [0..1]. */
-    public RMPlayerOptions gain(float pct) { this.initialGainPercent = clamp01(pct); return this; }
+    public ReactivePlayerOptions gain(float pct) { this.initialGainPercent = clamp01(pct); return this; }
 
     /** Initial per-player duck [0..1]. Multiplies with any group duck. */
-    public RMPlayerOptions duck(float pct) { this.initialDuckPercent = clamp01(pct); return this; }
+    public ReactivePlayerOptions duck(float pct) { this.initialDuckPercent = clamp01(pct); return this; }
 
     // --- getters (used by the manager/impl) ---
     public String pluginNamespace() { return pluginNamespace; }

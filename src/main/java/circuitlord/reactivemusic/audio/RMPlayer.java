@@ -1,8 +1,8 @@
 package circuitlord.reactivemusic.audio;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.api.RMPlayer;
-import circuitlord.reactivemusic.api.RMPlayerOptions;
+import circuitlord.reactivemusic.api.ReactivePlayer;
+import circuitlord.reactivemusic.api.ReactivePlayerOptions;
 import circuitlord.reactivemusic.songpack.MusicPackResource;
 import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 import net.minecraft.client.MinecraftClient;
@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class RMPlayerImpl implements RMPlayer, Closeable {
+public final class RMPlayer implements ReactivePlayer, Closeable {
 
     public static final String MOD_ID = "reactive_music";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -88,7 +88,7 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
         return name;
     }
 
-    public RMPlayerImpl(String id, RMPlayerOptions opts, Supplier<Float> groupDuckSupplier) {
+    public RMPlayer(String id, ReactivePlayerOptions opts, Supplier<Float> groupDuckSupplier) {
         this.id = Objects.requireNonNull(id);
         this.namespace = opts.pluginNamespace() != null ? opts.pluginNamespace() : "core";
         this.group = opts.group() != null ? opts.group() : "music";
@@ -288,7 +288,7 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
                     }
 
                     if (complete && !queuedToStop) {
-                        completeHandlers.forEach(RMPlayerImpl::safeRun);
+                        completeHandlers.forEach(RMPlayer::safeRun);
                         if (loop && !kill) queued = true;
                     }
                     queuedToStop = false;
@@ -525,7 +525,7 @@ public final class RMPlayerImpl implements RMPlayer, Closeable {
                     hwGainApplied = true;
                     swGainEnabled = false; // no need for SW gain
                     // reflect to outer field to keep your UI/state in sync
-                    try { RMPlayerImpl.this.realGainDb = db; } catch (Throwable ignored) {}
+                    try { RMPlayer.this.realGainDb = db; } catch (Throwable ignored) {}
                     System.err.println("[RMPlayer] HW gain applied: " + db + " dB");
                     return;
                 }

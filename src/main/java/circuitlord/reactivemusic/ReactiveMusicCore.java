@@ -15,21 +15,16 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import circuitlord.reactivemusic.api.RMPlayer;
-import circuitlord.reactivemusic.api.RMPlayerManager;
+import circuitlord.reactivemusic.api.ReactivePlayer;
+import circuitlord.reactivemusic.api.ReactivePlayerManager;
 import circuitlord.reactivemusic.api.ReactiveMusicUtils;
 import circuitlord.reactivemusic.api.SongpackEventPlugin;
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.SongpackZip;
+import circuitlord.reactivemusic.plugins.OverlayTrackPlugin;
+import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
-/**
- * TODO:
- * There's something wrong with the song switcher right now,
- * it doesn't change to a new song when the song is done... so my logic
- * is messed up somewhere.
- */
 public final class ReactiveMusicCore {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
@@ -47,23 +42,27 @@ public final class ReactiveMusicCore {
     /**
      * This is the built-in logic for Reactive Music's song switcher.
      * @param players Collection of audio players created by a PlayerManager.
-     * @see RMPlayerManager
+     * @see ReactivePlayerManager
      */
-    public static void newTick(Collection<RMPlayer> players) {
+    public static void newTick(Collection<ReactivePlayer> players) {
         RMRuntimeEntry newEntry = null;
 
 		// Pick the highest priority one
 		if (!ReactiveMusicState.validEntries.isEmpty()) {
             for (RMRuntimeEntry entry : ReactiveMusicState.validEntries) {
                 if (!entry.useOverlay) { 
+                    if (OverlayTrackPlugin.usingOverlay()) {
+                        newEntry = ReactiveMusicState.currentEntry;
+                        break;
+                    }
                     newEntry = entry;
                     break;
                 }
             }
 		}
 
-        for (RMPlayer player : players) {
-            if (finishedPlaying(player)) {
+        for (ReactivePlayer player : players) {
+            if (finishedPlaying(player) && !OverlayTrackPlugin.usingOverlay()) {
                 ReactiveMusicState.currentEntry = null;
                 ReactiveMusicState.currentSong = null;
             }
@@ -79,7 +78,7 @@ public final class ReactiveMusicCore {
 			List<String> selectedSongs = SongPicker.getSelectedSongs(newEntry, ReactiveMusicState.validEntries);
 
 			// wants to switch if our current entry doesn't exist -- or is not the same as the new one
-			boolean wantsToSwitch = ReactiveMusicState.currentEntry == null || !java.util.Objects.equals(ReactiveMusicState.currentEntry.eventString, newEntry.eventString);
+			boolean wantsToSwitch = !OverlayTrackPlugin.usingOverlay() && (ReactiveMusicState.currentEntry == null || !java.util.Objects.equals(ReactiveMusicState.currentEntry.eventString, newEntry.eventString));
 
 			// if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
 			if (wantsToSwitch && ReactiveMusicState.currentSong != null && newEntry.songs.contains(ReactiveMusicState.currentSong) && !queuedToStopMusic) {
@@ -92,14 +91,14 @@ public final class ReactiveMusicCore {
 			}
 
 			// make sure we're fully faded in if we faded out for any reason but this event is valid
-            for (RMPlayer player : players) {
+            for (ReactivePlayer player : players) {
                 if (player.isPlaying() && !wantsToSwitch) {
                     player.fade(1, FADE_DURATION);
                 }
             }
                 
             boolean isPlaying = false;
-            for (RMPlayer player : players) {
+            for (ReactivePlayer player : players) {
                 if (player.isPlaying()) {
                     isPlaying = true;
                     break;
@@ -107,7 +106,7 @@ public final class ReactiveMusicCore {
             }
 
 			// ---- FADE OUT ----
-			if ((wantsToSwitch || queuedToStopMusic) && isPlaying) {
+			if ((wantsToSwitch || queuedToStopMusic) && isPlaying && !OverlayTrackPlugin.usingOverlay()) {
 				waitForStopTicks++;
 				boolean shouldFadeOutMusic = false;
 				// handle fade-out if something's playing when a new event becomes valid
@@ -120,7 +119,7 @@ public final class ReactiveMusicCore {
 				}
 
 				if (shouldFadeOutMusic) {
-                    for (RMPlayer player : players) {
+                    for (ReactivePlayer player : players) {
                         player.stopOnFadeOut(true);
                         player.fade(0, FADE_DURATION);
                     }
@@ -131,8 +130,11 @@ public final class ReactiveMusicCore {
 			}
 
 			//  ---- SWITCH SONG ----
-
-			if ((wantsToSwitch || queuedToPlayMusic) && !isPlaying) {
+            // TODO: Refactor the overlay check to something expandable.
+            // Also --> where else can that be done???
+            // Potentially some really cool possibilities with more hooks like that.
+            //
+			if ((wantsToSwitch || queuedToPlayMusic) && !isPlaying && !OverlayTrackPlugin.usingOverlay()) {
 				waitForNewSongTicks++;
 				boolean shouldStartNewSong = false;
 				if (waitForNewSongTicks > getMusicDelay(ReactiveMusicState.currentSongpack)) {
@@ -144,7 +146,7 @@ public final class ReactiveMusicCore {
 				}
 				if (shouldStartNewSong) {
 					String picked = ReactiveMusicUtils.pickRandomSong(selectedSongs);
-                    for (RMPlayer player : players) {
+                    for (ReactivePlayer player : players) {
 					    changeCurrentSong(picked, newEntry, player);
                     }
 					waitForNewSongTicks = 0;
@@ -159,7 +161,7 @@ public final class ReactiveMusicCore {
 		// no entries are valid, we shouldn't be playing any music!
 		// this can happen if no entry is valid or the dimension is blacklisted
 		else {
-            for (RMPlayer player : players)
+            for (ReactivePlayer player : players)
 			    player.fade(0, FADE_DURATION);
 		}
 	}
@@ -242,7 +244,7 @@ public final class ReactiveMusicCore {
     // }
     
     
-    public static void changeCurrentSong(String song, RMRuntimeEntry newEntry, RMPlayer player) {
+    public static void changeCurrentSong(String song, RMRuntimeEntry newEntry, ReactivePlayer player) {
         // No change? Do nothing.
         if (java.util.Objects.equals(ReactiveMusicState.currentSong, song)) {
             queuedToPlayMusic = false;
@@ -271,14 +273,14 @@ public final class ReactiveMusicCore {
     
     
     
-    public static final void setActiveSongpack(SongpackZip songpackZip) {
+    public static final void setActiveSongpack(RMSongpackZip songpackZip) {
     
         // TODO: Support more than one songpack?
         if (ReactiveMusicState.currentSongpack != null) {
             deactivateSongpack(ReactiveMusicState.currentSongpack);
         }
     
-        for (RMPlayer player : ReactiveMusic.audio().getAll())
+        for (ReactivePlayer player : ReactiveMusic.audio().getAll())
             resetPlayer(player);
             
     
@@ -291,7 +293,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public static final void deactivateSongpack(SongpackZip songpackZip) {
+    public static final void deactivateSongpack(RMSongpackZip songpackZip) {
     
         // remove all entries that match that name
         for (int i = ReactiveMusicState.loadedEntries.size() - 1; i >= 0; i--) {
@@ -302,7 +304,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public final static int getMusicStopSpeed(SongpackZip songpack) {
+    public final static int getMusicStopSpeed(RMSongpackZip songpack) {
     
         MusicSwitchSpeed speed = ReactiveMusic.modConfig.musicSwitchSpeed2;
     
@@ -331,7 +333,7 @@ public final class ReactiveMusicCore {
     
     }
     
-    public final static int getMusicDelay(SongpackZip songpack) {
+    public final static int getMusicDelay(RMSongpackZip songpack) {
     
         MusicDelayLength delay = ReactiveMusic.modConfig.musicDelayLength2;
     
@@ -360,14 +362,14 @@ public final class ReactiveMusicCore {
     
     }
 
-    public static final boolean finishedPlaying(RMPlayer player) {
-        if ((player.fadePercent() == 0 && player.fadingOut()) || !player.isPlaying()) {
+    public static final boolean finishedPlaying(ReactivePlayer player) {
+        if ((player.fadePercent() == 0 && (player.fadingOut()) || !player.isPlaying())) {
             return true;
         }
         return false;
     }
     
-    public static final void resetPlayer(RMPlayer player) {
+    public static final void resetPlayer(ReactivePlayer player) {
         if (player != null && player.isPlaying()) {
             player.stop();
             player.reset();

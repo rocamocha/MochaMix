@@ -1,6 +1,6 @@
 package circuitlord.reactivemusic.api;
 
-public interface RMPlayer extends AutoCloseable {
+public interface ReactivePlayer extends AutoCloseable {
     String id();                         // unique handle, e.g. "myplugin:ambient-1"
     boolean isPlaying();
     boolean isPaused();

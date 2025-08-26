@@ -10,8 +10,8 @@ import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 public final class OverlayTrackPlugin implements SongpackEventPlugin {
     @Override public String getId() { return "Overlay Track (Built-In)"; }
 
-    RMPlayer musicPlayer;
-    RMPlayer overlayPlayer;
+    ReactivePlayer musicPlayer;
+    ReactivePlayer overlayPlayer;
 
     @Override public void init() {
         ReactiveMusicState.LOGGER.info("Initializing " + getId() + " songpack event plugin");
@@ -19,7 +19,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
 
         ReactiveMusic.audio().create(
             "reactive:overlay",
-            RMPlayerOptions.create()
+            ReactivePlayerOptions.create()
             .namespace("reactive")
             .group("overlay")
             .loop(false)
@@ -49,11 +49,14 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
             }
             overlayPlayer.fade(1f, 140);
             musicPlayer.fade(0f, 70);
+            musicPlayer.stopOnFadeOut(false);
             
         }
         if (!usingOverlay) {
             overlayPlayer.fade(0f, 70);
             overlayPlayer.stopOnFadeOut(true);
+            musicPlayer.fade(1, 140);
+            musicPlayer.stopOnFadeOut(true);
         }
     };
 
@@ -89,7 +92,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * Or is it? It's not logging, but sometimes the main player breaks.
      * @return
      */
-    private static boolean usingOverlay() {
+    public static boolean usingOverlay() {
         for (RMRuntimeEntry entry : ReactiveMusicState.validEntries) {
             if (entry.useOverlay) {
                 return true;

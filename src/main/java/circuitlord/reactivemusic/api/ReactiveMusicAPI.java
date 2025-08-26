@@ -6,14 +6,14 @@ import java.util.List;
 import circuitlord.reactivemusic.*;
 import circuitlord.reactivemusic.config.ModConfig;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.SongpackZip;
+import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
 public interface ReactiveMusicAPI {
     static ModConfig getModConfig() { return ReactiveMusic.modConfig; }
-    static RMPlayerManager audioManager() { return ReactiveMusic.audio(); }
-    static Collection<RMPlayer> reactivePlayers() { return ReactiveMusic.audio().getAll();}
+    static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); }
+    static Collection<ReactivePlayer> reactivePlayers() { return ReactiveMusic.audio().getAll();}
 
-    static SongpackZip currentSongpack() { return ReactiveMusicState.currentSongpack; }
+    static RMSongpackZip currentSongpack() { return ReactiveMusicState.currentSongpack; }
     static RMRuntimeEntry currentEntry() { return ReactiveMusicState.currentEntry; }
     static String currentSong() { return ReactiveMusicState.currentSong; }
 

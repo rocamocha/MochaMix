@@ -1,8 +1,7 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.api.SongpackEventPlugin;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
+import circuitlord.reactivemusic.api.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -14,7 +13,7 @@ public final class BiomeIdentityPlugin implements SongpackEventPlugin {
     @Override public void init() { /* no-op */ }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, java.util.Map<SongpackEventType, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, java.util.Map<SongpackEvent, Boolean> out) {
         if (player == null || world == null) return;
 
         BlockPos pos = player.getBlockPos();

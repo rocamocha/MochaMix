@@ -2,7 +2,6 @@ package circuitlord.reactivemusic.api;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
@@ -16,7 +15,7 @@ import java.util.Map;
  */
 public interface SongpackEventPlugin {
     /** Override this method and return a string. */
-    String getId();
+    default String getId() { return "PLUGIN ID IS NOT SET!"; }
 
     /** 
      * Freezes the plugin, disallowing its tick functions to be called from Reactive Music's newTick().
@@ -42,13 +41,13 @@ public interface SongpackEventPlugin {
      * @see #onValid(RMRuntimeEntry)
      * @see #onInvalid(RMRuntimeEntry)
      */
-    default void init() {};
+    default void init() {}
     
     /**
      * Override this method to set a different schedule, or to schedule dynamically.
      * @return The number of ticks that must pass before gameTick() is called each loop.
      */
-    default int tickSchedule() { return 20; }; // per-plugin configurable tick throttling
+    default int tickSchedule() { return 20; } // per-plugin configurable tick throttling
 
     /**
      * Called when scheduled. Default schedule is 20 ticks, and can be configured.
@@ -58,25 +57,25 @@ public interface SongpackEventPlugin {
      * @param eventMap
      * @see #tickSchedule()
      */
-    default void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> eventMap) {};
+    default void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {};
 
     /**
      * Called every tick.
      */
-    default void newTick() {}; // does not use schedule, called every tick
+    default void newTick() {} // does not use schedule, called every tick
 
     /**
      * FIXME: Why isn't this getting called??? Help!
      * Calls when <code>entry</code> flips from invalid -> valid.
      * @param entry
      */
-    default void onValid(RMRuntimeEntry entry) {};
+    default void onValid(RMRuntimeEntry entry) {}
     
     /**
      * FIXME: Why isn't this getting called??? Help!
      * Calls when <code>entry</code> flips from valid -> invalid.
      * @param entry
      */
-    default void onInvalid(RMRuntimeEntry entry) {};
+    default void onInvalid(RMRuntimeEntry entry) {}
 }
 

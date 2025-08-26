@@ -5,9 +5,9 @@ import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import java.nio.file.Path;
 import java.util.List;
 
-public class SongpackZip {
+public class RMSongpackZip {
 
-    public SongpackConfig config;
+    public RMSongpackConfig config;
 
 
     public List<RMRuntimeEntry> runtimeEntries;

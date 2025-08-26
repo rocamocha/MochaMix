@@ -3,7 +3,7 @@ package circuitlord.reactivemusic.songpack;
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
 
-public class SongpackConfig {
+public class RMSongpackConfig {
 
     public String name;
     public String version = "";
@@ -16,7 +16,7 @@ public class SongpackConfig {
 
     public MusicSwitchSpeed musicSwitchSpeed = MusicSwitchSpeed.NORMAL;
 
-    public SongpackEntry[] entries;
+    public RMSongpackEntry[] entries;
 
 
 }

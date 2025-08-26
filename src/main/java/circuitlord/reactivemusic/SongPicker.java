@@ -2,8 +2,8 @@ package circuitlord.reactivemusic;
 
 import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.SongpackEventState;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
+import circuitlord.reactivemusic.songpack.RMSongpackEventState;
+import circuitlord.reactivemusic.songpack.RMSongpackEvent;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.CreditsScreen;
@@ -96,17 +96,21 @@ public final class SongPicker {
 
         if (player == null || world == null) initialize();
 
-        ReactiveMusicState.songpackEventMap.put(SongpackEventType.GENERIC, true);
-        ReactiveMusicState.songpackEventMap.put(SongpackEventType.MAIN_MENU, player == null || world == null);
-        ReactiveMusicState.songpackEventMap.put(SongpackEventType.CREDITS, mc.currentScreen instanceof CreditsScreen);
+        ReactiveMusicState.songpackEventMap.put(RMSongpackEvent.GENERIC, true);
+        ReactiveMusicState.songpackEventMap.put(RMSongpackEvent.MAIN_MENU, player == null || world == null);
+        ReactiveMusicState.songpackEventMap.put(RMSongpackEvent.CREDITS, mc.currentScreen instanceof CreditsScreen);
         
-        SongpackEventState.updateForPlayer(player, ReactiveMusicState.songpackEventMap);
+        /**
+         * Not implemented yet.
+         * @see RMSongpackEventState
+         */
+        RMSongpackEventState.updateForPlayer(player, ReactiveMusicState.songpackEventMap);
     }
 
     public static void initialize() {
         // build string -> type map from the internal registry
         ReactiveMusicState.songpackEventMap.clear();
-        for (SongpackEventType set : SongpackEventType.values()) {
+        for (RMSongpackEvent set : RMSongpackEvent.values()) {
             ReactiveMusicState.songpackEventMap.put(set, false);
         }
     }
@@ -120,7 +124,7 @@ public final class SongPicker {
 
 
             boolean songpackEventsValid = false;
-            for (SongpackEventType songpackEvent : condition.songpackEvents) {
+            for (RMSongpackEvent songpackEvent : condition.songpackEvents) {
                 if (ReactiveMusicState.songpackEventMap.containsKey(songpackEvent) && ReactiveMusicState.songpackEventMap.get(songpackEvent)) {
                     songpackEventsValid = true;
                     break;

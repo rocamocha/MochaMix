@@ -1,7 +1,7 @@
 package circuitlord.reactivemusic;
 
 import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.audio.RMPlayerManagerImpl;
+import circuitlord.reactivemusic.audio.RMPlayerManager;
 import circuitlord.reactivemusic.config.ModConfig;
 import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 import net.fabricmc.api.ModInitializer;
@@ -32,7 +32,7 @@ public class ReactiveMusic implements ModInitializer {
 	public static ModConfig modConfig;
 
 	public static int additionalSilence = 0;
-	private static RMPlayer musicPlayer;
+	private static ReactivePlayer musicPlayer;
 	static int musicTrackedSoundsDuckTicks = 0;
 
 	boolean doSilenceForNextQueuedSong = true;
@@ -43,7 +43,7 @@ public class ReactiveMusic implements ModInitializer {
      * @return The core Reactive Music audio player manager. Unless you are doing something
      * very complicated, you should not need to instance a new manager. 
      */
-    public static RMPlayerManager audio() { return RMPlayerManagerImpl.get(); }
+    public static ReactivePlayerManager audio() { return RMPlayerManager.get(); }
 
 	@Override public void onInitialize() {
 		ModConfig.GSON.load();
@@ -64,7 +64,7 @@ public class ReactiveMusic implements ModInitializer {
 		// Create the primary audio player
 		musicPlayer = audio().create(
 			"reactive:music",
-			RMPlayerOptions.create()
+			ReactivePlayerOptions.create()
 			.namespace("reactive")
 			.group("music")
 			.loop(false)

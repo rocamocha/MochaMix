@@ -1,9 +1,8 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.ReactiveMusic;
-import circuitlord.reactivemusic.api.SongpackEventPlugin;
+import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.config.ModConfig;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,21 +21,21 @@ public final class AtHomePlugin implements SongpackEventPlugin {
     private static boolean wasSleeping = false;
 
     // Event handles
-    private static SongpackEventType HOME;
-    private static SongpackEventType HOME_OVERWORLD;
-    private static SongpackEventType HOME_NETHER;
-    private static SongpackEventType HOME_END;
+    private static SongpackEvent HOME;
+    private static SongpackEvent HOME_OVERWORLD;
+    private static SongpackEvent HOME_NETHER;
+    private static SongpackEvent HOME_END;
 
     @Override
     public void init() {
-        HOME = SongpackEventType.register("HOME");
-        HOME_OVERWORLD = SongpackEventType.register("HOME_OVERWORLD");
-        HOME_NETHER = SongpackEventType.register("HOME_NETHER");
-        HOME_END = SongpackEventType.register("HOME_END");
+        HOME = SongpackEvent.register("HOME");
+        HOME_OVERWORLD = SongpackEvent.register("HOME_OVERWORLD");
+        HOME_NETHER = SongpackEvent.register("HOME_NETHER");
+        HOME_END = SongpackEvent.register("HOME_END");
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEventType, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> out) {
         if (player == null || world == null) return;
 
         // Keys: base (per save/server), and per-dimension

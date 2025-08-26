@@ -1,16 +1,17 @@
 package circuitlord.reactivemusic.entries;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.songpack.SongpackEntry;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
-import circuitlord.reactivemusic.songpack.SongpackZip;
+import circuitlord.reactivemusic.api.RuntimeEntry;
+import circuitlord.reactivemusic.songpack.RMSongpackEntry;
+import circuitlord.reactivemusic.songpack.RMSongpackEvent;
+import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class RMRuntimeEntry {
+public class RMRuntimeEntry implements RuntimeEntry {
 
 
     public List<RMEntryCondition> conditions = new ArrayList<>();
@@ -37,7 +38,7 @@ public class RMRuntimeEntry {
     // should import values in the yaml that are *NOT* predefined
         // this means plugin devs can create custom options for events
         // that live in the YAML
-    private void setExternalOptions(SongpackEntry songpackEntry) {
+    private void setExternalOptions(RMSongpackEntry songpackEntry) {
         if (!songpackEntry.entryMap.keySet().isEmpty()) {
             for (String key : songpackEntry.entryMap.keySet()) {
                 entryMap.put(key, songpackEntry.entryMap.get(key));
@@ -45,7 +46,7 @@ public class RMRuntimeEntry {
         }
     }
 
-    public static RMRuntimeEntry create(SongpackZip songpack, SongpackEntry songpackEntry) {
+    public static RMRuntimeEntry create(RMSongpackZip songpack, RMSongpackEntry songpackEntry) {
 
         RMRuntimeEntry Entry = new RMRuntimeEntry();
         Entry.songpack = songpack.config.name;// songpackName;
@@ -181,10 +182,10 @@ public class RMRuntimeEntry {
                     try {
                         // try to cast to SongpackEvent
                         // needs uppercase for enum names
-                        SongpackEventType eventType = SongpackEventType.valueOf(eventSection);
+                        RMSongpackEvent eventType = RMSongpackEvent.valueOf(eventSection);
 
                         // it's a songpack event
-                        if (eventType != SongpackEventType.NONE) {
+                        if (eventType != RMSongpackEvent.NONE) {
                             condition.songpackEvents.add(eventType);
                             eventHasData = true;
                             continue;

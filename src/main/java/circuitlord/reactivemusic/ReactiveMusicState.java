@@ -8,9 +8,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.SongpackEventType;
-import circuitlord.reactivemusic.songpack.SongpackZip;
+import circuitlord.reactivemusic.songpack.RMSongpackZip;
 import net.minecraft.entity.player.PlayerEntity;
 
 /**
@@ -25,11 +25,11 @@ public final class ReactiveMusicState {
     
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
 
-    public static SongpackZip currentSongpack = null;
+    public static RMSongpackZip currentSongpack = null;
     public static Boolean currentDimBlacklisted = false;
     
     public static Map<String, Boolean>            logicFreeze      = new HashMap<>();
-    public static Map<SongpackEventType, Boolean> songpackEventMap = new HashMap<>();
+    public static Map<SongpackEvent, Boolean> songpackEventMap = new HashMap<>();
     
     public static RMRuntimeEntry       currentEntry         = null;
     public static String               currentSong          = null;
