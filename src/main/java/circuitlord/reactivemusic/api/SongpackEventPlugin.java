@@ -1,7 +1,6 @@
 package circuitlord.reactivemusic.api;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
@@ -69,13 +68,13 @@ public interface SongpackEventPlugin {
      * Calls when <code>entry</code> flips from invalid -> valid.
      * @param entry
      */
-    default void onValid(RMRuntimeEntry entry) {}
+    default void onValid(RuntimeEntry entry) {}
     
     /**
      * FIXME: Why isn't this getting called??? Help!
      * Calls when <code>entry</code> flips from valid -> invalid.
      * @param entry
      */
-    default void onInvalid(RMRuntimeEntry entry) {}
+    default void onInvalid(RuntimeEntry entry) {}
 }
 

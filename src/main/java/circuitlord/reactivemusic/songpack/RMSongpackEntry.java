@@ -7,17 +7,6 @@ import circuitlord.reactivemusic.api.SongpackEntry;
 public class RMSongpackEntry implements SongpackEntry {
 
     public HashMap<String, Object> entryMap = new HashMap<>();
-
-    // Type safety is enforced in the getter, so that plugin devs have a lower chance of breaking something by accident
-    public <T> T get(String key, Class<T> type) {
-        Object value = entryMap.get(key);
-        return type.isInstance(value) ? type.cast(value) : null;
-    }
-
-    public Object register(String id) {
-        return entryMap.putIfAbsent(id, null);
-    }
-
     
     // BUILT-INS:
     // These are kept class-based to improve developer experience
@@ -49,8 +38,8 @@ public class RMSongpackEntry implements SongpackEntry {
     //---------------------------------------------------------------------------------
     public String[] getEvents() { return events; }
     
-    public boolean allowFallback() { return allowFallback; }
-    public boolean useOverlay() { return useOverlay; }
+    public boolean getAllowFallback() { return allowFallback; }
+    public boolean getUseOverlay() { return useOverlay; }
     
     public float getForceChance() { return forceChance; }
     public boolean getForceStart() { return forceStartMusicOnValid; }

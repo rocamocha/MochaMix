@@ -178,13 +178,13 @@ public final class SongPicker {
         
     }
 
-    public static @NotNull List<String> getSelectedSongs(RMRuntimeEntry newEntry, List<RMRuntimeEntry> validEntries) {
+    public static @NotNull List<String> getSelectedSongs(RuntimeEntry newEntry, List<RMRuntimeEntry> validEntries) {
 		// if we have non-recent songs then just return those
-		if (ReactiveMusicUtils.hasSongNotPlayedRecently(newEntry.songs)) {
-			return newEntry.songs;
+		if (ReactiveMusicUtils.hasSongNotPlayedRecently(newEntry.getSongs())) {
+			return newEntry.getSongs();
 		}
 		// Fallback behaviour
-		if (newEntry.allowFallback) {
+		if (newEntry.fallbackAllowed()) {
 			for (int i = 1; i < ReactiveMusicState.validEntries.size(); i++) {
 				if (ReactiveMusicState.validEntries.get(i) == null)
 					continue;
@@ -195,6 +195,6 @@ public final class SongPicker {
 			}
 		}
 		// we've played everything recently, just give up and return this event's songs
-		return newEntry.songs;
+		return newEntry.getSongs();
 	}
 }

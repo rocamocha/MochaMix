@@ -4,12 +4,14 @@ import java.util.Collection;
 import java.util.List;
 
 import circuitlord.reactivemusic.*;
-import circuitlord.reactivemusic.config.ModConfig;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
 public interface ReactiveMusicAPI {
-    static ModConfig getModConfig() { return ReactiveMusic.modConfig; }
+    public interface ModConfig {
+        static boolean debugModeEnabled() { return ReactiveMusic.modConfig.debugModeEnabled; }
+    }
+
     static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); }
     static Collection<ReactivePlayer> reactivePlayers() { return ReactiveMusic.audio().getAll();}
 

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class RMRuntimeEntry implements RuntimeEntry {
 
@@ -35,16 +36,40 @@ public class RMRuntimeEntry implements RuntimeEntry {
 
     public HashMap<String, Object> entryMap = new HashMap<>();
 
-    // should import values in the yaml that are *NOT* predefined
-        // this means plugin devs can create custom options for events
-        // that live in the YAML
-    private void setExternalOptions(RMSongpackEntry songpackEntry) {
-        if (!songpackEntry.entryMap.keySet().isEmpty()) {
-            for (String key : songpackEntry.entryMap.keySet()) {
-                entryMap.put(key, songpackEntry.entryMap.get(key));
-            }
-        }
+    public Object getExternalOption(String key) {
+        return entryMap.get(key);
     }
+
+    // should import values in the yaml that are *NOT* predefined
+    // this means plugin devs can create custom options for events
+    // that live in the YAML
+    //
+    // TODO: Not implemented - need to figure out how to change
+    // the RMSongpackLoader to import the unknown keys with SnakeYAML
+    //
+    // TODO: Maybe the built-ins should just use this pattern as well?
+    public void setExternalOption(String key, Object value) {
+        Set<String> knownOptions = Set.of(
+            "allowFallback",
+            "useOverlay",
+            "forceStopMusicOnValid",
+            "forceStopMusicOnInvalid",
+            "forceStartMusicOnValid",
+            "forceChance",
+            // don't load the songs or events into this map either
+            "songs",
+            "events"
+        );
+
+        entryMap.put(key, value);
+        entryMap.keySet().removeAll(knownOptions);
+    }
+
+    // getters
+    //--------------------------------------------------------------
+    public List<String> getSongs() { return songs; }
+    public boolean fallbackAllowed() { return allowFallback; }
+    public boolean shouldOverlay() { return useOverlay; }
 
     public static RMRuntimeEntry create(RMSongpackZip songpack, RMSongpackEntry songpackEntry) {
 
@@ -60,8 +85,6 @@ public class RMRuntimeEntry implements RuntimeEntry {
         Entry.forceStartMusicOnValid = songpackEntry.forceStartMusicOnValid;
 
         Entry.forceChance = songpackEntry.forceChance;
-
-        Entry.setExternalOptions(songpackEntry);
 
         if (songpackEntry.songs != null) {
             Entry.songs = Arrays.stream(songpackEntry.songs).toList();

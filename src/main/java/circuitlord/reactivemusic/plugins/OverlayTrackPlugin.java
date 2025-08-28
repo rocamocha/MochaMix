@@ -5,7 +5,6 @@ import circuitlord.reactivemusic.ReactiveMusicCore;
 import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 
 public final class OverlayTrackPlugin implements SongpackEventPlugin {
     @Override public String getId() { return "Overlay Track (Built-In)"; }
@@ -41,7 +40,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
         if (usingOverlay) {
             if (!overlayPlayer.isPlaying()) {
                 if (!ReactiveMusicState.validEntries.isEmpty()) {
-                    RMRuntimeEntry newEntry = ReactiveMusicState.validEntries.get(0);
+                    RuntimeEntry newEntry = ReactiveMusicState.validEntries.get(0);
                     overlayPlayer.setSong(ReactiveMusicUtils.pickRandomSong(SongPicker.getSelectedSongs(newEntry, ReactiveMusicState.validEntries)));
                 }
                 overlayPlayer.setFadePercent(0);
@@ -66,7 +65,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * @see SongpackEventPlugin#onValid(RMRuntimeEntry)
      * @see ReactiveMusicCore#processValidEvents(java.util.List, java.util.List)
      */
-    @Override public void onValid(RMRuntimeEntry entry) {
+    @Override public void onValid(RuntimeEntry entry) {
         // ReactiveMusicAPI.LOGGER.info("Overlay enabled");
         // if (entry.useOverlay) {
         //     ReactiveMusicAPI.freezeCore();
@@ -80,7 +79,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * @see SongpackEventPlugin#onInvalid(RMRuntimeEntry)
      * @see ReactiveMusicCore#processValidEvents(java.util.List, java.util.List)
      */
-    @Override public void onInvalid(RMRuntimeEntry entry) {
+    @Override public void onInvalid(RuntimeEntry entry) {
         // ReactiveMusicAPI.LOGGER.info("Overlay disabled");
         // if (entry.useOverlay) {
         //     ReactiveMusicAPI.unfreezeCore();
@@ -93,8 +92,8 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * @return
      */
     public static boolean usingOverlay() {
-        for (RMRuntimeEntry entry : ReactiveMusicState.validEntries) {
-            if (entry.useOverlay) {
+        for (RuntimeEntry entry : ReactiveMusicState.validEntries) {
+            if (entry.shouldOverlay()) {
                 return true;
             }
         }

@@ -1,11 +1,10 @@
 package circuitlord.reactivemusic.api;
 
 public interface SongpackEntry {
-    public <T> T get(String key, Class<T> type);
     public String[] getEvents();
 
-    public boolean allowFallback();
-    public boolean useOverlay();
+    public boolean getAllowFallback();
+    public boolean getUseOverlay();
 
     public enum forceStop {
         OnChanged, OnValid, OnInvalid
