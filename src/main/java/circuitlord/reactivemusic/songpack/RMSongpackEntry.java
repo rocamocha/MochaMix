@@ -2,8 +2,6 @@ package circuitlord.reactivemusic.songpack;
 
 import java.util.HashMap;
 
-import circuitlord.reactivemusic.api.SongpackEntry;
-
 public class RMSongpackEntry {
 
     public HashMap<String, Object> entryMap = new HashMap<>();

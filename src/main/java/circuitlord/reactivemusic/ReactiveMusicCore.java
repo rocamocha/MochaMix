@@ -363,7 +363,7 @@ public final class ReactiveMusicCore {
     }
 
     public static final boolean finishedPlaying(ReactivePlayer player) {
-        if ((player.fadePercent() == 0 && (player.fadingOut()) || !player.isPlaying())) {
+        if ((player.getFadePercent() == 0 && (player.isFadingOut()) || !player.isPlaying())) {
             return true;
         }
         return false;

@@ -5,6 +5,7 @@ public interface ReactivePlayer extends AutoCloseable {
     boolean isPlaying();
     boolean isPaused();
     boolean isIdle();
+    
     void play();                         // (re)start from beginning
     void stop();                         // stop + release decoder
     void pause();                        // pause without releasing resources
