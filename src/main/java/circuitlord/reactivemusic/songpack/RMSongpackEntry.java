@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import circuitlord.reactivemusic.api.SongpackEntry;
 
-public class RMSongpackEntry implements SongpackEntry {
+public class RMSongpackEntry {
 
     public HashMap<String, Object> entryMap = new HashMap<>();
     
@@ -33,28 +33,4 @@ public class RMSongpackEntry implements SongpackEntry {
     // deprecated
     public boolean alwaysPlay = false;
     public boolean alwaysStop = false;
-    
-    // getters
-    //---------------------------------------------------------------------------------
-    public String[] getEvents() { return events; }
-    
-    public boolean getAllowFallback() { return allowFallback; }
-    public boolean getUseOverlay() { return useOverlay; }
-    
-    public float getForceChance() { return forceChance; }
-    public boolean getForceStart() { return forceStartMusicOnValid; }
-    public boolean getForceStop(forceStop forceStop) {
-        switch (forceStop) {
-            case OnChanged:
-                return forceStopMusicOnChanged;
-            case OnValid:
-                return forceStopMusicOnValid;
-            case OnInvalid:
-                return forceStopMusicOnInvalid;
-            default:
-                return false;
-                
-        }
-    }
-
 }

@@ -39,18 +39,19 @@ public final class RMPlayerManager implements ReactivePlayerManager {
     @Override public void tick() {
         for (ReactivePlayer player : players.values()) {
 
-            float fp = player.fadePercent();    // current
-            float ft = player.fadeTarget();     // target
-            int   dur = player.fadeDuration() > 0 ? player.fadeDuration() : 150;
-            if (ft < fp) { player.fadingOut(true); }
+            float fp = player.getFadePercent();    // current
+            float ft = player.getFadeTarget();     // target
+            int   dur = player.getFadeDuration() > 0 ? player.getFadeDuration() : 150;
+            if (ft < fp) { player.isFadingOut(true); }
 
-            if (fp == 0f && player.stopOnFadeOut() && player.fadingOut()) {
+            if (fp == 0f && player.stopOnFadeOut() && player.isFadingOut()) {
                 // reached target – run arrival side effects
                 LOGGER.info(player.id() + " has stopped on fadeout");
                 if (fp == 0f && player.stopOnFadeOut()) player.stop();
                 if (fp == 0f && player.resetOnFadeOut()) player.reset();
             }
-            player.fadingOut(false);
+
+            player.isFadingOut(false);
             
             float step = (ft > fp ? 1f : -1f) * (1f / dur);
             float next = fp + step;

@@ -20,34 +20,34 @@ public interface ReactivePlayer extends AutoCloseable {
     void setDuckPercent(float p);        // 0..1 “duck” layer (like musicDiscDuckPercentage)
     void setMute(boolean v);
     float getRealGainDb();               // last applied dB to audio device
-
+    
     // Grouping / coordination
     void setGroup(String group);         // e.g. "music", "ambient", "sfx"
     String getGroup();
-
+    
     // Events
     void onComplete(Runnable r);         // fires when track completes
     void onError(java.util.function.Consumer<Throwable> c);
-
-    @Override void close();              // same as stop(); also unregister
     
+    void close();              // same as stop(); also unregister
+    void reset();
+    
+    // More controls & accessors
     void fade(float target, int tickDuration);
-    float fadeTarget();
-    int fadeDuration();
-    
-    float fadePercent();
     void setFadePercent(float p);
-
-    boolean stopOnFadeOut();
-    void stopOnFadeOut(boolean b);
+    float getFadePercent();
+    float getFadeTarget();
+    int getFadeDuration();
     
+    // Fade OUT specific
+    boolean isFadingOut();
+    boolean stopOnFadeOut();
     boolean resetOnFadeOut();
+    
+    void isFadingOut(boolean b);
+    void stopOnFadeOut(boolean b);
     void resetOnFadeOut(boolean b);
     
-    void reset();
-    boolean overlayFade();
-    void overlayFade(boolean set);
+    
 
-    boolean fadingOut();
-    void fadingOut(boolean b);
 }

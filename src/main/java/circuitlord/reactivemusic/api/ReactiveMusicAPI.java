@@ -1,26 +1,38 @@
 package circuitlord.reactivemusic.api;
 
-import java.util.Collection;
 import java.util.List;
 
 import circuitlord.reactivemusic.*;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.RMSongpackZip;
+import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 
+/**
+ * ✅ = documented in the API reference
+ */
 public interface ReactiveMusicAPI {
     public interface ModConfig {
-        static boolean debugModeEnabled() { return ReactiveMusic.modConfig.debugModeEnabled; }
+        static boolean debugModeEnabled() { return ReactiveMusic.modConfig.debugModeEnabled; } // ✅
     }
 
-    static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); }
-    static Collection<ReactivePlayer> reactivePlayers() { return ReactiveMusic.audio().getAll();}
+    /**
+     * API view for the anything related to the EVENT system should go here.
+     * This allows for expandability in the future past the event system, and better
+     * modularity.
+     */
+    public interface EventSys { 
+        static RuntimeEntry currentEntry() { return ReactiveMusicState.currentEntry; }
+        static String currentSong() { return ReactiveMusicState.currentSong; }
+        static List<String> recentSongs() { return ReactiveMusicState.recentlyPickedSongs; }
+        static List<RuntimeEntry> validEntries() { return List.copyOf(ReactiveMusicState.validEntries); }
+        static List<RuntimeEntry> loadedEntries() { return List.copyOf(ReactiveMusicState.loadedEntries); }
+        static List<RuntimeEntry> previousValidEntries() { return List.copyOf(ReactiveMusicState.previousValidEntries); }
+    }
 
-    static RMSongpackZip currentSongpack() { return ReactiveMusicState.currentSongpack; }
-    static RMRuntimeEntry currentEntry() { return ReactiveMusicState.currentEntry; }
-    static String currentSong() { return ReactiveMusicState.currentSong; }
+    public interface Songpack {
+        static SongpackZip getCurrent() { return ReactiveMusicState.currentSongpack; }
+        static List<SongpackZip> getAvailable() { return List.copyOf(RMSongpackLoader.availableSongpacks); }
+    }
 
-    static List<RMRuntimeEntry> validEntries() { return ReactiveMusicState.validEntries; }
-    static List<RMRuntimeEntry> loadEntries() { return ReactiveMusicState.loadedEntries; }
-    static List<RMRuntimeEntry> previousValidEntries() { return ReactiveMusicState.previousValidEntries; }
-    static List<String> recentlyPickedSongs() { return ReactiveMusicState.recentlyPickedSongs; }
+    static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); } // ✅
+
+
 }

@@ -47,7 +47,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile int fadeDuration;
     private volatile boolean stopOnFadeOut = true;
     private volatile boolean resetOnFadeOut = true;
-    private volatile boolean overlayFade = false;
     private volatile boolean fadingOut = false;
 
     // ----- source -----
@@ -173,21 +172,25 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         fadeDuration = tickDuration;
     }
 
-    @Override public float fadeTarget() { return fadeTarget; }
-    @Override public int fadeDuration() { return fadeDuration; }
-    @Override public float fadePercent() { return fadePercent; }
+    @Override public float getFadeTarget() { return fadeTarget; }
+    @Override public int getFadeDuration() { return fadeDuration; }
+    @Override public float getFadePercent() { return fadePercent; }
     
-    @Override public boolean fadingOut() { return fadingOut; }
-    @Override public void fadingOut(boolean set) { fadingOut = set; }
-
+    // XXX
+    // I know this next pattern isn't idiomatic... but this feels like it's going to get bloated otherwise
+    
+    // getters
+    @Override public boolean isFadingOut() { return fadingOut; }
     @Override public boolean stopOnFadeOut() { return stopOnFadeOut; }
-    @Override public void stopOnFadeOut(boolean set) { stopOnFadeOut = set; }
-
-    @Override public boolean overlayFade() { return overlayFade; }
-    @Override public void overlayFade(boolean set) { overlayFade = set; }
-
     @Override public boolean resetOnFadeOut() { return resetOnFadeOut; }
+    
+    // setters
+    @Override public void isFadingOut(boolean set) { fadingOut = set; }
+    @Override public void stopOnFadeOut(boolean set) { stopOnFadeOut = set; }
     @Override public void resetOnFadeOut(boolean set) { resetOnFadeOut = set; }
+
+
+
 
     @Override public boolean isIdle() {
         // Idle when we have no active/queued playback work

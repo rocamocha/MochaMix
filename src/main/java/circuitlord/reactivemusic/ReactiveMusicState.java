@@ -28,7 +28,7 @@ public final class ReactiveMusicState {
     public static RMSongpackZip currentSongpack = null;
     public static Boolean currentDimBlacklisted = false;
     
-    public static Map<String, Boolean>            logicFreeze      = new HashMap<>();
+    public static Map<String, Boolean>        logicFreeze      = new HashMap<>();
     public static Map<SongpackEvent, Boolean> songpackEventMap = new HashMap<>();
     
     public static RMRuntimeEntry       currentEntry         = null;
