@@ -1,7 +1,6 @@
 package circuitlord.reactivemusic.mixin;
 
 import circuitlord.reactivemusic.ReactiveMusic;
-import circuitlord.reactivemusic.ReactiveMusicState;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.client.sound.SoundManager;
 import org.spongepowered.asm.mixin.Mixin;
