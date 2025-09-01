@@ -7,4 +7,7 @@ public interface SongpackZip {
     Path getPath();
     String getErrorString();
     List<RuntimeEntry> getEntries();
+
+    String getName();
+    String getAuthor();
 }

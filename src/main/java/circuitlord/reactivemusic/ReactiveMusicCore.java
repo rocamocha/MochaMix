@@ -62,7 +62,7 @@ public final class ReactiveMusicCore {
 		}
 
         for (ReactivePlayer player : players) {
-            if (finishedPlaying(player) && !OverlayTrackPlugin.usingOverlay()) {
+            if (player.isFinished() && !OverlayTrackPlugin.usingOverlay()) {
                 ReactiveMusicState.currentEntry = null;
                 ReactiveMusicState.currentSong = null;
             }
@@ -79,8 +79,10 @@ public final class ReactiveMusicCore {
 
 			// wants to switch if our current entry doesn't exist -- or is not the same as the new one
 			boolean wantsToSwitch = !OverlayTrackPlugin.usingOverlay() && (ReactiveMusicState.currentEntry == null || !java.util.Objects.equals(ReactiveMusicState.currentEntry.eventString, newEntry.eventString));
-
-			// if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
+            
+            // ReactiveMusic.LOGGER.info(wantsToSwitch ? "Trying to switch the music." : "The music will not switch.");
+			
+            // if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
 			if (wantsToSwitch && ReactiveMusicState.currentSong != null && newEntry.songs.contains(ReactiveMusicState.currentSong) && !queuedToStopMusic) {
 				LOGGER.info("doing fake swap to new event: " + newEntry.eventString);
 				// do a fake swap
@@ -121,6 +123,7 @@ public final class ReactiveMusicCore {
 				if (shouldFadeOutMusic) {
                     for (ReactivePlayer player : players) {
                         player.stopOnFadeOut(true);
+                        player.resetOnFadeOut(true);
                         player.fade(0, FADE_DURATION);
                     }
 				}
@@ -161,6 +164,7 @@ public final class ReactiveMusicCore {
 		// no entries are valid, we shouldn't be playing any music!
 		// this can happen if no entry is valid or the dimension is blacklisted
 		else {
+            ReactiveMusic.LOGGER.info("There are no valid songpack entries!");
             for (ReactivePlayer player : players)
 			    player.fade(0, FADE_DURATION);
 		}
@@ -187,13 +191,13 @@ public final class ReactiveMusicCore {
             // if this event was valid before and is invalid now
             if (validEntries.stream().noneMatch(e -> java.util.Objects.equals(e.eventString, entry.eventString))) {
                 
-                LOGGER.info("Triggering onInvalid() for songpack event plugins");
+                ReactiveMusic.LOGGER.info("Triggering onInvalid() for songpack event plugins");
                 for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) plugin.onInvalid(entry);
     
                 if (entry.forceStopMusicOnInvalid) {
-                    LOGGER.info("trying forceStopMusicOnInvalid: " + entry.eventString);
+                    ReactiveMusic.LOGGER.info("trying forceStopMusicOnInvalid: " + entry.eventString);
                     if (entry.cachedRandomChance <= entry.forceChance) {
-                        LOGGER.info("doing forceStopMusicOnInvalid: " + entry.eventString);
+                        ReactiveMusic.LOGGER.info("doing forceStopMusicOnInvalid: " + entry.eventString);
                         queuedToStopMusic = true;
                     }
                     break;
@@ -209,39 +213,26 @@ public final class ReactiveMusicCore {
                 boolean randSuccess = entry.cachedRandomChance <= entry.forceChance;
     
                 // if this event wasn't valid before and is now
-                LOGGER.info("Triggering onValid() for songpack event plugins");
+                ReactiveMusic.LOGGER.info("Triggering onValid() for songpack event plugins");
                 for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) plugin.onValid(entry);
     
                 if (entry.forceStopMusicOnValid) {
-                    LOGGER.info("trying forceStopMusicOnValid: " + entry.eventString);
+                    ReactiveMusic.LOGGER.info("trying forceStopMusicOnValid: " + entry.eventString);
                     if (randSuccess) {
-                        LOGGER.info("doing forceStopMusicOnValid: " + entry.eventString);
+                        ReactiveMusic.LOGGER.info("doing forceStopMusicOnValid: " + entry.eventString);
                         queuedToStopMusic = true;
                     }
                 }
                 if (entry.forceStartMusicOnValid) {
-                    LOGGER.info("trying forceStartMusicOnValid: " + entry.eventString);
+                    ReactiveMusic.LOGGER.info("trying forceStartMusicOnValid: " + entry.eventString);
                     if (randSuccess) {
-                        LOGGER.info("doing forceStartMusicOnValid: " + entry.eventString);
+                        ReactiveMusic.LOGGER.info("doing forceStartMusicOnValid: " + entry.eventString);
                         queuedToPlayMusic = true;
                     }
                 }
             }
         }
     }
-    
-    // DEPRECATED: RMPlayerManager now handles tick fading
-    // public static void tickFadeOut() {
-    // 	if (musicPlayer == null || !musicPlayer.isPlaying()) return;
-    // 	if (fadeOutTicks < FADE_DURATION) {
-    // 		LOGGER.info("RM:[tickFadeOut]: Fading out... " + fadeOutTicks + "/" + FADE_DURATION);
-    // 		fadeOutTicks++;
-    // 		musicPlayer.setGainPercent(1f - (fadeOutTicks / (float) FADE_DURATION));
-    // 	} else {
-    // 		LOGGER.info("RM:[tickFadeOut]: Fadeout completed!");
-    // 		resetPlayer();
-    // 	}
-    // }
     
     
     public static void changeCurrentSong(String song, RMRuntimeEntry newEntry, ReactivePlayer player) {
@@ -280,9 +271,12 @@ public final class ReactiveMusicCore {
             deactivateSongpack(ReactiveMusicState.currentSongpack);
         }
     
-        for (ReactivePlayer player : ReactiveMusic.audio().getAll())
+        for (ReactivePlayer player : ReactiveMusic.audio().getAll()) {
             resetPlayer(player);
-            
+        }
+
+        ReactiveMusicState.currentEntry = null;
+        ReactiveMusicState.currentSong = null;
     
         ReactiveMusicState.currentSongpack = songpackZip;
     
@@ -361,21 +355,12 @@ public final class ReactiveMusicCore {
         return 100;
     
     }
-
-    public static final boolean finishedPlaying(ReactivePlayer player) {
-        if ((player.getFadePercent() == 0 && (player.isFadingOut()) || !player.isPlaying())) {
-            return true;
-        }
-        return false;
-    }
     
     public static final void resetPlayer(ReactivePlayer player) {
         if (player != null && player.isPlaying()) {
             player.stop();
             player.reset();
         }
-        ReactiveMusicState.currentEntry = null;
-        ReactiveMusicState.currentSong = null;
     }
 
 }

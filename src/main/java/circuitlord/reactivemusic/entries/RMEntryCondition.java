@@ -6,20 +6,17 @@ import net.minecraft.world.biome.Biome;
 import java.util.ArrayList;
 import java.util.List;
 
-import circuitlord.reactivemusic.songpack.RMSongpackEvent;
+import circuitlord.reactivemusic.api.SongpackEvent;
 
 public class RMEntryCondition {
 
     // the way conditions work just means that each condition requires there to be at least one true in each list (or empty list) for the whole condition to be valid
     // This is how we handle ORs
 
-    public List<RMSongpackEvent> songpackEvents = new ArrayList<>();
+    public List<SongpackEvent> songpackEvents = new ArrayList<>();
     public List<String> biomeTypes = new ArrayList<>();
-
     public List<String> dimTypes = new ArrayList<>();
-
     public List<TagKey<Biome>> biomeTags = new ArrayList<>();
-
     public List<RMEntryBlockCondition> blocks = new ArrayList<>();
 
 }

@@ -38,12 +38,27 @@ public class ReactiveMusic implements ModInitializer {
 	boolean doSilenceForNextQueuedSong = true;
 	public static final List<SoundInstance> trackedSoundsMuteMusic = new ArrayList<SoundInstance>();
 
+	private class Mocha {
+		public static Screen lastScreen;
+		public static void log(MinecraftClient mc) {
+			ScreenChange(mc);
+		}
+		
+		private static void ScreenChange(MinecraftClient mc) {
+			Screen screen = mc.currentScreen;
+			if (screen != null && lastScreen != screen) {
+				LOGGER.info("currentScreen.getTitle(): " + screen.getTitle().toString());
+			}
+			lastScreen = screen;
+		}
+	}
+
 	/**
      * Audio subsystem (player creation, grouping, ducking).
      * @return The core Reactive Music audio player manager. Unless you are doing something
      * very complicated, you should not need to instance a new manager. 
      */
-    public static ReactivePlayerManager audio() { return RMPlayerManager.get(); }
+    public static final ReactivePlayerManager audio() { return RMPlayerManager.get(); }
 
 	@Override public void onInitialize() {
 		ModConfig.GSON.load();
@@ -69,6 +84,8 @@ public class ReactiveMusic implements ModInitializer {
 			.group("music")
 			.loop(false)
 			.gain(1.0f)
+			.fade(0.0f)
+			.duck(1.0f)
 			.quietWhenGamePaused(false)
 		);
 			
@@ -185,12 +202,18 @@ public class ReactiveMusic implements ModInitializer {
 						})
 				)
 
+				.then(ClientCommandManager.literal("info")
+						.executes(context -> {
+							// TODO: Do something here.
+							return 1;
+						})
+				)
+
 			)
 		);
 	}
 
 	public static void newTick() {
-
 		if (musicPlayer == null) return;
 		if (ReactiveMusicState.currentSongpack == null) return;
 		if (ReactiveMusicState.loadedEntries.isEmpty()) return;
@@ -198,6 +221,7 @@ public class ReactiveMusic implements ModInitializer {
 		MinecraftClient mc = MinecraftClient.getInstance();
 		if (mc == null) return;
 
+		Mocha.log(mc); // XXX~ My info logs! ~rocamocha
 
 		// force a reasonable volume once on mod install, if you have full 100% everything it's way too loud
 		if (!modConfig.hasForcedInitialVolume) {

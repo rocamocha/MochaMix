@@ -1,9 +1,9 @@
 package circuitlord.reactivemusic.entries;
 
 import circuitlord.reactivemusic.SongPicker;
+import circuitlord.reactivemusic.api.SongpackEvent;
 import circuitlord.reactivemusic.api.RuntimeEntry;
 import circuitlord.reactivemusic.songpack.RMSongpackEntry;
-import circuitlord.reactivemusic.songpack.RMSongpackEvent;
 import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ public class RMRuntimeEntry implements RuntimeEntry {
 
 
     public List<RMEntryCondition> conditions = new ArrayList<>();
+    @Override public List<RMEntryCondition> getConditions() { return conditions; }
 
     public String songpack;
 
@@ -205,10 +206,10 @@ public class RMRuntimeEntry implements RuntimeEntry {
                     try {
                         // try to cast to SongpackEvent
                         // needs uppercase for enum names
-                        RMSongpackEvent eventType = RMSongpackEvent.get(eventSection);
+                        SongpackEvent eventType = SongpackEvent.get(eventSection.toUpperCase());
 
                         // it's a songpack event
-                        if (eventType != RMSongpackEvent.NONE) {
+                        if (eventType != SongpackEvent.NONE) {
                             condition.songpackEvents.add(eventType);
                             eventHasData = true;
                             continue;

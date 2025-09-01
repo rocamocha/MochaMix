@@ -97,6 +97,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         this.gainPercent = opts.initialGainPercent();
         this.duckPercent = opts.initialDuckPercent();
         this.fadePercent = opts.initialFadePercent();
+        this.fadeTarget = opts.initialFadePercent();
         this.groupDuckSupplier = groupDuckSupplier != null ? groupDuckSupplier : () -> 1.0f;
 
         this.worker = new Thread(this::runLoop, "ReactiveMusic Player [" + id + "]");
@@ -125,6 +126,8 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     @Override public boolean isPlaying() { return playing && !complete; }
 
     // @Override public boolean isPaused() { return paused; }
+
+    @Override public boolean isFinished() { return complete && !playing; }
 
     @Override public void setSong(String songId) {
         this.songId = songId;
@@ -169,26 +172,26 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     }
 
     @Override public void fade(float target, int tickDuration) {
-        fadeTarget = target;
-        fadeDuration = tickDuration;
+        this.fadeTarget = target;
+        this.fadeDuration = tickDuration;
     }
 
-    @Override public float getFadeTarget() { return fadeTarget; }
-    @Override public int getFadeDuration() { return fadeDuration; }
-    @Override public float getFadePercent() { return fadePercent; }
+    @Override public float getFadeTarget() { return this.fadeTarget; }
+    @Override public int getFadeDuration() { return this.fadeDuration; }
+    @Override public float getFadePercent() { return this.fadePercent; }
     
     // XXX
     // I know this next pattern isn't idiomatic... but this feels like it's going to get bloated otherwise
     
     // getters
-    @Override public boolean isFadingOut() { return fadingOut; }
-    @Override public boolean stopOnFadeOut() { return stopOnFadeOut; }
-    @Override public boolean resetOnFadeOut() { return resetOnFadeOut; }
+    @Override public boolean isFadingOut() { return this.fadingOut; }
+    @Override public boolean stopOnFadeOut() { return this.stopOnFadeOut; }
+    @Override public boolean resetOnFadeOut() { return this.resetOnFadeOut; }
     
     // setters
-    @Override public void isFadingOut(boolean set) { fadingOut = set; }
-    @Override public void stopOnFadeOut(boolean set) { stopOnFadeOut = set; }
-    @Override public void resetOnFadeOut(boolean set) { resetOnFadeOut = set; }
+    @Override public void isFadingOut(boolean set) { this.fadingOut = set; }
+    @Override public void stopOnFadeOut(boolean set) { this.stopOnFadeOut = set; }
+    @Override public void resetOnFadeOut(boolean set) { this.resetOnFadeOut = set; }
     
     
     

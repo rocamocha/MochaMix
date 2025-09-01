@@ -35,7 +35,7 @@ public final class AtHomePlugin implements SongpackEventPlugin {
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         // Keys: base (per save/server), and per-dimension
@@ -53,27 +53,27 @@ public final class AtHomePlugin implements SongpackEventPlugin {
         wasSleeping = player.isSleeping();
 
         // Emit base HOME (per save/server, regardless of dimension)
-        out.put(HOME, isWithinHome(world, player, baseKey));
+        eventMap.put(HOME, isWithinHome(world, player, baseKey));
 
         // Emit one of the three dimension-specific events (only for vanilla dims)
         Identifier dimId = world.getRegistryKey().getValue();
         if (dimId.equals(World.OVERWORLD.getValue())) {
-            out.put(HOME_OVERWORLD, isWithinHome(world, player, dimKey));
-            out.put(HOME_NETHER, false);
-            out.put(HOME_END, false);
+            eventMap.put(HOME_OVERWORLD, isWithinHome(world, player, dimKey));
+            eventMap.put(HOME_NETHER, false);
+            eventMap.put(HOME_END, false);
         } else if (dimId.equals(World.NETHER.getValue())) {
-            out.put(HOME_OVERWORLD, false);
-            out.put(HOME_NETHER, isWithinHome(world, player, dimKey));
-            out.put(HOME_END, false);
+            eventMap.put(HOME_OVERWORLD, false);
+            eventMap.put(HOME_NETHER, isWithinHome(world, player, dimKey));
+            eventMap.put(HOME_END, false);
         } else if (dimId.equals(World.END.getValue())) {
-            out.put(HOME_OVERWORLD, false);
-            out.put(HOME_NETHER, false);
-            out.put(HOME_END, isWithinHome(world, player, dimKey));
+            eventMap.put(HOME_OVERWORLD, false);
+            eventMap.put(HOME_NETHER, false);
+            eventMap.put(HOME_END, isWithinHome(world, player, dimKey));
         } else {
             // Non-vanilla dimension: keep the three vanilla-specific flags false
-            out.put(HOME_OVERWORLD, false);
-            out.put(HOME_NETHER, false);
-            out.put(HOME_END, false);
+            eventMap.put(HOME_OVERWORLD, false);
+            eventMap.put(HOME_NETHER, false);
+            eventMap.put(HOME_END, false);
         }
     }
 

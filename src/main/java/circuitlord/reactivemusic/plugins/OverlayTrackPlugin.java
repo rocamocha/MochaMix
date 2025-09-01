@@ -41,8 +41,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
         if (usingOverlay) {
             if (!overlayPlayer.isPlaying()) {
                 if (!ReactiveMusicState.validEntries.isEmpty()) {
-                    RuntimeEntry newEntry = ReactiveMusicState.validEntries.get(0);
-                    overlayPlayer.setSong(ReactiveMusicUtils.pickRandomSong(SongPicker.getSelectedSongs(newEntry, ReactiveMusicState.validEntries)));
+                    overlayPlayer.setSong(ReactiveMusicUtils.pickRandomSong(SongPicker.getSelectedSongs(ReactiveMusicState.validEntries.get(0), ReactiveMusicState.validEntries)));
                 }
                 overlayPlayer.setFadePercent(0);
                 overlayPlayer.play();
@@ -55,8 +54,10 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
         if (!usingOverlay) {
             overlayPlayer.fade(0f, 70);
             overlayPlayer.stopOnFadeOut(true);
-            musicPlayer.fade(1, 140);
+
+            // FIXME: This is coupling! Figure out how to get this out of here.
             musicPlayer.stopOnFadeOut(true);
+            musicPlayer.resetOnFadeOut(true);
         }
     };
 

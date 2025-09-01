@@ -29,5 +29,8 @@ public class RMSongpackZip implements SongpackZip {
     public Path getPath() { return path; }
     public String getErrorString() { return errorString; }
     public List<RuntimeEntry> getEntries() { return List.copyOf(runtimeEntries); }
+    
+    public String getName() { return config.name; }
+    public String getAuthor() {return config.author; }
 
 }

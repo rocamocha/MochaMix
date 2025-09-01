@@ -13,7 +13,7 @@ public final class ReactivePlayerOptions {
 
     private float initialGainPercent = 1.0f;        // 0..1
     private float initialDuckPercent = 1.0f;        // 0..1
-    private float initialFadePercent = 1.0f;        // 0..1
+    private float initialFadePercent = 0.0f;        // 0..1
 
     private ReactivePlayerOptions() {}
 

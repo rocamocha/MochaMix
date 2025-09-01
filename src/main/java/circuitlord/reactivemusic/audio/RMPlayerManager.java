@@ -51,7 +51,7 @@ public final class RMPlayerManager implements ReactivePlayerManager {
                 if (fp == 0f && player.resetOnFadeOut()) player.reset();
             }
 
-            player.isFadingOut(false);
+            if (fp == 0 || ft > fp || fp == ft) player.isFadingOut(false);
             
             float step = (ft > fp ? 1f : -1f) * (1f / dur);
             float next = fp + step;

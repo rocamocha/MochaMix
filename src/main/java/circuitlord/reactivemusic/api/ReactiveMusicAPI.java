@@ -5,12 +5,9 @@ import java.util.List;
 import circuitlord.reactivemusic.*;
 import circuitlord.reactivemusic.songpack.RMSongpackLoader;
 
-/**
- * ✅ = documented in the API reference
- */
 public interface ReactiveMusicAPI {
     public interface ModConfig {
-        static boolean debugModeEnabled() { return ReactiveMusic.modConfig.debugModeEnabled; } // ✅
+        static boolean debugModeEnabled() { return ReactiveMusic.modConfig.debugModeEnabled; }
     }
 
     /**
@@ -32,7 +29,7 @@ public interface ReactiveMusicAPI {
         static List<SongpackZip> getAvailable() { return List.copyOf(RMSongpackLoader.availableSongpacks); }
     }
 
-    static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); } // ✅
+    static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); }
 
 
 }

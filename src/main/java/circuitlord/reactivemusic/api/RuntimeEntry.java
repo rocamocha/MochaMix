@@ -2,6 +2,9 @@ package circuitlord.reactivemusic.api;
 
 import java.util.List;
 
+import circuitlord.reactivemusic.entries.RMEntryCondition;
+import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+
 /** Marker for type-safety without exposing internals.*/
 public interface RuntimeEntry {
     /**
@@ -14,4 +17,6 @@ public interface RuntimeEntry {
     List<String> getSongs();
     boolean fallbackAllowed();
     boolean shouldOverlay();
+
+    List<RMEntryCondition> getConditions();
 }
