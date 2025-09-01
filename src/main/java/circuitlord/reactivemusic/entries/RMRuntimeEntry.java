@@ -205,7 +205,7 @@ public class RMRuntimeEntry implements RuntimeEntry {
                     try {
                         // try to cast to SongpackEvent
                         // needs uppercase for enum names
-                        RMSongpackEvent eventType = RMSongpackEvent.valueOf(eventSection);
+                        RMSongpackEvent eventType = RMSongpackEvent.get(eventSection);
 
                         // it's a songpack event
                         if (eventType != RMSongpackEvent.NONE) {

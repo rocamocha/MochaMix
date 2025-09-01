@@ -25,7 +25,7 @@ public final class SongpackEventState {
     /** Overload: lookup by ID (case-insensitive via SongpackEventType.valueOf). */
     public static boolean isActive(PlayerEntity player, String id) {
         if (player == null || id == null) return false;
-        SongpackEvent t = SongpackEvent.valueOf(id);
+        SongpackEvent t = SongpackEvent.get(id);
         return t != null && isActive(player, t);
     }
 

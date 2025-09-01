@@ -70,7 +70,7 @@ public class ReactiveMusic implements ModInitializer {
 			.loop(false)
 			.gain(1.0f)
 			.quietWhenGamePaused(false)
-			);
+		);
 			
 			SongPicker.initialize();
 			

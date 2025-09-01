@@ -39,8 +39,8 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile boolean loop;
     private volatile boolean mute;
 
-    private volatile float gainPercent;        // user layer (your old gainPercentage)
-    private volatile float duckPercent;        // per-player duck
+    private volatile float gainPercent;              // user layer (your old gainPercentage)
+    private volatile float duckPercent;              // per-player duck
     private final Supplier<Float> groupDuckSupplier; // from manager: returns 1.0f unless group ducked
     private volatile float fadePercent;
     private volatile float fadeTarget;
@@ -65,7 +65,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile float realGainDb;       // last applied dB
 
     private AdvancedPlayer player;           // JavaZoom player
-    private AudioDevice audio;      // audio device for gain control
+    private AudioDevice audio;               // audio device for gain control
     private Thread worker;                   // daemon worker thread
 
     // callbacks
@@ -96,6 +96,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         this.loop = opts.loop();
         this.gainPercent = opts.initialGainPercent();
         this.duckPercent = opts.initialDuckPercent();
+        this.fadePercent = opts.initialFadePercent();
         this.groupDuckSupplier = groupDuckSupplier != null ? groupDuckSupplier : () -> 1.0f;
 
         this.worker = new Thread(this::runLoop, "ReactiveMusic Player [" + id + "]");
@@ -123,7 +124,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 
     @Override public boolean isPlaying() { return playing && !complete; }
 
-    @Override public boolean isPaused() { return paused; }
+    // @Override public boolean isPaused() { return paused; }
 
     @Override public void setSong(String songId) {
         this.songId = songId;
@@ -188,18 +189,19 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     @Override public void isFadingOut(boolean set) { fadingOut = set; }
     @Override public void stopOnFadeOut(boolean set) { stopOnFadeOut = set; }
     @Override public void resetOnFadeOut(boolean set) { resetOnFadeOut = set; }
-
-
-
-
+    
+    
+    
+    
     @Override public boolean isIdle() {
         // Idle when we have no active/queued playback work
         return !playing && !queued;
     }
     
-    @Override public void pause() { paused = true; }
-    @Override public void resume() { paused = false; }
-
+    // TODO: Figure out how to implement pausing.
+    // @Override public void pause() { paused = true; }
+    // @Override public void resume() { paused = false; }
+    
     @Override public void reset() {
         fadePercent = 1f;
         fadeTarget = 1f;
@@ -360,7 +362,12 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         );
     }
 
-    /** Force a recompute of real dB gain using your existing math. */
+    /**
+     * Force a recompute of real dB gain using your existing math.
+     * TODO: Implement a hashmap of gain suppliers, that can be registered.
+     * This will allow cleaner gain staging by plugins since they can create their
+     * own value to affect rather than sharing the built-ins.
+     */
     public float requestGainRecompute() {
         if (audio == null) return 0f;
         float minecraftGain = 1.0f;

@@ -3,13 +3,13 @@ package circuitlord.reactivemusic.api;
 public interface ReactivePlayer extends AutoCloseable {
     String id();                         // unique handle, e.g. "myplugin:ambient-1"
     boolean isPlaying();
-    boolean isPaused();
+    // boolean isPaused();
     boolean isIdle();
-    
+
     void play();                         // (re)start from beginning
     void stop();                         // stop + release decoder
-    void pause();                        // pause without releasing resources
-    void resume();
+    // void pause();                        // pause without releasing resources
+    // void resume();
 
     // Source
     void setSong(String songId);         // e.g. "music/ForestTheme" -> resolves to music/ForestTheme.mp3 in active songpack
@@ -45,9 +45,9 @@ public interface ReactivePlayer extends AutoCloseable {
     boolean stopOnFadeOut();
     boolean resetOnFadeOut();
     
-    void isFadingOut(boolean b);
-    void stopOnFadeOut(boolean b);
-    void resetOnFadeOut(boolean b);
+    void isFadingOut(boolean v);
+    void stopOnFadeOut(boolean v);
+    void resetOnFadeOut(boolean v);
     
     
 

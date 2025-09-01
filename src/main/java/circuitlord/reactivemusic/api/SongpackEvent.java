@@ -16,7 +16,6 @@ public interface SongpackEvent {
     static SongpackEvent get(String id) { return RMSongpackEvent.get(id); }
     static SongpackEvent register(String id) { return RMSongpackEvent.register(id); }
     static SongpackEvent[] values() { return RMSongpackEvent.values(); }
-    static SongpackEvent valueOf(String name) { return RMSongpackEvent.valueOf(name); }
 
     // Optional: expose predefined constants as interface-typed fields
     SongpackEvent NONE = RMSongpackEvent.NONE;

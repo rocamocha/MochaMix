@@ -14,15 +14,16 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
 
     @Override public void init() {
         ReactiveMusicState.LOGGER.info("Initializing " + getId() + " songpack event plugin");
-        musicPlayer = ReactiveMusic.audio().get("reactive:music");
+        musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
 
-        ReactiveMusic.audio().create(
+        ReactiveMusicAPI.audioManager().create(
             "reactive:overlay",
             ReactivePlayerOptions.create()
             .namespace("reactive")
             .group("overlay")
             .loop(false)
             .gain(1.0f)
+            .fade(0f)
             .quietWhenGamePaused(false)
             .linkToMinecraftVolumes(true)
         );

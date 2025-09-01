@@ -24,9 +24,7 @@ public final class RMSongpackEvent implements SongpackEvent {
         return REGISTRY.computeIfAbsent(id, RMSongpackEvent::new);
     }
     public static RMSongpackEvent get(String id) { return REGISTRY.get(id); }
-    public static RMSongpackEvent valueOf(String name) {
-        return name == null ? null : get(name.toUpperCase(Locale.ROOT));
-    }
+
 
     public static final RMSongpackEvent NONE = register("NONE");
     public static final RMSongpackEvent MAIN_MENU = register("MAIN_MENU");

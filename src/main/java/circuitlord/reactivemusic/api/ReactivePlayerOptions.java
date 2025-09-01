@@ -13,6 +13,7 @@ public final class ReactivePlayerOptions {
 
     private float initialGainPercent = 1.0f;        // 0..1
     private float initialDuckPercent = 1.0f;        // 0..1
+    private float initialFadePercent = 1.0f;        // 0..1
 
     private ReactivePlayerOptions() {}
 
@@ -34,6 +35,7 @@ public final class ReactivePlayerOptions {
 
     /** Initial per-player duck [0..1]. Multiplies with any group duck. */
     public ReactivePlayerOptions duck(float pct) { this.initialDuckPercent = clamp01(pct); return this; }
+    public ReactivePlayerOptions fade(float pct) { this.initialFadePercent = clamp01(pct); return this; }
 
     // --- getters (used by the manager/impl) ---
     public String pluginNamespace() { return pluginNamespace; }
@@ -45,6 +47,7 @@ public final class ReactivePlayerOptions {
     public int gainRefreshIntervalTicks() { return gainRefreshIntervalTicks; }
     public float initialGainPercent() { return initialGainPercent; }
     public float initialDuckPercent() { return initialDuckPercent; }
+    public float initialFadePercent() { return initialFadePercent; }
 
     private static float clamp01(float f) { return (f < 0f) ? 0f : (f > 1f ? 1f : f); }
 }
