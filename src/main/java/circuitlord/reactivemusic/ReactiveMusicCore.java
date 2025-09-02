@@ -12,11 +12,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import circuitlord.reactivemusic.api.ReactivePlayer;
 import circuitlord.reactivemusic.api.ReactivePlayerManager;
+import circuitlord.reactivemusic.ReactiveMusicDebug.ChangeLogger;
 import circuitlord.reactivemusic.api.ReactiveMusicUtils;
 import circuitlord.reactivemusic.api.SongpackEventPlugin;
 import circuitlord.reactivemusic.config.MusicDelayLength;
@@ -27,7 +25,7 @@ import circuitlord.reactivemusic.songpack.RMSongpackZip;
 
 public final class ReactiveMusicCore {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
+    public static final ChangeLogger CHANGE_LOGGER = ReactiveMusic.debugTools.new ChangeLogger();
     public static final int FADE_DURATION = 150;
 	public static final int SILENCE_DURATION = 100;
 
@@ -80,11 +78,11 @@ public final class ReactiveMusicCore {
 			// wants to switch if our current entry doesn't exist -- or is not the same as the new one
 			boolean wantsToSwitch = !OverlayTrackPlugin.usingOverlay() && (ReactiveMusicState.currentEntry == null || !java.util.Objects.equals(ReactiveMusicState.currentEntry.eventString, newEntry.eventString));
             
-            // ReactiveMusic.LOGGER.info(wantsToSwitch ? "Trying to switch the music." : "The music will not switch.");
+            CHANGE_LOGGER.writeInfo(wantsToSwitch ? "Trying to switch the music." : "The music will not switch.");
 			
             // if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
 			if (wantsToSwitch && ReactiveMusicState.currentSong != null && newEntry.songs.contains(ReactiveMusicState.currentSong) && !queuedToStopMusic) {
-				LOGGER.info("doing fake swap to new event: " + newEntry.eventString);
+				ReactiveMusicDebug.LOGGER.info("doing fake swap to new event: " + newEntry.eventString);
 				// do a fake swap
 				ReactiveMusicState.currentEntry = newEntry;
 				wantsToSwitch = false;
@@ -164,7 +162,7 @@ public final class ReactiveMusicCore {
 		// no entries are valid, we shouldn't be playing any music!
 		// this can happen if no entry is valid or the dimension is blacklisted
 		else {
-            ReactiveMusic.LOGGER.info("There are no valid songpack entries!");
+            ReactiveMusicDebug.LOGGER.info("There are no valid songpack entries!");
             for (ReactivePlayer player : players)
 			    player.fade(0, FADE_DURATION);
 		}
@@ -191,13 +189,13 @@ public final class ReactiveMusicCore {
             // if this event was valid before and is invalid now
             if (validEntries.stream().noneMatch(e -> java.util.Objects.equals(e.eventString, entry.eventString))) {
                 
-                ReactiveMusic.LOGGER.info("Triggering onInvalid() for songpack event plugins");
+                ReactiveMusicDebug.LOGGER.info("Triggering onInvalid() for songpack event plugins");
                 for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) plugin.onInvalid(entry);
     
                 if (entry.forceStopMusicOnInvalid) {
-                    ReactiveMusic.LOGGER.info("trying forceStopMusicOnInvalid: " + entry.eventString);
+                    ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnInvalid: " + entry.eventString);
                     if (entry.cachedRandomChance <= entry.forceChance) {
-                        ReactiveMusic.LOGGER.info("doing forceStopMusicOnInvalid: " + entry.eventString);
+                        ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnInvalid: " + entry.eventString);
                         queuedToStopMusic = true;
                     }
                     break;
@@ -213,20 +211,20 @@ public final class ReactiveMusicCore {
                 boolean randSuccess = entry.cachedRandomChance <= entry.forceChance;
     
                 // if this event wasn't valid before and is now
-                ReactiveMusic.LOGGER.info("Triggering onValid() for songpack event plugins");
+                ReactiveMusicDebug.LOGGER.info("Triggering onValid() for songpack event plugins");
                 for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) plugin.onValid(entry);
     
                 if (entry.forceStopMusicOnValid) {
-                    ReactiveMusic.LOGGER.info("trying forceStopMusicOnValid: " + entry.eventString);
+                    ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnValid: " + entry.eventString);
                     if (randSuccess) {
-                        ReactiveMusic.LOGGER.info("doing forceStopMusicOnValid: " + entry.eventString);
+                        ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnValid: " + entry.eventString);
                         queuedToStopMusic = true;
                     }
                 }
                 if (entry.forceStartMusicOnValid) {
-                    ReactiveMusic.LOGGER.info("trying forceStartMusicOnValid: " + entry.eventString);
+                    ReactiveMusicDebug.LOGGER.info("trying forceStartMusicOnValid: " + entry.eventString);
                     if (randSuccess) {
-                        ReactiveMusic.LOGGER.info("doing forceStartMusicOnValid: " + entry.eventString);
+                        ReactiveMusicDebug.LOGGER.info("doing forceStartMusicOnValid: " + entry.eventString);
                         queuedToPlayMusic = true;
                     }
                 }

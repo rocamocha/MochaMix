@@ -1,6 +1,7 @@
 package circuitlord.reactivemusic.songpack;
 
 import circuitlord.reactivemusic.ReactiveMusic;
+import circuitlord.reactivemusic.ReactiveMusicDebug;
 import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 import net.fabricmc.loader.api.FabricLoader;
 import org.rm_yaml.snakeyaml.Yaml;
@@ -38,7 +39,7 @@ public class RMSongpackLoader {
         }
 
         if (dirPath == null) {
-            ReactiveMusic.LOGGER.error("dirpath was null");
+            ReactiveMusicDebug.LOGGER.error("dirpath was null");
             return null;
         }
 
@@ -56,7 +57,7 @@ public class RMSongpackLoader {
                     return resource;
                 }
             } catch (IOException e) {
-                ReactiveMusic.LOGGER.error("Failed while loading file from zip " + e.getMessage());
+                ReactiveMusicDebug.LOGGER.error("Failed while loading file from zip " + e.getMessage());
                 return null;
             }
         }
@@ -69,10 +70,10 @@ public class RMSongpackLoader {
                     resource.inputStream = Files.newInputStream(filePath);
                     return resource;
                 } catch (IOException e) {
-                    ReactiveMusic.LOGGER.error(e.toString());
+                    ReactiveMusicDebug.LOGGER.error(e.toString());
                 }
             } else {
-                ReactiveMusic.LOGGER.error("Couldn't find file! " + filePath);
+                ReactiveMusicDebug.LOGGER.error("Couldn't find file! " + filePath);
             }
         }
 
@@ -99,7 +100,7 @@ public class RMSongpackLoader {
                 }
             });
         } catch (IOException e) {
-            ReactiveMusic.LOGGER.error("Failed while visiting potential packs " + e.getMessage());
+            ReactiveMusicDebug.LOGGER.error("Failed while visiting potential packs " + e.getMessage());
         }
 
         for (Path packPath : potentialPacks) {
@@ -114,7 +115,7 @@ public class RMSongpackLoader {
                     yamlFileNames = getYamlFiles(Files.list(root).toList());
 
                 } catch (IOException e) {
-                    ReactiveMusic.LOGGER.error("Failed reading zip: " + e);
+                    ReactiveMusicDebug.LOGGER.error("Failed reading zip: " + e);
                     continue;
                 }
             }
@@ -126,7 +127,7 @@ public class RMSongpackLoader {
                     yamlFileNames = getYamlFiles(Files.list(packPath).toList());
 
                 } catch (IOException e) {
-                    ReactiveMusic.LOGGER.error("Failed reading directory: " + e);
+                    ReactiveMusicDebug.LOGGER.error("Failed reading directory: " + e);
                     continue;
                 }
             }
@@ -139,7 +140,7 @@ public class RMSongpackLoader {
             }
         }
 
-        ReactiveMusic.LOGGER.info("Took " + (System.currentTimeMillis() - startTime) + "ms to parse available songpacks, found " + availableSongpacks.size() + "!");
+        ReactiveMusicDebug.LOGGER.info("Took " + (System.currentTimeMillis() - startTime) + "ms to parse available songpacks, found " + availableSongpacks.size() + "!");
     }
 
     public static List<String> getYamlFiles(List<Path> paths) {
@@ -182,7 +183,7 @@ public class RMSongpackLoader {
             songpackZip.errorString = e.toString() + "\n\n";
             songpackZip.blockLoading = true;
 
-            ReactiveMusic.LOGGER.error("Failed to load properties! Embedded=" + embedded + " Exception:" + e.toString());
+            ReactiveMusicDebug.LOGGER.error("Failed to load properties! Embedded=" + embedded + " Exception:" + e.toString());
         }
 
         if (!Constructor.errorString.isEmpty()) {

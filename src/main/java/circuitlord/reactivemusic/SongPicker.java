@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SongPicker {
 
     static int pluginTickCounter = 0;
+    // TODO: Put this stuff in the plugins, silly 😝
+    //-------------------------------------------------------------------------------------
 
     public static Map<TagKey<Biome>, Boolean> biomeTagEventMap = new HashMap<>();
 

@@ -1,6 +1,7 @@
 package circuitlord.reactivemusic.mixin;
 
 import circuitlord.reactivemusic.ReactiveMusic;
+import circuitlord.reactivemusic.ReactiveMusicDebug;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.client.sound.SoundManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,7 @@ public class SoundManagerMixin {
         else if (path.contains("battle.pv")) {
             ReactiveMusic.trackedSoundsMuteMusic.add(soundInstance);
 
-            ReactiveMusic.LOGGER.info("Detected cobblemon battle event, adding to list!");
+            ReactiveMusicDebug.LOGGER.info("Detected cobblemon battle event, adding to list!");
         }
 
 

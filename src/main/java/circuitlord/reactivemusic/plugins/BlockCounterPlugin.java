@@ -92,6 +92,6 @@ public final class BlockCounterPlugin implements SongpackEventPlugin {
         long elapsed = System.nanoTime() - startNano;
         @SuppressWarnings("unused")
         double elapsedMs = elapsed / 1_000_000.0;
-        // (optional) log if you want: ReactiveMusic.LOGGER.info("BlockCounterPlugin tick: " + elapsedMs + "ms");
+        // (optional) log if you want: ReactiveMusicDebug.LOGGER.info("BlockCounterPlugin tick: " + elapsedMs + "ms");
     }
 }

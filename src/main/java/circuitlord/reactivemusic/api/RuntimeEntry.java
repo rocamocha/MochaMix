@@ -8,7 +8,8 @@ import circuitlord.reactivemusic.entries.RMRuntimeEntry;
 /** Marker for type-safety without exposing internals.*/
 public interface RuntimeEntry {
     /**
-     * Not implemented yet.
+     * Not implemented yet. TODO: Second parse of the yaml?
+     * The dynamic keys can't be typecast beforehand, so we need to get them as a raw map.
      * @return External option defined in the yaml config.
      * @see RMRuntimeEntry#setExternalOption(String key, Object value)
      */

@@ -49,7 +49,4 @@ public interface ReactivePlayer extends AutoCloseable {
     void isFadingOut(boolean v);
     void stopOnFadeOut(boolean v);
     void resetOnFadeOut(boolean v);
-    
-    
-
 }

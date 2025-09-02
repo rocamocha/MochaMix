@@ -4,31 +4,28 @@ import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.audio.RMPlayerManager;
 import circuitlord.reactivemusic.config.ModConfig;
 import circuitlord.reactivemusic.songpack.RMSongpackLoader;
-import net.fabricmc.api.ModInitializer;
 
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
 public class ReactiveMusic implements ModInitializer {
 
-	public static final String MOD_ID = "reactive_music";
 	public static final ServiceLoader<SongpackEventPlugin> PLUGINS = ServiceLoader.load(SongpackEventPlugin.class);
-
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
+	
+	public static final ReactiveMusicDebug debugTools = new ReactiveMusicDebug();
 	public static ModConfig modConfig;
 
 	public static int additionalSilence = 0;
@@ -47,7 +44,7 @@ public class ReactiveMusic implements ModInitializer {
 		private static void ScreenChange(MinecraftClient mc) {
 			Screen screen = mc.currentScreen;
 			if (screen != null && lastScreen != screen) {
-				LOGGER.info("currentScreen.getTitle(): " + screen.getTitle().toString());
+				ReactiveMusicDebug.LOGGER.info("currentScreen.getTitle(): " + screen.getTitle().toString());
 			}
 			lastScreen = screen;
 		}
@@ -65,7 +62,7 @@ public class ReactiveMusic implements ModInitializer {
 		modConfig = ModConfig.getConfig();
 		
 		ReactiveMusicState.logicFreeze.put("ReactiveMusicCore", false);
-		LOGGER.info("Initializing Reactive Music");
+		ReactiveMusicDebug.LOGGER.info("Initializing Reactive Music");
 		
 		if (circuitlord.reactivemusic.api.ReactiveMusicUtils.isClientEnv()) {
 			try {
@@ -91,14 +88,17 @@ public class ReactiveMusic implements ModInitializer {
 			
 			SongPicker.initialize();
 			
-			for (SongpackEventPlugin plugin: PLUGINS) { plugin.init(); }
+			for (SongpackEventPlugin plugin: PLUGINS) {
+				plugin.init();
+			}
 			
 			RMSongpackLoader.fetchAvailableSongpacks();
+
 			boolean loadedUserSongpack = false;
 			
-			// try to load a saved songpack
+		// try to load a saved songpack
 		if (!modConfig.loadedUserSongpack.isEmpty()) {
-			LOGGER.info("Initialization is attempting to load user songpack.");
+			ReactiveMusicDebug.LOGGER.info("Initialization is attempting to load user songpack.");
 			for (var songpack : RMSongpackLoader.availableSongpacks) {
 				if (songpack.config == null) continue;
 				if (!songpack.config.name.equals(modConfig.loadedUserSongpack)) continue;
@@ -124,94 +124,112 @@ public class ReactiveMusic implements ModInitializer {
 			}
 		}
 
+		
+		
+		
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess)-> dispatcher.register(literal("reactivemusic")
+		.executes(ctx -> {
+			MinecraftClient mc = ctx.getSource().getClient();
+			Screen screen = ModConfig.createScreen(mc.currentScreen);
+			mc.send(() -> mc.setScreen(screen));
+			return 1;
+		})
+		
 
+			.then(literal("logBlockCounter")
+			.executes(ctx -> {
+				SongPicker.queuedToPrintBlockCounter = true;
+				return 1;	
+			}))
+			
+			
+			.then(literal("blacklistDimension")
+			.executes(ctx -> {	
+				String key = ctx.getSource().getClient().world.getRegistryKey().getValue().toString();
+				if (modConfig.blacklistedDimensions.contains(key)) {
+					ctx.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was already in blacklist."));
+					return 1;
+				}
+				ctx.getSource().sendFeedback(Text.literal("ReactiveMusic: Added " + key + " to blacklist."));
+				modConfig.blacklistedDimensions.add(key);
+				ModConfig.saveConfig();
+				return 1;
+			}))
+			
+			
+			.then(literal("unblacklistDimension")
+			.executes(ctx -> {
+				String key = ctx.getSource().getClient().world.getRegistryKey().getValue().toString();
+				
+				if (!modConfig.blacklistedDimensions.contains(key)) {
+					ctx.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was not in blacklist."));
+					return 1;
+				}
+				ctx.getSource().sendFeedback(Text.literal("ReactiveMusic: Removed " + key + " from blacklist."));
+				modConfig.blacklistedDimensions.remove(key);
+				ModConfig.saveConfig();
+				return 1;
+			}))
+			
+			
+			.then(literal("plugin")
+				.then(literal("list")
+				.executes(ctx -> {
+					for (SongpackEventPlugin plugin : PLUGINS) {
+						ctx.getSource().sendFeedback(Text.literal(plugin.getId()));
+					}
+					return 1;
+				}))
+				.then(literal("enable")
+				.executes(ctx -> {
+					// TODO: Implement pluginId first!
+					return 1;
+				}))
+				.then(literal("disable").executes(ctx -> {
+					// TODO: Implement pluginId first!
+					return 1;
+				}))
+			.executes(ctx -> {
+				ctx.getSource().sendFeedback(Text.literal("""
+					Usage:
+					/plugin list
+					/plugin enable pluginId
+					/plugin disable pluginId
+					"""));
+				return 1;	
+			}))
+			
+			
+			.then(literal("skip")
+			.executes(ctx -> {
+				ReactiveMusicState.currentEntry = null;
+				ReactiveMusicState.currentSong = null;
+				
+				return 1;
+			}))
+			
+			
+			.then(literal("info")
+				.then(literal("currentEntry")
+				.executes(ctx -> {
+					ctx.getSource().sendFeedback(debugTools.new TextBuilder()
+					
+					.header("CURRENT ENTRY")
+					.line("Events", ReactiveMusicState.currentEntry.eventString, Formatting.WHITE)
+					.build());
+					
+					return 1;
+				}))
 
+			.executes(ctx -> {
+				// TODO: What do we have here?
+				return 1;
+			}))
+		));
 
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("reactivemusic")
-				.executes(context -> {
-							MinecraftClient mc = context.getSource().getClient();
-							Screen screen = ModConfig.createScreen(mc.currentScreen);
-							mc.send(() -> mc.setScreen(screen));
-							return 1;
-						}
-				)
-
-
-				.then(ClientCommandManager.literal("logBlockCounter")
-						.executes(context -> {
-
-							SongPicker.queuedToPrintBlockCounter = true;
-
-							return 1;
-						})
-				)
-
-				.then(ClientCommandManager.literal("blacklistDimension")
-						.executes(context -> {
-
-							String key = context.getSource().getClient().world.getRegistryKey().getValue().toString();
-
-							if (modConfig.blacklistedDimensions.contains(key)) {
-								context.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was already in blacklist."));
-								return 1;
-							}
-
-							context.getSource().sendFeedback(Text.literal("ReactiveMusic: Added " + key + " to blacklist."));
-
-							modConfig.blacklistedDimensions.add(key);
-							ModConfig.saveConfig();
-
-							return 1;
-						})
-				)
-
-				.then(ClientCommandManager.literal("unblacklistDimension")
-						.executes(context -> {
-							String key = context.getSource().getClient().world.getRegistryKey().getValue().toString();
-
-							if (!modConfig.blacklistedDimensions.contains(key)) {
-								context.getSource().sendFeedback(Text.literal("ReactiveMusic: " + key + " was not in blacklist."));
-								return 1;
-							}
-
-							context.getSource().sendFeedback(Text.literal("ReactiveMusic: Removed " + key + " from blacklist."));
-
-							modConfig.blacklistedDimensions.remove(key);
-							ModConfig.saveConfig();
-
-							return 1;
-						})
-				)
-
-				.then(ClientCommandManager.literal("plugins")
-						.executes(context -> {
-							for (SongpackEventPlugin plugin : PLUGINS) {
-								context.getSource().sendFeedback(Text.literal(plugin.getId()));
-							}
-
-							return 1;
-						})
-				)
-
-				.then(ClientCommandManager.literal("skip")
-						.executes(context -> {
-							ReactiveMusicState.currentEntry = null;
-							ReactiveMusicState.currentSong = null;
-							
-							return 1;
-						})
-				)
-
-				.then(ClientCommandManager.literal("info")
-						.executes(context -> {
-							// TODO: Do something here.
-							return 1;
-						})
-				)
-
-			)
-		);
 	}
+	
+	
 
 	public static void newTick() {
 		if (musicPlayer == null) return;
@@ -230,7 +248,7 @@ public class ReactiveMusic implements ModInitializer {
 
 			if (mc.options.getSoundVolume(SoundCategory.MASTER) > 0.5) {
 
-				LOGGER.info("Forcing master volume to a lower default, this will only happen once on mod-install to avoid loud defaults.");
+				ReactiveMusicDebug.LOGGER.info("Forcing master volume to a lower default, this will only happen once on mod-install to avoid loud defaults.");
 
 				mc.options.getSoundVolumeOption(SoundCategory.MASTER).setValue(0.5);
 				mc.options.write();
