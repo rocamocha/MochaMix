@@ -1,10 +1,15 @@
 package circuitlord.reactivemusic;
 
 import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.audio.RMPlayerManager;
+import circuitlord.reactivemusic.api.audio.ReactivePlayer;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerManager;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerOptions;
+import circuitlord.reactivemusic.api.eventsys.PluginIdentifier;
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
 import circuitlord.reactivemusic.config.ModConfig;
-import circuitlord.reactivemusic.songpack.RMSongpackLoader;
-
+import circuitlord.reactivemusic.impl.audio.RMPlayerManager;
+import circuitlord.reactivemusic.impl.eventsys.RMPluginIdentifier;
+import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackLoader;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
@@ -23,8 +28,9 @@ import java.util.ServiceLoader;
 
 public class ReactiveMusic implements ModInitializer {
 
-	public static final ServiceLoader<SongpackEventPlugin> PLUGINS = ServiceLoader.load(SongpackEventPlugin.class);
+	public static final ServiceLoader<ReactiveMusicPlugin> PLUGINS = ServiceLoader.load(ReactiveMusicPlugin.class);
 	
+	public static final PluginIdentifier corePluginId = new RMPluginIdentifier("reactivemusic", "core");
 	public static final ReactiveMusicDebug debugTools = new ReactiveMusicDebug();
 	public static ModConfig modConfig;
 
@@ -61,7 +67,7 @@ public class ReactiveMusic implements ModInitializer {
 		ModConfig.GSON.load();
 		modConfig = ModConfig.getConfig();
 		
-		ReactiveMusicState.logicFreeze.put("ReactiveMusicCore", false);
+		ReactiveMusicState.logicFreeze.put(corePluginId, false);
 		ReactiveMusicDebug.LOGGER.info("Initializing Reactive Music");
 		
 		if (circuitlord.reactivemusic.api.ReactiveMusicUtils.isClientEnv()) {
@@ -88,7 +94,7 @@ public class ReactiveMusic implements ModInitializer {
 			
 			SongPicker.initialize();
 			
-			for (SongpackEventPlugin plugin: PLUGINS) {
+			for (ReactiveMusicPlugin plugin: PLUGINS) {
 				plugin.init();
 			}
 			
@@ -175,8 +181,8 @@ public class ReactiveMusic implements ModInitializer {
 			.then(literal("plugin")
 				.then(literal("list")
 				.executes(ctx -> {
-					for (SongpackEventPlugin plugin : PLUGINS) {
-						ctx.getSource().sendFeedback(Text.literal(plugin.getId()));
+					for (ReactiveMusicPlugin plugin : PLUGINS) {
+						ctx.getSource().sendFeedback(Text.literal(plugin.pluginId.getId()));
 					}
 					return 1;
 				}))
@@ -212,10 +218,14 @@ public class ReactiveMusic implements ModInitializer {
 			.then(literal("info")
 				.then(literal("currentEntry")
 				.executes(ctx -> {
+					RuntimeEntry entry = ReactiveMusicState.currentEntry;
+
 					ctx.getSource().sendFeedback(debugTools.new TextBuilder()
 					
 					.header("CURRENT ENTRY")
-					.line("Events", ReactiveMusicState.currentEntry.eventString, Formatting.WHITE)
+					.line("events", entry.getEventString(), Formatting.WHITE)
+					.line("allowFallback ", entry.fallbackAllowed() ? "YES" : "NO", entry.fallbackAllowed() ? Formatting.GREEN : Formatting.GRAY)
+					.line("useOverlay", entry.shouldOverlay() ? "YES" : "NO", entry.shouldOverlay() ? Formatting.GREEN : Formatting.GRAY )
 					.build());
 					
 					return 1;
@@ -274,7 +284,7 @@ public class ReactiveMusic implements ModInitializer {
 
 		ReactiveMusicState.validEntries = ReactiveMusicCore.getValidEntries();
 
-		if (!ReactiveMusicState.logicFreeze.get("ReactiveMusicCore")) {
+		if (!ReactiveMusicState.logicFreeze.get(corePluginId)) {
 			ReactiveMusicCore.newTick(audio().getByGroup("music"));
 		}
 		

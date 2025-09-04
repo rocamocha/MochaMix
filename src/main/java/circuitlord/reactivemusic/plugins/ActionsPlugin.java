@@ -1,6 +1,8 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseEntity;
 import net.minecraft.entity.passive.PigEntity;
@@ -11,27 +13,28 @@ import net.minecraft.world.World;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class ActionsPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Actions (Built-In)"; }
-    Logger LOGGER = LoggerFactory.getLogger(getId());
-
-    private static SongpackEvent FISHING, MINECART, BOAT, HORSE, PIG;
-
-    @Override public void init() {
-        LOGGER.info("Initializing " + getId() + " songpack event plugin");
-
-        FISHING = SongpackEvent.register("FISHING");
-        MINECART = SongpackEvent.register("MINECART");
-        BOAT = SongpackEvent.register("BOAT");
-        HORSE = SongpackEvent.register("HORSE");
-        PIG = SongpackEvent.register("PIG");
+public final class ActionsPlugin extends ReactiveMusicPlugin {
+    
+    public ActionsPlugin() {
+        super("reactivemusic", "actions");
     }
 
+    private static EventRecord FISHING, MINECART, BOAT, HORSE, PIG;
+
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
+    public void init() {
+        registerSongpackEvents("FISHING","MINECART","BOAT","HORSE","PIG");
+        
+        FISHING = SongpackEvent.get("FISHING");
+        MINECART = SongpackEvent.get("MINECART");
+        BOAT = SongpackEvent.get("BOAT");
+        HORSE = SongpackEvent.get("HORSEING");
+        PIG = SongpackEvent.get("PIG");
+    }
+    
+
+    @Override
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> eventMap) {
         if (player == null) return;
 
         eventMap.put(FISHING, player.fishHook != null);

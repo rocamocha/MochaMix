@@ -2,6 +2,7 @@ package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.Registries;
@@ -12,8 +13,10 @@ import net.minecraft.block.Block;
 
 import java.util.*;
 
-public final class BlockCounterPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Block Counter (Built-In)"; }
+public final class BlockCounterPlugin extends ReactiveMusicPlugin {
+    public BlockCounterPlugin() {
+        super("reactivemusic", "block_counter");
+    }
 
     // --- config (mirrors your current setup) ---
     private static final int RADIUS = 25;
@@ -29,7 +32,7 @@ public final class BlockCounterPlugin implements SongpackEventPlugin {
     @Override public int tickSchedule() { return 1; }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> out) {
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> out) {
         if (!(player instanceof ClientPlayerEntity) || world == null) return;
 
         // lazily initialize origin

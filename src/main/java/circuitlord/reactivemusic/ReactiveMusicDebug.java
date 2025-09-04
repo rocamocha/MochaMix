@@ -10,8 +10,10 @@ import org.slf4j.LoggerFactory;
 
 public class ReactiveMusicDebug {
     public ReactiveMusicDebug() {}
+    public static final ReactiveMusicDebug INSTANCE = new ReactiveMusicDebug(); 
     
     public static final Logger LOGGER = LoggerFactory.getLogger("reactive_music");
+    public static final ChangeLogger CHANGE_LOGGER = INSTANCE.new ChangeLogger();
 
     /**
      * Useful for monitoring changes on an assignment that happens every tick,
@@ -70,6 +72,15 @@ public class ReactiveMusicDebug {
             if (thisLog.equals(PreviousLog)) return;
             LOGGER.info(msg);
             PreviousLog = thisLog;
+        }
+    }
+
+    public class Wrapper {
+        private static ChangeLogger WRAPPER_LOGGER = INSTANCE.new ChangeLogger();
+
+        public static void fn(Runnable m) {
+            WRAPPER_LOGGER.writeInfo(Thread.currentThread().getStackTrace()[2].getMethodName());
+            m.run();
         }
     }
 

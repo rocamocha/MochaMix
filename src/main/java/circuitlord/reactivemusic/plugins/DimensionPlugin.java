@@ -2,24 +2,30 @@ package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
 import java.util.Map;
 
-public final class DimensionPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Dimensions (Built-In)"; }
-    private static SongpackEvent OVERWORLD, NETHER, END;
+public final class DimensionPlugin extends ReactiveMusicPlugin {
+    public DimensionPlugin() {
+        super("reactivemusic", "dimension");
+    }
+    private static EventRecord OVERWORLD, NETHER, END;
 
     @Override
     public void init() {
-        OVERWORLD = SongpackEvent.register("OVERWORLD");
-        NETHER    = SongpackEvent.register("NETHER");
-        END       = SongpackEvent.register("END");
+        registerSongpackEvents("OVERWORLD", "NETHER", "END");
+
+        OVERWORLD = SongpackEvent.get("OVERWORLD");
+        NETHER    = SongpackEvent.get("NETHER");
+        END       = SongpackEvent.get("END");
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> eventMap) {
         if (world == null) return;
 
         var indimension = world.getRegistryKey();

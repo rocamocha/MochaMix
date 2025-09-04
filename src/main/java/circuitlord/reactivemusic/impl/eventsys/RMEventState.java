@@ -1,6 +1,7 @@
-package circuitlord.reactivemusic.songpack;
+package circuitlord.reactivemusic.impl.eventsys;
 
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.*;
@@ -12,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * It is here for possible server-side functionality using
  * a bridging plugin for client-server communication.
  */
-public final class RMSongpackEventState {
-    private RMSongpackEventState() {}
+public final class RMEventState {
+    private RMEventState() {}
     private static final Map<UUID, Map<SongpackEvent, Boolean>> LAST = new ConcurrentHashMap<>();
 
     public static void updateForPlayer(PlayerEntity player, Map<SongpackEvent, Boolean> conditions) {

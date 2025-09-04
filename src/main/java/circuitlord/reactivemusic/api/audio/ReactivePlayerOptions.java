@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic.api;
+package circuitlord.reactivemusic.api.audio;
 
 /** Builder-style options for creating RMPlayers. */
 public final class ReactivePlayerOptions {

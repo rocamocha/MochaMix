@@ -1,9 +1,9 @@
 package circuitlord.reactivemusic.compat.modmenu;
 
 
-//import circuitlord.reactivemusic.RMConfigScreen;
 import circuitlord.reactivemusic.compat.CompatUtils;
 import circuitlord.reactivemusic.config.ModConfig;
+
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import net.fabricmc.api.EnvType;

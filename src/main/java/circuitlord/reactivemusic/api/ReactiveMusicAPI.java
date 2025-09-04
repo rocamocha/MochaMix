@@ -3,7 +3,10 @@ package circuitlord.reactivemusic.api;
 import java.util.List;
 
 import circuitlord.reactivemusic.*;
-import circuitlord.reactivemusic.songpack.RMSongpackLoader;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerManager;
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackZip;
+import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackLoader;
 
 public interface ReactiveMusicAPI {
     public interface ModConfig {
@@ -16,17 +19,18 @@ public interface ReactiveMusicAPI {
      * modularity.
      */
     public interface EventSys { 
+    }
+    
+    public interface Songpack {
+        static SongpackZip getCurrent() { return ReactiveMusicState.currentSongpack; }
+        static List<SongpackZip> getAvailable() { return List.copyOf(RMSongpackLoader.availableSongpacks); }
+
         static RuntimeEntry currentEntry() { return ReactiveMusicState.currentEntry; }
         static String currentSong() { return ReactiveMusicState.currentSong; }
         static List<String> recentSongs() { return ReactiveMusicState.recentlyPickedSongs; }
         static List<RuntimeEntry> validEntries() { return List.copyOf(ReactiveMusicState.validEntries); }
         static List<RuntimeEntry> loadedEntries() { return List.copyOf(ReactiveMusicState.loadedEntries); }
         static List<RuntimeEntry> previousValidEntries() { return List.copyOf(ReactiveMusicState.previousValidEntries); }
-    }
-
-    public interface Songpack {
-        static SongpackZip getCurrent() { return ReactiveMusicState.currentSongpack; }
-        static List<SongpackZip> getAvailable() { return List.copyOf(RMSongpackLoader.availableSongpacks); }
     }
 
     static ReactivePlayerManager audioManager() { return ReactiveMusic.audio(); }

@@ -1,10 +1,10 @@
-package circuitlord.reactivemusic.audio;
+package circuitlord.reactivemusic.impl.audio;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.api.ReactivePlayer;
-import circuitlord.reactivemusic.api.ReactivePlayerOptions;
-import circuitlord.reactivemusic.songpack.MusicPackResource;
-import circuitlord.reactivemusic.songpack.RMSongpackLoader;
+import circuitlord.reactivemusic.api.audio.ReactivePlayer;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerOptions;
+import circuitlord.reactivemusic.impl.eventsys.songpack.MusicPackResource;
+import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -341,9 +341,9 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         LOGGER.info("[openFromSongpack]:" + fileName);
 
         return RMSongpackLoader.getInputStream(
-            ReactiveMusicState.currentSongpack.path,
+            ReactiveMusicState.currentSongpack.getPath(),
             fileName,
-            ReactiveMusicState.currentSongpack.embedded
+            ReactiveMusicState.currentSongpack.isEmbedded()
         ); // loader returns MusicPackResource{ inputStream, fileSystem? }.
     }
 
@@ -359,9 +359,9 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         LOGGER.info("[openFromFile]: " + fileName);
 
         return RMSongpackLoader.getInputStream(
-            ReactiveMusicState.currentSongpack.path,
+            ReactiveMusicState.currentSongpack.getPath(),
             fileName,
-            ReactiveMusicState.currentSongpack.embedded
+            ReactiveMusicState.currentSongpack.isEmbedded()
         );
     }
 

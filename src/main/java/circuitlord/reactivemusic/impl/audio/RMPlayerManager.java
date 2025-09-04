@@ -1,9 +1,9 @@
-package circuitlord.reactivemusic.audio;
+package circuitlord.reactivemusic.impl.audio;
 
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.api.ReactivePlayer;
-import circuitlord.reactivemusic.api.ReactivePlayerManager;
-import circuitlord.reactivemusic.api.ReactivePlayerOptions;
+import circuitlord.reactivemusic.api.audio.ReactivePlayer;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerManager;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerOptions;
 
 import java.util.Collection;
 import java.util.Collections;

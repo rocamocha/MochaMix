@@ -1,9 +1,9 @@
-package circuitlord.reactivemusic.api;
+package circuitlord.reactivemusic.api.eventsys.songpack;
 
 import java.util.List;
 
-import circuitlord.reactivemusic.entries.RMEntryCondition;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.impl.eventsys.songpack.entries.RMEntryCondition;
+import circuitlord.reactivemusic.impl.eventsys.songpack.entries.RMRuntimeEntry;
 
 /** Marker for type-safety without exposing internals.*/
 public interface RuntimeEntry {
@@ -15,9 +15,18 @@ public interface RuntimeEntry {
      */
     Object getExternalOption(String key);
 
+    String getEventString();
+    String getErrorString();
     List<String> getSongs();
     boolean fallbackAllowed();
     boolean shouldOverlay();
+    float getForceChance();
+    boolean getForceStopMusicOnValid();
+    boolean getForceStopMusicOnInvalid();
+    boolean getForceStartMusicOnValid();
+    float getCachedRandomChance();
+    void setCachedRandomChance(float c);
+    String getSongpack();
 
     List<RMEntryCondition> getConditions();
 }

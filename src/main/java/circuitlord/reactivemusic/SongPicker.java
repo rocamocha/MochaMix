@@ -1,8 +1,11 @@
 package circuitlord.reactivemusic;
 
+import circuitlord.reactivemusic.ReactiveMusicDebug.ChangeLogger;
+import circuitlord.reactivemusic.ReactiveMusicDebug.Wrapper;
 import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-import circuitlord.reactivemusic.songpack.RMSongpackEventState;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.CreditsScreen;
@@ -20,6 +23,7 @@ import java.util.*;
 import org.jetbrains.annotations.NotNull;
 
 public final class SongPicker {
+    private static final ChangeLogger CHANGE_LOGGER = ReactiveMusic.debugTools.new ChangeLogger();
 
     static int pluginTickCounter = 0;
     // TODO: Put this stuff in the plugins, silly 😝
@@ -74,10 +78,10 @@ public final class SongPicker {
         
         pluginTickCounter++;
         
-        for (SongpackEventPlugin plugin : ReactiveMusic.PLUGINS) {
+        for (ReactiveMusicPlugin plugin : ReactiveMusic.PLUGINS) {
             
-            if (ReactiveMusicState.logicFreeze.computeIfAbsent(plugin.getId(), k -> false)) {
-                ReactiveMusicState.LOGGER.info("Skipping execution for " + plugin.getId());
+            if (ReactiveMusicState.logicFreeze.computeIfAbsent(plugin.pluginId, k -> false)) {
+                ReactiveMusicState.LOGGER.info("Skipping execution for " + plugin.pluginId.getId());
                 continue;
             }
 
@@ -100,34 +104,30 @@ public final class SongPicker {
         ReactiveMusicState.songpackEventMap.put(SongpackEvent.GENERIC, true);
         ReactiveMusicState.songpackEventMap.put(SongpackEvent.MAIN_MENU, (player == null || world == null));
         ReactiveMusicState.songpackEventMap.put(SongpackEvent.CREDITS, (mc.currentScreen instanceof CreditsScreen));
-        
-        /**
-         * Not implemented yet.
-         * @see RMSongpackEventState
-         */
-        RMSongpackEventState.updateForPlayer(player, ReactiveMusicState.songpackEventMap);
+
     }
 
     public static void initialize() {
         // build string -> type map from the internal registry
         ReactiveMusicState.songpackEventMap.clear();
-        for (SongpackEvent event : SongpackEvent.values()) {
-            ReactiveMusicState.songpackEventMap.put(event, false);
+        for (EventRecord eventRecord : SongpackEvent.values()) {
+            ReactiveMusicState.songpackEventMap.put(eventRecord, false);
         }
     }
 
     //----------------------------------------------------------------------------------------
-    public static boolean isEntryValid(RMRuntimeEntry entry) {
+    public static boolean isEntryValid(RuntimeEntry entry) {
 
-        for (var condition : entry.conditions) {
+        for (var condition : entry.getConditions()) {
 
             // each condition functions as an OR, if at least one of them is true then the condition is true
 
 
             boolean songpackEventsValid = false;
-            for (var eventType : condition.songpackEvents) {
-                if (eventType == null) break;
-                if (ReactiveMusicState.songpackEventMap.containsKey(eventType) && ReactiveMusicState.songpackEventMap.get(eventType)) {
+            for (var eventRecord : condition.songpackEvents) {
+                if (eventRecord == null) break;
+                CHANGE_LOGGER.writeInfo(ReactiveMusicState.songpackEventMap.containsKey(eventRecord) ? "The event record key was found in the event map!" : "Oh no!" );
+                if (ReactiveMusicState.songpackEventMap.containsKey(eventRecord) && ReactiveMusicState.songpackEventMap.get(SongpackEvent.get(eventRecord.getEventId()))) {
                     songpackEventsValid = true;
                     break;
                 }
@@ -180,7 +180,7 @@ public final class SongPicker {
         
     }
 
-    public static @NotNull List<String> getSelectedSongs(RMRuntimeEntry newEntry, List<RMRuntimeEntry> validEntries) {
+    public static @NotNull List<String> getSelectedSongs(RuntimeEntry newEntry, List<RuntimeEntry> validEntries) {
 		// if we have non-recent songs then just return those
 		if (ReactiveMusicUtils.hasSongNotPlayedRecently(newEntry.getSongs())) {
 			return newEntry.getSongs();
@@ -191,8 +191,8 @@ public final class SongPicker {
 				if (ReactiveMusicState.validEntries.get(i) == null)
 					continue;
 				// check if we have songs not played recently and early out
-				if (ReactiveMusicUtils.hasSongNotPlayedRecently(ReactiveMusicState.validEntries.get(i).songs)) {
-					return ReactiveMusicState.validEntries.get(i).songs;
+				if (ReactiveMusicUtils.hasSongNotPlayedRecently(ReactiveMusicState.validEntries.get(i).getSongs())) {
+					return ReactiveMusicState.validEntries.get(i).getSongs();
 				}
 			}
 		}

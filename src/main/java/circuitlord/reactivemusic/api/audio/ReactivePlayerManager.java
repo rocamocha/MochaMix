@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic.api;
+package circuitlord.reactivemusic.api.audio;
 
 import java.util.Collection;
 

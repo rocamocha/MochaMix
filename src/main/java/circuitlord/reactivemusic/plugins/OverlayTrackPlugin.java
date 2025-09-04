@@ -5,15 +5,20 @@ import circuitlord.reactivemusic.ReactiveMusicCore;
 import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.audio.ReactivePlayer;
+import circuitlord.reactivemusic.api.audio.ReactivePlayerOptions;
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
 
-public final class OverlayTrackPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Overlay Track (Built-In)"; }
+public final class OverlayTrackPlugin extends ReactiveMusicPlugin {
+    public OverlayTrackPlugin() {
+        super("reactivemusic","overlay");
+    }
 
     ReactivePlayer musicPlayer;
     ReactivePlayer overlayPlayer;
 
     @Override public void init() {
-        ReactiveMusicState.LOGGER.info("Initializing " + getId() + " songpack event plugin");
+        ReactiveMusicState.LOGGER.info("Initializing " + pluginId.getId() + " plugin");
         musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
 
         ReactiveMusicAPI.audioManager().create(
@@ -64,8 +69,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
     /**
      * FIXME
      * This is broken. It should be getting called from processValidEvents... but it isn't.
-     * @see SongpackEventPlugin#onValid(RMRuntimeEntry)
-     * @see ReactiveMusicCore#processValidEvents(java.util.List, java.util.List)
+     * @see ReactiveMusicPlugin#onValid(RMRuntimeEntry)
      */
     @Override public void onValid(RuntimeEntry entry) {
         // ReactiveMusicAPI.LOGGER.info("Overlay enabled");
@@ -78,8 +82,7 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * FIXME
      * This is broken. It should be getting called from processValidEvents... but it isn't.
      * Or is it? It's not logging, but sometimes the main player breaks.
-     * @see SongpackEventPlugin#onInvalid(RMRuntimeEntry)
-     * @see ReactiveMusicCore#processValidEvents(java.util.List, java.util.List)
+     * @see ReactiveMusicPlugin#onInvalid(RMRuntimeEntry)
      */
     @Override public void onInvalid(RuntimeEntry entry) {
         // ReactiveMusicAPI.LOGGER.info("Overlay disabled");
@@ -94,6 +97,8 @@ public final class OverlayTrackPlugin implements SongpackEventPlugin {
      * @return
      */
     public static boolean usingOverlay() {
+        // FIXME: Overlay should only activate is the entry is higher prio
+        // ???: Should prio be checked here or in core logic?
         for (RuntimeEntry entry : ReactiveMusicState.validEntries) {
             if (entry.shouldOverlay()) {
                 return true;

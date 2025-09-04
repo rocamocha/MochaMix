@@ -2,6 +2,7 @@ package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -10,12 +11,15 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
 
 import java.util.List;
+import java.util.Map;
 
-public final class BiomeTagPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Biome Tags (Built-In)"; }
+public final class BiomeTagPlugin extends ReactiveMusicPlugin {
+    public BiomeTagPlugin() {
+        super("reactivemusic", "biome_tag");
+    }
     @Override public void init() { /* no-op (SongPicker already builds BIOME_TAGS/map) */ }
 
-    @Override public void gameTick(PlayerEntity player, World world, java.util.Map<SongpackEvent, Boolean> out) {
+    @Override public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> out) {
         if (player == null || world == null) return;
 
         BlockPos pos = player.getBlockPos();

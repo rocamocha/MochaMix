@@ -2,6 +2,8 @@ package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.ReactiveMusic;
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import circuitlord.reactivemusic.config.ModConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
@@ -12,8 +14,10 @@ import net.minecraft.world.World;
 
 import java.util.Map;
 
-public final class AtHomePlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "At Home (Built-In)"; }
+public final class AtHomePlugin extends ReactiveMusicPlugin {
+    public AtHomePlugin() {
+        super("reactivemusic", "at_home");
+    }
 
     private static final float RADIUS = 45.0f;
 
@@ -21,21 +25,20 @@ public final class AtHomePlugin implements SongpackEventPlugin {
     private static boolean wasSleeping = false;
 
     // Event handles
-    private static SongpackEvent HOME;
-    private static SongpackEvent HOME_OVERWORLD;
-    private static SongpackEvent HOME_NETHER;
-    private static SongpackEvent HOME_END;
+    private static EventRecord HOME, HOME_OVERWORLD, HOME_NETHER, HOME_END;
 
     @Override
     public void init() {
-        HOME = SongpackEvent.register("HOME");
-        HOME_OVERWORLD = SongpackEvent.register("HOME_OVERWORLD");
-        HOME_NETHER = SongpackEvent.register("HOME_NETHER");
-        HOME_END = SongpackEvent.register("HOME_END");
+        registerSongpackEvents("HOME", "HOME_OVERWORLD", "HOME_NETHER", "HOME_END");
+        
+        HOME = SongpackEvent.get("HOME");
+        HOME_OVERWORLD = SongpackEvent.get("HOME_OVERWORLD");
+        HOME_NETHER = SongpackEvent.get("HOME_NETHER");
+        HOME_END = SongpackEvent.get("HOME_END");
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         // Keys: base (per save/server), and per-dimension
@@ -48,6 +51,8 @@ public final class AtHomePlugin implements SongpackEventPlugin {
             var pos = player.getPos();
             ReactiveMusic.modConfig.savedHomePositions.put(baseKey, pos);
             ReactiveMusic.modConfig.savedHomePositions.put(dimKey, pos);
+            // TODO: There is a better way to sereialize the positions that is built into the fabric mappings
+            // ???: Is it Persistent State?
             ModConfig.saveConfig();
         }
         wasSleeping = player.isSleeping();

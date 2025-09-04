@@ -1,8 +1,7 @@
-package circuitlord.reactivemusic.songpack;
+package circuitlord.reactivemusic.impl.eventsys.songpack;
 
-import circuitlord.reactivemusic.api.*;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
-
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackZip;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -11,7 +10,7 @@ public class RMSongpackZip implements SongpackZip {
     public RMSongpackConfig config;
 
 
-    public List<RMRuntimeEntry> runtimeEntries;
+    public List<RuntimeEntry> runtimeEntries;
 
 
     public Path path;
@@ -26,8 +25,11 @@ public class RMSongpackZip implements SongpackZip {
 
     public boolean embedded = false;
 
+    public boolean isEmbedded() { return embedded; }
+    public RMSongpackConfig getConfig() { return config; }
     public Path getPath() { return path; }
     public String getErrorString() { return errorString; }
+    public void setErrorString(String s) { errorString = s; }
     public List<RuntimeEntry> getEntries() { return List.copyOf(runtimeEntries); }
     
     public String getName() { return config.name; }

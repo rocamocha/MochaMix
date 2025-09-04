@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic.songpack;
+package circuitlord.reactivemusic.impl.eventsys.songpack;
 
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;

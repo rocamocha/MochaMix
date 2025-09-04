@@ -1,6 +1,8 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -8,17 +10,20 @@ import net.minecraft.world.World;
 
 import java.util.Map;
 
-public final class ProximityPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Proximity (Built-In)"; }
-    private static SongpackEvent NEARBY_MOBS, VILLAGE;
+public final class ProximityPlugin extends ReactiveMusicPlugin {
+    public ProximityPlugin() {
+        super("reactivemusic", "promximity");
+    }
+    private static EventRecord NEARBY_MOBS, VILLAGE;
 
     @Override public void init() {
-        NEARBY_MOBS = SongpackEvent.register("NEARBY_MOBS");
-        VILLAGE     = SongpackEvent.register("VILLAGE");
+        registerSongpackEvents("NEARBY_MOBS", "VILLAGE");
+        NEARBY_MOBS = SongpackEvent.get("NEARBY_MOBS");
+        VILLAGE     = SongpackEvent.get("VILLAGE");
     }
 
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         // Nearby mobs

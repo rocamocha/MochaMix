@@ -1,25 +1,33 @@
 package circuitlord.reactivemusic.plugins;
 
 import circuitlord.reactivemusic.api.*;
+import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
 import java.util.Map;
 
-public final class TimeOfDayPlugin implements SongpackEventPlugin {
-    @Override public String getId() { return "Time of Day (Built-In)"; }
-    private static SongpackEvent DAY, NIGHT, SUNSET, SUNRISE;
-
-    @Override
-    public void init() {
-        DAY     = SongpackEvent.register("DAY");
-        NIGHT   = SongpackEvent.register("NIGHT");
-        SUNSET  = SongpackEvent.register("SUNSET");
-        SUNRISE = SongpackEvent.register("SUNRISE");
+public final class TimeOfDayPlugin extends ReactiveMusicPlugin {
+    public TimeOfDayPlugin() {
+        super("reactivemusic", "time_of_day");
     }
 
+    private static EventRecord DAY, NIGHT, SUNSET, SUNRISE;
+    
     @Override
-    public void gameTick(PlayerEntity player, World world, Map<SongpackEvent, Boolean> eventMap) {
+    public void init() {
+        registerSongpackEvents("DAY","NIGHT","SUNSET","SUNRISE");
+        
+        DAY = SongpackEvent.get("DAY");
+        NIGHT = SongpackEvent.get("NIGHT");
+        SUNSET = SongpackEvent.get("SUNSET");
+        SUNRISE = SongpackEvent.get("SUNRISE");
+    }
+
+
+    @Override
+    public void gameTick(PlayerEntity player, World world, Map<EventRecord, Boolean> eventMap) {
         if (player == null || world == null) return;
 
         long time = world.getTimeOfDay() % 24000L;

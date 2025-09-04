@@ -1,8 +1,8 @@
-package circuitlord.reactivemusic.songpack;
+package circuitlord.reactivemusic.impl.eventsys.songpack;
 
-import circuitlord.reactivemusic.ReactiveMusic;
 import circuitlord.reactivemusic.ReactiveMusicDebug;
-import circuitlord.reactivemusic.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.impl.eventsys.songpack.entries.RMRuntimeEntry;
 import net.fabricmc.loader.api.FabricLoader;
 import org.rm_yaml.snakeyaml.Yaml;
 import org.rm_yaml.snakeyaml.constructor.Constructor;
@@ -208,22 +208,22 @@ public class RMSongpackLoader {
         return loadSongpack(songpackPath, embedded, "ReactiveMusic.yaml");
     }
 
-    private static List<RMRuntimeEntry> getRuntimeEntries(RMSongpackZip songpackZip) {
-        List<RMRuntimeEntry> runtimeEntries = new ArrayList<>();
+    private static List<RuntimeEntry> getRuntimeEntries(RMSongpackZip songpackZip) {
+        List<RuntimeEntry> runtimeEntries = new ArrayList<>();
 
-        for (var entry : songpackZip.config.entries) {
+        for (var entry : songpackZip.getConfig().entries) {
             if (entry == null) continue;
 
-            RMRuntimeEntry runtimeEntry = RMRuntimeEntry.create(songpackZip, entry);
+            RuntimeEntry runtimeEntry = new RMRuntimeEntry(songpackZip, entry);
 
-            if (!runtimeEntry.errorString.isEmpty()) {
-                songpackZip.errorString += runtimeEntry.errorString;
+            if (!runtimeEntry.getErrorString().isEmpty()) {
+                songpackZip.setErrorString(songpackZip.getErrorString() + runtimeEntry.getErrorString());
 
                 // allow it to keep loading if it passes the check below
                 //continue;
             }
 
-            if (runtimeEntry.conditions.isEmpty()) continue;
+            if (runtimeEntry.getConditions().isEmpty()) continue;
 
             runtimeEntries.add(runtimeEntry);
         }
