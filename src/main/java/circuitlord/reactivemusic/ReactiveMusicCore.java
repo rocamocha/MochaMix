@@ -253,6 +253,7 @@ public final class ReactiveMusicCore {
             // if you do a fade-in elsewhere, set 0 here; otherwise set 1
             player.setGainPercent(1.0f);
             player.setDuckPercent(1.0f);
+            player.setFadePercent(1.0f);
             player.setSong(song);   // resolves to music/<song>.mp3 inside RMPlayerImpl
             player.play();          // worker thread runs blocking play() internally
         }
