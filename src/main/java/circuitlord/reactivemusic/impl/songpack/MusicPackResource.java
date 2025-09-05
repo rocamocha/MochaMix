@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack;
+package circuitlord.reactivemusic.impl.songpack;
 
 import java.io.InputStream;
 import java.nio.file.FileSystem;

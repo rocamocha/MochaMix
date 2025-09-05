@@ -3,8 +3,9 @@ package circuitlord.reactivemusic.api;
 import circuitlord.reactivemusic.ReactiveMusicState;
 import circuitlord.reactivemusic.api.eventsys.EventRecord;
 import circuitlord.reactivemusic.api.eventsys.PluginIdentifier;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.SongpackEvent;
+import circuitlord.reactivemusic.impl.eventsys.RMEventRecord;
 import circuitlord.reactivemusic.impl.eventsys.RMPluginIdentifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
@@ -40,7 +41,7 @@ public abstract class ReactiveMusicPlugin {
      */
     public void registerSongpackEvents(String... eventNames) {
         for (String e : eventNames) {
-            SongpackEvent.register(EventRecord.create(e.toUpperCase(), this.pluginId));
+            SongpackEvent.register(new RMEventRecord(e.toUpperCase(), this.pluginId));
         }
     }
 

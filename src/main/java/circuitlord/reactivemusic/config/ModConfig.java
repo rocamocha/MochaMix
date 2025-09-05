@@ -3,8 +3,8 @@ package circuitlord.reactivemusic.config;
 
 import circuitlord.reactivemusic.ReactiveMusicCore;
 import circuitlord.reactivemusic.ReactiveMusicState;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackLoader;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackZip;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackLoader;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackZip;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;

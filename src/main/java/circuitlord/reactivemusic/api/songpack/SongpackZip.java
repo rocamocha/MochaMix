@@ -1,9 +1,9 @@
-package circuitlord.reactivemusic.api.eventsys.songpack;
+package circuitlord.reactivemusic.api.songpack;
 
 import java.nio.file.Path;
 import java.util.List;
 
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackConfig;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackConfig;
 
 public interface SongpackZip {
     boolean isEmbedded();

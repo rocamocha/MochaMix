@@ -3,7 +3,7 @@ package circuitlord.reactivemusic.plugins;
 import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.api.eventsys.EventRecord;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
+import circuitlord.reactivemusic.api.songpack.SongpackEvent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 

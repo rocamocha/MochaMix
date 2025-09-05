@@ -1,9 +1,9 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack;
+package circuitlord.reactivemusic.impl.songpack;
 
 import java.util.*;
 
 import circuitlord.reactivemusic.ReactiveMusicDebug;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
+import circuitlord.reactivemusic.api.songpack.SongpackEvent;
 import circuitlord.reactivemusic.impl.eventsys.RMEventRecord;
 import circuitlord.reactivemusic.impl.eventsys.RMPluginIdentifier;
 

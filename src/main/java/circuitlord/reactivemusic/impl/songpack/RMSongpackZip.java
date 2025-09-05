@@ -1,9 +1,10 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack;
+package circuitlord.reactivemusic.impl.songpack;
 
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackZip;
 import java.nio.file.Path;
 import java.util.List;
+
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.SongpackZip;
 
 public class RMSongpackZip implements SongpackZip {
 

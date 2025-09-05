@@ -1,9 +1,9 @@
-package circuitlord.reactivemusic.api.eventsys.songpack;
+package circuitlord.reactivemusic.api.songpack;
 
 import java.util.Map;
 
 import circuitlord.reactivemusic.impl.eventsys.RMEventRecord;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackEvent;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackEvent;
 
 /**
  * This had to be structured as a coupling.

@@ -1,8 +1,7 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack;
+package circuitlord.reactivemusic.impl.songpack;
 
 import circuitlord.reactivemusic.ReactiveMusicDebug;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.impl.eventsys.songpack.entries.RMRuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
 import net.fabricmc.loader.api.FabricLoader;
 import org.rm_yaml.snakeyaml.Yaml;
 import org.rm_yaml.snakeyaml.constructor.Constructor;

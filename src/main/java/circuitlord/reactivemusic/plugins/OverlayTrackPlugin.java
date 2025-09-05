@@ -7,7 +7,7 @@ import circuitlord.reactivemusic.SongPicker;
 import circuitlord.reactivemusic.api.*;
 import circuitlord.reactivemusic.api.audio.ReactivePlayer;
 import circuitlord.reactivemusic.api.audio.ReactivePlayerOptions;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
 
 public final class OverlayTrackPlugin extends ReactiveMusicPlugin {
     public OverlayTrackPlugin() {

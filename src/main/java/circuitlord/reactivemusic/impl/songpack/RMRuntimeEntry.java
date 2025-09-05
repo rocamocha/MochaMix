@@ -1,11 +1,9 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack.entries;
+package circuitlord.reactivemusic.impl.songpack;
 
 import circuitlord.reactivemusic.SongPicker;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackEvent;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackEntry;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackZip;
 import circuitlord.reactivemusic.api.eventsys.EventRecord;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.SongpackEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,9 +72,9 @@ public class RMRuntimeEntry implements RuntimeEntry {
     public boolean fallbackAllowed() { return allowFallback; }
     public boolean shouldOverlay() { return useOverlay; }
     public float getForceChance() { return forceChance; }
-    public boolean getForceStopMusicOnValid() { return forceStopMusicOnValid; }
-    public boolean getForceStopMusicOnInvalid() { return forceStopMusicOnInvalid; }
-    public boolean getForceStartMusicOnValid() { return forceStartMusicOnValid; }
+    public boolean shouldStopMusicOnValid() { return forceStopMusicOnValid; }
+    public boolean shouldStopMusicOnInvalid() { return forceStopMusicOnInvalid; }
+    public boolean shouldStartMusicOnValid() { return forceStartMusicOnValid; }
     public float getCachedRandomChance() { return cachedRandomChance; }
     public void setCachedRandomChance(float c) { cachedRandomChance = c; }
     public String getSongpack() { return songpack; }

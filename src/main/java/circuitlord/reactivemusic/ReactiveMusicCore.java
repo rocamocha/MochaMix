@@ -17,11 +17,11 @@ import circuitlord.reactivemusic.api.ReactiveMusicPlugin;
 import circuitlord.reactivemusic.api.ReactiveMusicUtils;
 import circuitlord.reactivemusic.api.audio.ReactivePlayer;
 import circuitlord.reactivemusic.api.audio.ReactivePlayerManager;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackZip;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.SongpackZip;
 import circuitlord.reactivemusic.config.MusicDelayLength;
 import circuitlord.reactivemusic.config.MusicSwitchSpeed;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackZip;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackZip;
 import circuitlord.reactivemusic.plugins.OverlayTrackPlugin;
 
 public final class ReactiveMusicCore {
@@ -192,7 +192,7 @@ public final class ReactiveMusicCore {
                 ReactiveMusicDebug.LOGGER.info("Triggering onInvalid() for songpack event plugins");
                 for (ReactiveMusicPlugin plugin : ReactiveMusic.PLUGINS) plugin.onInvalid(entry);
     
-                if (entry.getForceStopMusicOnInvalid()) {
+                if (entry.shouldStopMusicOnInvalid()) {
                     ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnInvalid: " + entry.getEventString());
                     if (entry.getCachedRandomChance() <= entry.getForceChance()) {
                         ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnInvalid: " + entry.getEventString());
@@ -214,14 +214,14 @@ public final class ReactiveMusicCore {
                 ReactiveMusicDebug.LOGGER.info("Triggering onValid() for songpack event plugins");
                 for (ReactiveMusicPlugin plugin : ReactiveMusic.PLUGINS) plugin.onValid(entry);
     
-                if (entry.getForceStopMusicOnValid()) {
+                if (entry.shouldStopMusicOnValid()) {
                     ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnValid: " + entry.getEventString());
                     if (randSuccess) {
                         ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnValid: " + entry.getEventString());
                         queuedToStopMusic = true;
                     }
                 }
-                if (entry.getForceStartMusicOnValid()) {
+                if (entry.shouldStartMusicOnValid()) {
                     ReactiveMusicDebug.LOGGER.info("trying forceStartMusicOnValid: " + entry.getEventString());
                     if (randSuccess) {
                         ReactiveMusicDebug.LOGGER.info("doing forceStartMusicOnValid: " + entry.getEventString());

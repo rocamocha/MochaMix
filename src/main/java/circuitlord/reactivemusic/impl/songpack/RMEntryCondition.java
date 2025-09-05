@@ -1,4 +1,4 @@
-package circuitlord.reactivemusic.impl.eventsys.songpack.entries;
+package circuitlord.reactivemusic.impl.songpack;
 
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.world.biome.Biome;

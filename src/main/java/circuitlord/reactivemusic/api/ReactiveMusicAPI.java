@@ -4,9 +4,9 @@ import java.util.List;
 
 import circuitlord.reactivemusic.*;
 import circuitlord.reactivemusic.api.audio.ReactivePlayerManager;
-import circuitlord.reactivemusic.api.eventsys.songpack.RuntimeEntry;
-import circuitlord.reactivemusic.api.eventsys.songpack.SongpackZip;
-import circuitlord.reactivemusic.impl.eventsys.songpack.RMSongpackLoader;
+import circuitlord.reactivemusic.api.songpack.RuntimeEntry;
+import circuitlord.reactivemusic.api.songpack.SongpackZip;
+import circuitlord.reactivemusic.impl.songpack.RMSongpackLoader;
 
 public interface ReactiveMusicAPI {
     public interface ModConfig {
