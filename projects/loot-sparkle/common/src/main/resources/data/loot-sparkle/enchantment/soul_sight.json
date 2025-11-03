@@ -1,0 +1,22 @@
+﻿{
+  "description": {
+    "translate": "enchantment.loot-sparkle.soul_sight"
+  },
+  "supported_items": "#minecraft:enchantable/head_armor",
+  "primary_items": "#minecraft:enchantable/head_armor",
+  "weight": 8,
+  "max_level": 5,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 21,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 2,
+  "slots": [
+    "head"
+  ],
+  "exclusive_set": []
+}

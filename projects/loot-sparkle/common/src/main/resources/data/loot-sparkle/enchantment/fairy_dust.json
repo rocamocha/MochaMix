@@ -1,0 +1,26 @@
+﻿{
+  "description": {
+    "translate": "enchantment.loot-sparkle.fairy_dust"
+  },
+  "supported_items": [
+    "loot-sparkle:treasure_compass"
+  ],
+  "primary_items": [
+    "loot-sparkle:treasure_compass"
+  ],
+  "weight": 8,
+  "max_level": 1,
+  "min_cost": {
+    "base": 25,
+    "per_level_above_first": 0
+  },
+  "max_cost": {
+    "base": 29,
+    "per_level_above_first": 0
+  },
+  "anvil_cost": 2,
+  "slots": [
+    "mainhand"
+  ],
+  "exclusive_set": []
+}

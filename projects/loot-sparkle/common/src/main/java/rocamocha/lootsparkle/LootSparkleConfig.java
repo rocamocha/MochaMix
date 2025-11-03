@@ -15,11 +15,14 @@ public class LootSparkleConfig {
     private static final String CONFIG_FILE_NAME = "loot-sparkle.properties";
     private static final String SPARKLE_LIFETIME_KEY = "sparkle_lifetime_minutes";
     private static final String VERTICAL_RADIUS_KEY = "vertical_spawn_radius";
+    private static final String TREASURE_COMPASS_DURABILITY_KEY = "treasure_compass_durability";
     private static final int DEFAULT_SPARKLE_LIFETIME_MINUTES = 10;
     private static final int DEFAULT_VERTICAL_RADIUS = 16;
+    private static final int DEFAULT_TREASURE_COMPASS_DURABILITY = 100;
 
     private static int sparkleLifetimeMinutes = DEFAULT_SPARKLE_LIFETIME_MINUTES;
     private static int verticalRadius = DEFAULT_VERTICAL_RADIUS;
+    private static int treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
 
     /**
      * Loads the configuration from the config file
@@ -80,11 +83,28 @@ public class LootSparkleConfig {
                 verticalRadius = DEFAULT_VERTICAL_RADIUS;
             }
 
+            // Read treasure compass durability setting
+            String durabilityStr = properties.getProperty(TREASURE_COMPASS_DURABILITY_KEY,
+                String.valueOf(DEFAULT_TREASURE_COMPASS_DURABILITY));
+            try {
+                treasureCompassDurability = Integer.parseInt(durabilityStr);
+                if (treasureCompassDurability < 0) {
+                    LootSparkle.LOGGER.warn("Invalid treasure compass durability {}, using default of {}",
+                        treasureCompassDurability, DEFAULT_TREASURE_COMPASS_DURABILITY);
+                    treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
+                }
+            } catch (NumberFormatException e) {
+                LootSparkle.LOGGER.warn("Invalid treasure compass durability value '{}', using default of {}",
+                    durabilityStr, DEFAULT_TREASURE_COMPASS_DURABILITY);
+                treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
+            }
+
             // Save the config (this will create the file with current values if it doesn't exist)
             saveConfig();
 
             LootSparkle.LOGGER.info("Loot Sparkle sparkle lifetime set to {} minutes", sparkleLifetimeMinutes);
             LootSparkle.LOGGER.info("Loot Sparkle vertical spawn radius set to {} blocks", verticalRadius);
+            LootSparkle.LOGGER.info("Loot Sparkle treasure compass durability set to {}", treasureCompassDurability);
 
         } catch (Exception e) {
             LootSparkle.LOGGER.error("Failed to load Loot Sparkle config, using defaults", e);
@@ -103,11 +123,13 @@ public class LootSparkleConfig {
             Properties properties = new Properties();
             properties.setProperty(SPARKLE_LIFETIME_KEY, String.valueOf(sparkleLifetimeMinutes));
             properties.setProperty(VERTICAL_RADIUS_KEY, String.valueOf(verticalRadius));
+            properties.setProperty(TREASURE_COMPASS_DURABILITY_KEY, String.valueOf(treasureCompassDurability));
 
             // Add comments
             String comments = "Loot Sparkle Mod Configuration\n" +
                 "sparkle_lifetime_minutes: How long sparkles last before disappearing (in minutes)\n" +
-                "vertical_spawn_radius: Maximum vertical distance sparkles can spawn from player (in blocks)";
+                "vertical_spawn_radius: Maximum vertical distance sparkles can spawn from player (in blocks)\n" +
+                "treasure_compass_durability: Durability of the treasure compass item (0 = unbreakable)";
 
             try (FileOutputStream fos = new FileOutputStream(configFile.toFile())) {
                 properties.store(fos, comments);
@@ -137,5 +159,12 @@ public class LootSparkleConfig {
      */
     public static int getVerticalSpawnRadius() {
         return verticalRadius;
+    }
+
+    /**
+     * Gets the treasure compass durability
+     */
+    public static int getTreasureCompassDurability() {
+        return treasureCompassDurability;
     }
 }

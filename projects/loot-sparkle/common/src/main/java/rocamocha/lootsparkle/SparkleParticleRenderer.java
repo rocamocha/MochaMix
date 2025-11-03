@@ -5,7 +5,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -92,7 +91,7 @@ public class SparkleParticleRenderer {
      */
     private static void spawnSparkleParticles(ClientWorld world) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
+        if (client.player == null || !isPlayerHoldingCompass(client)) return;
 
         UUID playerId = client.player.getUuid();
         List<ClientSparkleManager.ClientSparkle> sparkles = ClientSparkleManager.getPlayerSparkles(playerId);
@@ -133,30 +132,30 @@ public class SparkleParticleRenderer {
     }
 
     /**
-     * Checks if the player has a compass and returns where it's located
+     * Checks if the player has a treasure compass and returns where it's located
      */
     private static CompassLocation getCompassLocation(MinecraftClient client) {
         if (client.player == null) return CompassLocation.NONE;
 
         // Check main hand
         ItemStack mainHand = client.player.getMainHandStack();
-        if (mainHand.getItem() == Items.COMPASS) return CompassLocation.MAIN_HAND;
+        if (mainHand.getItem() == LootSparkle.TREASURE_COMPASS) return CompassLocation.MAIN_HAND;
 
         // Check off hand
         ItemStack offHand = client.player.getOffHandStack();
-        if (offHand.getItem() == Items.COMPASS) return CompassLocation.OFF_HAND;
+        if (offHand.getItem() == LootSparkle.TREASURE_COMPASS) return CompassLocation.OFF_HAND;
 
         // Check hotbar slots (0-8)
         for (int slot = 0; slot < 9; slot++) {
             ItemStack hotbarStack = client.player.getInventory().getStack(slot);
-            if (hotbarStack.getItem() == Items.COMPASS) return CompassLocation.HOTBAR;
+            if (hotbarStack.getItem() == LootSparkle.TREASURE_COMPASS) return CompassLocation.HOTBAR;
         }
 
         return CompassLocation.NONE;
     }
 
     /**
-     * Checks if the player has a compass (in hand or hotbar)
+     * Checks if the player has a treasure compass (in hand or hotbar)
      */
     private static boolean isPlayerHoldingCompass(MinecraftClient client) {
         return getCompassLocation(client) != CompassLocation.NONE;
@@ -171,7 +170,61 @@ public class SparkleParticleRenderer {
     }
 
     /**
-     * Finds the nearest sparkle to the player
+     * Gets the treasure compass item stack from the player's inventory
+     */
+    private static ItemStack getTreasureCompassStack(MinecraftClient client) {
+        if (client.player == null) return ItemStack.EMPTY;
+
+        // Check main hand
+        ItemStack mainHand = client.player.getMainHandStack();
+        if (mainHand.getItem() == LootSparkle.TREASURE_COMPASS) return mainHand;
+
+        // Check off hand
+        ItemStack offHand = client.player.getOffHandStack();
+        if (offHand.getItem() == LootSparkle.TREASURE_COMPASS) return offHand;
+
+        // Check hotbar slots (0-8)
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack hotbarStack = client.player.getInventory().getStack(slot);
+            if (hotbarStack.getItem() == LootSparkle.TREASURE_COMPASS) return hotbarStack;
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Checks if the player is wearing a helmet with Soul Sight enchantment
+     */
+    private static boolean hasSoulSightHelmet(MinecraftClient client) {
+        return getSoulSightLevel(client) > 0;
+    }
+
+    /**
+     * Gets the Soul Sight enchantment level from the player's helmet
+     * Returns 0 if no Soul Sight enchantment is present
+     */
+    private static int getSoulSightLevel(MinecraftClient client) {
+        if (client.player == null) return 0;
+
+        ItemStack helmet = client.player.getInventory().getArmorStack(3); // Helmet slot
+        if (helmet.isEmpty()) return 0;
+
+        // Get the enchantments component
+        var enchantments = helmet.getEnchantments();
+        
+        // Find the Soul Sight enchantment and get its level
+        for (var entry : enchantments.getEnchantments()) {
+            if (entry.getIdAsString().equals("loot-sparkle:soul_sight")) {
+                return enchantments.getLevel(entry);
+            }
+        }
+        
+        return 0;
+    }
+
+    /**
+     * Finds the nearest sparkle to the player (no Soul Sight filtering)
+     * Used for fairy particle - shows nearest sparkle regardless of detection ability
      */
     private static ClientSparkleManager.ClientSparkle findNearestSparkle(ClientWorld world, MinecraftClient client) {
         if (client.player == null) return null;
@@ -187,6 +240,42 @@ public class SparkleParticleRenderer {
             Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
             double distance = playerPos.distanceTo(sparklePos);
 
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = sparkle;
+            }
+        }
+
+        return nearest;
+    }
+
+    /**
+     * Finds the nearest sparkle to the player that can be detected by the current Soul Sight level
+     * Used for directional particles - requires Soul Sight
+     */
+    private static ClientSparkleManager.ClientSparkle findNearestDetectableSparkle(ClientWorld world, MinecraftClient client) {
+        if (client.player == null) return null;
+
+        UUID playerId = client.player.getUuid();
+        List<ClientSparkleManager.ClientSparkle> sparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+        
+        int soulSightLevel = getSoulSightLevel(client);
+        // Determine max tier that can be detected: Soul Sight level 1 = Common (tier 0), level 2 = Uncommon (tier 1), etc.
+        int maxDetectableTier = soulSightLevel > 0 ? soulSightLevel - 1 : -1;
+
+        ClientSparkleManager.ClientSparkle nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        Vec3d playerPos = client.player.getPos();
+
+        for (ClientSparkleManager.ClientSparkle sparkle : sparkles) {
+            // Filter by Soul Sight level - can only detect sparkles up to maxDetectableTier
+            if (soulSightLevel == 0 || sparkle.getTierLevel() > maxDetectableTier) {
+                continue; // Skip this sparkle if we can't detect it
+            }
+            
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            
             if (distance < nearestDistance) {
                 nearestDistance = distance;
                 nearest = sparkle;
@@ -213,6 +302,11 @@ public class SparkleParticleRenderer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || !isPlayerHoldingCompass(client)) return;
 
+        // Check if treasure compass has Fairy Dust enchantment
+        ItemStack treasureCompass = getTreasureCompassStack(client);
+        if (!TreasureCompassItem.hasFairyDust(treasureCompass)) return;
+
+        // Find nearest sparkle (no Soul Sight filtering - fairy shows all sparkles)
         ClientSparkleManager.ClientSparkle nearestSparkle = findNearestSparkle(world, client);
         if (nearestSparkle == null) return;
 
@@ -248,10 +342,16 @@ public class SparkleParticleRenderer {
             0.0, 0.01, 0.0 // Slight upward drift for magical effect
         );
 
-        // Spawn directional particles if compass is held in hand
-        if (isPlayerHoldingCompassInHand(client)) {
-            spawnDirectionalParticles(world, particleManager, nearestSparkle, fairyPos, particleColor);
-            spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+        // Spawn directional particles if compass is held in hand AND player has Soul Sight helmet
+        if (isPlayerHoldingCompassInHand(client) && hasSoulSightHelmet(client)) {
+            // Find the nearest DETECTABLE sparkle for directional particles
+            ClientSparkleManager.ClientSparkle detectableSparkle = findNearestDetectableSparkle(world, client);
+            if (detectableSparkle != null) {
+                // Get the color for the detectable sparkle (may be different from fairy color)
+                Vector3f detectableColor = getTierColor(detectableSparkle.getTierLevel());
+                spawnDirectionalParticles(world, particleManager, detectableSparkle, fairyPos, detectableColor);
+                spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+            }
         }
     }
 
@@ -649,10 +749,39 @@ public class SparkleParticleRenderer {
     }
 
     /**
-     * Gets the fairy color based on the nearest sparkle's tier
+     * Gets the fairy color based on the highest tier sparkle within the player's viewing angle
+     * No Soul Sight filtering - fairy shows colors for all sparkles regardless of detection ability
      */
-    private static Vector3f getFairyColor(MinecraftClient client, ClientSparkleManager.ClientSparkle sparkle) {
-        return getTierColor(sparkle.getTierLevel());
+    private static Vector3f getFairyColor(MinecraftClient client, ClientSparkleManager.ClientSparkle nearestSparkle) {
+        if (client.player == null) return getTierColor(nearestSparkle.getTierLevel());
+
+        UUID playerId = client.player.getUuid();
+        List<ClientSparkleManager.ClientSparkle> sparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+
+        Vec3d playerPos = client.player.getPos();
+        Vec3d playerLookVec = client.player.getRotationVector();
+        
+        int highestTier = -1;
+
+        for (ClientSparkleManager.ClientSparkle sparkle : sparkles) {
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            Vec3d toSparkle = sparklePos.subtract(playerPos).normalize();
+            
+            // Check if sparkle is in front of player (dot product > 0)
+            double dotProduct = playerLookVec.dotProduct(toSparkle);
+            if (dotProduct > 0) {
+                // Track the highest tier we're looking at
+                if (sparkle.getTierLevel() > highestTier) {
+                    highestTier = sparkle.getTierLevel();
+                }
+            }
+        }
+        
+        // Use the highest tier found, or fall back to the nearest sparkle's tier
+        if (highestTier >= 0) {
+            return getTierColor(highestTier);
+        }
+        return getTierColor(nearestSparkle.getTierLevel());
     }
 
     /**

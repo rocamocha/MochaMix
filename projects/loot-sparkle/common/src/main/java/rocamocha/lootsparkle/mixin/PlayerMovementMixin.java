@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import rocamocha.lootsparkle.ClientSparkleManager;
+import rocamocha.lootsparkle.LootSparkle;
 import rocamocha.lootsparkle.SparkleManager;
 import rocamocha.lootsparkle.SparkleNetworking;
 
@@ -58,12 +59,41 @@ public class PlayerMovementMixin {
     }
 
     private void checkForNearbySparkles(PlayerEntity player) {
+        // Only allow sparkle interaction if player has a Treasure Compass in inventory
+        if (!hasCompassInInventory(player)) {
+            return;
+        }
+        
         // Check if player is near any sparkles
         ClientSparkleManager.ClientSparkle nearbySparkle = findNearbySparkle(player);
         if (nearbySparkle != null) {
             // Send interaction packet to server
             ClientPlayNetworking.send(new SparkleNetworking.InteractSparklePacket(nearbySparkle.getSparkleId()));
         }
+    }
+    
+    /**
+     * Check if the player has a Treasure Compass in their inventory
+     */
+    private boolean hasCompassInInventory(PlayerEntity player) {
+        // Check main hand
+        if (player.getMainHandStack().getItem() == LootSparkle.TREASURE_COMPASS) {
+            return true;
+        }
+
+        // Check off hand
+        if (player.getOffHandStack().getItem() == LootSparkle.TREASURE_COMPASS) {
+            return true;
+        }
+
+        // Check hotbar slots (0-8) - matches SparkleParticleRenderer visibility logic
+        for (int slot = 0; slot < 9; slot++) {
+            if (player.getInventory().getStack(slot).getItem() == LootSparkle.TREASURE_COMPASS) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private ClientSparkleManager.ClientSparkle findNearbySparkle(PlayerEntity player) {
