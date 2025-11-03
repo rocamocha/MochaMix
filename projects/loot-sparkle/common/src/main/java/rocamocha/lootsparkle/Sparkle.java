@@ -24,6 +24,7 @@ public class Sparkle {
     private final long creationTime;
     private final long lifetime; // milliseconds
     private final SparkleTier tier;
+    private boolean experienceGranted = false;
 
     public Sparkle(UUID playerId, BlockPos position, World world) {
         this.sparkleId = UUID.randomUUID();
@@ -42,6 +43,24 @@ public class Sparkle {
 
         // Generate loot for this sparkle based on tier
         LootTableIntegration.generateLootForSparkle(this.inventory, this.tier, world, position);
+    }
+
+    /**
+     * Creates a sparkle with a specific tier (for debug/testing purposes)
+     */
+    public Sparkle(UUID playerId, BlockPos position, World world, SparkleTier tier) {
+        this.sparkleId = UUID.randomUUID();
+        this.playerId = playerId;
+        this.position = position;
+        this.inventory = new SimpleInventory(27); // 27 slots like a chest
+        this.creationTime = System.currentTimeMillis();
+        this.lifetime = LootSparkleConfig.getSparkleLifetimeMs();
+        this.tier = tier;
+
+        LootSparkle.LOGGER.info("Creating sparkle at {} for player {} with tier {}", position, playerId, tier.getName());
+
+        // Generate loot for this sparkle based on the specified tier
+        LootTableIntegration.generateLootForSparkle(this.inventory, tier, world, position);
     }
 
     public UUID getSparkleId() {
@@ -104,10 +123,21 @@ public class Sparkle {
         }
     }
 
-    /**
-     * Gets the remaining lifetime in milliseconds
-     */
     public long getRemainingLifetime() {
         return Math.max(0, lifetime - (System.currentTimeMillis() - creationTime));
+    }
+
+    /**
+     * Checks if experience has already been granted for this sparkle
+     */
+    public boolean isExperienceGranted() {
+        return experienceGranted;
+    }
+
+    /**
+     * Marks that experience has been granted for this sparkle
+     */
+    public void setExperienceGranted(boolean experienceGranted) {
+        this.experienceGranted = experienceGranted;
     }
 }

@@ -39,7 +39,9 @@ ext {
 
     mod_version = [
         "mochamix": findProperty("mochamix_version"),
-        "logical-loadouts": findProperty("logical_loadouts_version")
+        "logical-loadouts": findProperty("logical_loadouts_version"),
+        "loot-sparkle": findProperty("loot_sparkle_version"),
+        "voidloom": findProperty("voidloom_version")
     ]
 }
 
@@ -218,6 +220,133 @@ task clearAllLogs {
                 delete(serverLogsDir.listFiles().findAll { it.isFile() && it.name != "latest.log" })
             }
         }
+    }
+}
+
+// Task to clean the active project's build/libs folder
+task cleanProjectLibs(type: Delete) {
+    doFirst {
+        def sourceProject = findProject(activeProjectPath)
+        if (sourceProject != null) {
+            def sourceDir = sourceProject.file("build/libs")
+            if (sourceDir.exists()) {
+                println "Cleaning ${sourceDir}"
+                delete sourceDir
+            }
+        }
+    }
+}
+
+// Task to clean old JAR files for the active project from the root build folder
+task cleanRootBuildForActiveProject(type: Delete) {
+    doFirst {
+        def targetDir = file("build/${activeAdapter}/libs")
+        if (targetDir.exists()) {
+            // Delete only JAR files that match the active project name
+            def filesToDelete = targetDir.listFiles()?.findAll { file ->
+                file.isFile() && file.name.startsWith("${activeProject}-") && file.name.endsWith('.jar')
+            }
+            if (filesToDelete) {
+                filesToDelete.each { file ->
+                    println "Deleting old file: ${file.name}"
+                }
+                delete filesToDelete
+            }
+        }
+    }
+}
+
+// Task to move built JAR files to root build directory organized by adapter
+task moveJarsToRootBuild {
+    doFirst {
+        // Clean root build folder for active project BEFORE moving new files
+        def targetDir = file("build/${activeAdapter}/libs")
+        if (targetDir.exists()) {
+            def filesToDelete = targetDir.listFiles()?.findAll { file ->
+                file.isFile() && file.name.startsWith("${activeProject}-") && file.name.endsWith('.jar')
+            }
+            if (filesToDelete) {
+                filesToDelete.each { file ->
+                    println "Deleting old file: ${file.name}"
+                }
+                delete filesToDelete
+            }
+        }
+    }
+    
+    doLast {
+        def targetDir = file("build/${activeAdapter}/libs")
+        targetDir.mkdirs()
+        
+        def sourceProject = findProject(activeProjectPath)
+        
+        if (sourceProject != null) {
+            def sourceDir = sourceProject.file("build/libs")
+            if (sourceDir.exists()) {
+                def sourceJars = sourceDir.listFiles() ?: []
+                sourceJars.each { jar ->
+                    if (jar.isFile() && (jar.name.endsWith('.jar'))) {
+                        def targetJar = new File(targetDir, jar.name)
+                        jar.renameTo(targetJar)
+                        println "Moved ${jar.name} to root build/${activeAdapter}/libs/"
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Make cleanProjectLibs run before the active project's build task,
+// and moveJarsToRootBuild run after the active project's build task
+gradle.projectsEvaluated {
+    if (targetProject != null) {
+        if (targetProject.tasks.findByName('build')) {
+            targetProject.tasks.build.dependsOn rootProject.tasks.cleanProjectLibs
+            targetProject.tasks.build.finalizedBy rootProject.tasks.moveJarsToRootBuild
+        }
+    }
+}
+
+// Task to copy all JAR files from root build directory to mods folder
+task copyModsToRunFolder {
+    doLast {
+        def sourceDir = file("build/${activeAdapter}/libs")
+        def targetDir = file("run/client/${activeAdapter}/mods")
+        targetDir.mkdirs()
+        
+        if (sourceDir.exists()) {
+            copy {
+                from sourceDir
+                into targetDir
+                include "*.jar"
+            }
+            println "Copied all JAR files to ${targetDir}"
+            
+            // List what was copied
+            targetDir.listFiles()?.each { jar ->
+                if (jar.isFile()) {
+                    println "  - ${jar.name}"
+                }
+            }
+        } else {
+            println "Source directory not found: ${sourceDir}"
+        }
+    }
+}
+
+// Task to run the client with all mods loaded
+task runAllMods(type: JavaExec) {
+    dependsOn copyModsToRunFolder
+    
+    doLast {
+        println "Launching Minecraft with all mod projects loaded for ${activeAdapter}..."
+    }
+}
+
+// Execute the actual client run task after copying mods
+gradle.projectsEvaluated {
+    if (targetProject != null && targetProject.tasks.findByName('runClient')) {
+        rootProject.tasks.runAllMods.finalizedBy targetProject.tasks.runClient
     }
 }
 

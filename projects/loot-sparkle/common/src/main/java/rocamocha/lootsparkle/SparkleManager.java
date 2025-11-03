@@ -76,6 +76,21 @@ public class SparkleManager {
     }
 
     /**
+     * Spawns a new sparkle of a specific tier for a player at a given location
+     */
+    public static void spawnSparkleOfTierForPlayer(UUID playerId, World world, BlockPos position, SparkleTier tier) {
+        List<Sparkle> sparkles = playerSparkles.computeIfAbsent(playerId, k -> new ArrayList<>());
+
+        Sparkle sparkle = new Sparkle(playerId, position, world, tier);
+        sparkles.add(sparkle);
+
+        // Send sync packet to the player
+        sendSparkleSyncPacket(playerId, sparkle);
+
+        LootSparkle.LOGGER.info("Spawned {} tier sparkle for player {} at {}", tier.getName(), playerId, position);
+    }
+
+    /**
      * Gets all active sparkles for a player
      */
     public static List<Sparkle> getPlayerSparkles(UUID playerId) {
@@ -88,8 +103,16 @@ public class SparkleManager {
      */
     public static int expireAllSparkles() {
         int expiredCount = 0;
-        for (List<Sparkle> playerSparkleList : playerSparkles.values()) {
-            expiredCount += playerSparkleList.size();
+        for (Map.Entry<UUID, List<Sparkle>> entry : playerSparkles.entrySet()) {
+            UUID playerId = entry.getKey();
+            List<Sparkle> playerSparkleList = entry.getValue();
+            
+            for (Sparkle sparkle : playerSparkleList) {
+                // Send remove packet to the player for each sparkle
+                sendSparkleRemovePacket(playerId, sparkle.getSparkleId());
+                expiredCount++;
+            }
+            
             playerSparkleList.clear();
         }
         LootSparkle.LOGGER.info("Debug command: Expired {} sparkles", expiredCount);
@@ -253,13 +276,20 @@ public class SparkleManager {
                     // Verify player is close enough to the sparkle (same distance check as client)
                     double distance = player.getPos().distanceTo(Vec3d.ofCenter(sparkle.getPosition()));
                     if (distance <= 3.0) {
-                        // Spawn experience orbs based on sparkle tier
-                        int experienceAmount = getExperienceForTier(sparkle.getTier());
-                        spawnExperienceOrbs(player.getWorld(), sparkle.getPosition(), experienceAmount);
+                        // Only spawn experience orbs if they haven't been granted yet
+                        if (!sparkle.isExperienceGranted()) {
+                            // Spawn experience orbs based on sparkle tier
+                            int experienceAmount = getExperienceForTier(sparkle.getTier());
+                            spawnExperienceOrbs(player.getWorld(), sparkle.getPosition(), experienceAmount);
+                            sparkle.setExperienceGranted(true);
+                            LootSparkle.LOGGER.debug("Player {} successfully interacted with sparkle at {} and spawned {} experience orbs", 
+                                player.getUuid(), sparkle.getPosition(), experienceAmount);
+                        } else {
+                            LootSparkle.LOGGER.debug("Player {} interacted with sparkle at {} but experience already granted", 
+                                player.getUuid(), sparkle.getPosition());
+                        }
                         
                         openSparkleInventory(player.getUuid(), sparkle);
-                        LootSparkle.LOGGER.debug("Player {} successfully interacted with sparkle at {} and spawned {} experience orbs", 
-                            player.getUuid(), sparkle.getPosition(), experienceAmount);
                     } else {
                         sendInteractionFailedPacket(player, "You are too far away from the sparkle");
                         LootSparkle.LOGGER.debug("Player {} attempted to interact with sparkle at {} but is too far ({} blocks away)",

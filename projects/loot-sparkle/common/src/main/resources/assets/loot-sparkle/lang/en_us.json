@@ -1,6 +1,8 @@
 {
   "item.loot-sparkle.treasure_compass": "Treasure Compass",
   "item.loot-sparkle.treasure_compass.tooltip": "Reveals hidden sparkles of treasure",
+  "item.loot-sparkle.treasure_compass.essence": "Essence: %d / %d",
+  "item.loot-sparkle.treasure_compass.repair_success": "Restored %d Essence",
   "enchantment.loot-sparkle.fairy_dust": "Fairy Dust",
   "enchantment.loot-sparkle.soul_sight": "Soul Sight"
 }

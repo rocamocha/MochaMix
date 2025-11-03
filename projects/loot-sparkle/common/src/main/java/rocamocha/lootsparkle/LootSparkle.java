@@ -98,6 +98,62 @@ public class LootSparkle implements ModInitializer {
                         return 1;
                     })
                 )
+                .then(CommandManager.literal("ring")
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        if (source.getPlayer() == null) {
+                            source.sendError(Text.literal("This command can only be run by a player"));
+                            return 0;
+                        }
+                        
+                        // Expire all existing sparkles
+                        int expiredCount = SparkleManager.expireAllSparkles();
+                        
+                        // Spawn one sparkle of each tier in a ring around the player
+                        net.minecraft.server.network.ServerPlayerEntity player = source.getPlayer();
+                        net.minecraft.server.world.ServerWorld world = source.getWorld();
+                        net.minecraft.util.math.Vec3d playerPos = player.getPos();
+                        
+                        SparkleTier[] tiers = SparkleTier.values();
+                        double radius = 7.0; // Distance from player
+                        double angleStep = (2.0 * Math.PI) / tiers.length;
+                        
+                        for (int i = 0; i < tiers.length; i++) {
+                            double angle = angleStep * i;
+                            double x = playerPos.x + radius * Math.cos(angle);
+                            double z = playerPos.z + radius * Math.sin(angle);
+                            int y = player.getBlockY();
+                            
+                            // Find a valid spawn position at this location
+                            net.minecraft.util.math.BlockPos spawnPos = new net.minecraft.util.math.BlockPos(
+                                (int) Math.round(x),
+                                y,
+                                (int) Math.round(z)
+                            );
+                            
+                            // Try to find a valid air block with solid ground
+                            net.minecraft.util.math.BlockPos validPos = null;
+                            for (int yOffset = 0; yOffset <= 5; yOffset++) {
+                                net.minecraft.util.math.BlockPos checkPos = spawnPos.up(yOffset);
+                                if (world.getBlockState(checkPos).isAir() && 
+                                    world.getBlockState(checkPos.down()).isSolidBlock(world, checkPos.down())) {
+                                    validPos = checkPos;
+                                    break;
+                                }
+                            }
+                            
+                            // If no valid position found in range, use the original position
+                            if (validPos == null) {
+                                validPos = spawnPos;
+                            }
+                            
+                            SparkleManager.spawnSparkleOfTierForPlayer(player.getUuid(), world, validPos, tiers[i]);
+                        }
+                        
+                        source.sendFeedback(() -> Text.literal("Expired " + expiredCount + " sparkles and spawned a ring of " + tiers.length + " sparkles (one per tier)"), true);
+                        return 1;
+                    })
+                )
                 .then(CommandManager.literal("list_enchantments")
                     .executes(context -> {
                         ServerCommandSource source = context.getSource();

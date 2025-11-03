@@ -12,8 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import rocamocha.lootsparkle.ClientSparkleManager;
 import rocamocha.lootsparkle.LootSparkle;
+import rocamocha.lootsparkle.LootSparkleConfig;
 import rocamocha.lootsparkle.SparkleManager;
 import rocamocha.lootsparkle.SparkleNetworking;
+import rocamocha.lootsparkle.TreasureCompassItem;
 
 /**
  * Mixin to handle player movement and sparkle spawning/interaction
@@ -25,6 +27,9 @@ public class PlayerMovementMixin {
 
     // Track previous crouching state to detect when crouching starts
     private boolean wasSneaking = false;
+
+    // Track ticks for fairy dust durability loss (every 20 ticks)
+    private int fairyDustTickCounter = 0;
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onPlayerTick(CallbackInfo ci) {
@@ -44,6 +49,9 @@ public class PlayerMovementMixin {
             BlockPos playerPos = player.getBlockPos();
             SparkleManager.spawnSparkleForPlayer(player.getUuid(), world, playerPos);
         }
+
+        // Handle fairy dust durability loss
+        handleFairyDustDurabilityLoss(player);
     }
 
     private void handleClientCrouchingDetection(PlayerEntity player) {
@@ -56,6 +64,69 @@ public class PlayerMovementMixin {
 
         // Update previous state
         wasSneaking = isCurrentlySneaking;
+    }
+
+    /**
+     * Handles durability loss for treasure compass with Fairy Dust enchantment
+     */
+    private void handleFairyDustDurabilityLoss(PlayerEntity player) {
+        fairyDustTickCounter++;
+
+        // Check every N ticks (configurable)
+        int tickInterval = LootSparkleConfig.getFairyDustTickInterval();
+        if (fairyDustTickCounter >= tickInterval) {
+            fairyDustTickCounter = 0;
+
+            // Check if player has treasure compass with Fairy Dust
+            var treasureCompass = findTreasureCompassWithFairyDust(player);
+            if (treasureCompass != null) {
+                // Check if compass has durability remaining
+                if (treasureCompass.getDamage() >= treasureCompass.getMaxDamage()) return;
+
+                // Check if there are nearby sparkles (fairy dust active condition)
+                if (hasNearbySparkles(player)) {
+                    // Damage the compass by 1
+                    if (treasureCompass.getDamage() < treasureCompass.getMaxDamage()) {
+                        treasureCompass.setDamage(treasureCompass.getDamage() + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Finds a treasure compass with Fairy Dust enchantment in the player's inventory
+     */
+    private net.minecraft.item.ItemStack findTreasureCompassWithFairyDust(PlayerEntity player) {
+        // Check main hand
+        var mainHand = player.getMainHandStack();
+        if (mainHand.getItem() == LootSparkle.TREASURE_COMPASS && TreasureCompassItem.hasFairyDust(mainHand)) {
+            return mainHand;
+        }
+
+        // Check off hand
+        var offHand = player.getOffHandStack();
+        if (offHand.getItem() == LootSparkle.TREASURE_COMPASS && TreasureCompassItem.hasFairyDust(offHand)) {
+            return offHand;
+        }
+
+        // Check hotbar slots (0-8)
+        for (int slot = 0; slot < 9; slot++) {
+            var hotbarStack = player.getInventory().getStack(slot);
+            if (hotbarStack.getItem() == LootSparkle.TREASURE_COMPASS && TreasureCompassItem.hasFairyDust(hotbarStack)) {
+                return hotbarStack;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks if the player has nearby sparkles
+     */
+    private boolean hasNearbySparkles(PlayerEntity player) {
+        var playerSparkles = SparkleManager.getPlayerSparkles(player.getUuid());
+        return !playerSparkles.isEmpty();
     }
 
     private void checkForNearbySparkles(PlayerEntity player) {

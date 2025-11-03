@@ -8,6 +8,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -30,10 +31,10 @@ import net.minecraft.resource.ResourceManager;
  */
 public class LootTableIntegration {
     // Base loot table identifiers
-    public static final Identifier COMMON_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/common");
-    public static final Identifier UNCOMMON_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/uncommon");
-    public static final Identifier RARE_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/rare");
-    public static final Identifier EPIC_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/epic");
+    public static final Identifier COMMON_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/0_common");
+    public static final Identifier UNCOMMON_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/1_uncommon");
+    public static final Identifier RARE_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/2_rare");
+    public static final Identifier EPIC_LOOT_TABLE = Identifier.of(LootSparkle.MOD_ID, "tiers/3_epic");
 
     public static void initialize() {
         LootSparkle.LOGGER.info("Initializing loot table integration...");
@@ -55,14 +56,49 @@ public class LootTableIntegration {
 
         try {
             LootSparkle.LOGGER.info("Starting loot generation for tier {}", tier.getName());
-            // Get all applicable loot table IDs for this tier and context
-            List<String> lootTableIds = tier.getLootTableIds(world, position);
-            LootSparkle.LOGGER.info("Loot table IDs for tier {}: {}", tier.getName(), lootTableIds);
+            
+            // Get base loot table IDs for this tier
+            List<String> baseLootTableIds = tier.getBaseLootTableIds();
+            LootSparkle.LOGGER.info("Base loot table IDs for tier {}: {}", tier.getName(), baseLootTableIds);
+            
+            // Select one random base table
+            List<String> selectedTableIds = new ArrayList<>();
+            if (!baseLootTableIds.isEmpty()) {
+                String randomBaseTable = baseLootTableIds.get(serverWorld.getRandom().nextInt(baseLootTableIds.size()));
+                selectedTableIds.add(randomBaseTable);
+                LootSparkle.LOGGER.info("Selected base loot table: {} for tier {}", randomBaseTable, tier.getName());
+            }
+            
+            // Add biome-specific table if applicable and exists
+            Biome biome = world.getBiome(position).value();
+            String biomeCategory = getBiomeCategory(biome);
+            if (biomeCategory != null) {
+                String biomeTableId = "loot-sparkle:tiers/" + tier.getNumberedName() + "/biomes/" + biomeCategory;
+                Identifier biomeResourceId = Identifier.of("loot-sparkle", "loot_tables/" + tier.getNumberedName() + "/biomes/" + biomeCategory + ".json");
+                if (serverWorld.getServer().getResourceManager().getResource(biomeResourceId).isPresent()) {
+                    selectedTableIds.add(biomeTableId);
+                    LootSparkle.LOGGER.info("Added biome-specific loot table: {} for tier {}", biomeTableId, tier.getName());
+                }
+            }
+            
+            // Add height-specific table if applicable and exists
+            int y = position.getY();
+            String heightCategory = getHeightCategory(y);
+            if (heightCategory != null) {
+                String heightTableId = "loot-sparkle:tiers/" + tier.getNumberedName() + "/heights/" + heightCategory;
+                Identifier heightResourceId = Identifier.of("loot-sparkle", "loot_tables/" + tier.getNumberedName() + "/heights/" + heightCategory + ".json");
+                if (serverWorld.getServer().getResourceManager().getResource(heightResourceId).isPresent()) {
+                    selectedTableIds.add(heightTableId);
+                    LootSparkle.LOGGER.info("Added height-specific loot table: {} for tier {}", heightTableId, tier.getName());
+                }
+            }
+            
+            LootSparkle.LOGGER.info("Final selected loot table IDs for tier {}: {}", tier.getName(), selectedTableIds);
             List<LootTable> lootTables = new ArrayList<>();
 
             // Load loot tables directly from mod resources
             ResourceManager resourceManager = serverWorld.getServer().getResourceManager();
-            for (String tableId : lootTableIds) {
+            for (String tableId : selectedTableIds) {
                 try {
                     Identifier identifier = Identifier.of(tableId);
                     Identifier resourceId = Identifier.of(identifier.getNamespace(), "loot_tables/" + identifier.getPath() + ".json");
@@ -95,7 +131,7 @@ public class LootTableIntegration {
                 return;
             }
 
-            // Generate loot from all applicable tables
+            // Generate loot from all selected tables
             List<net.minecraft.item.ItemStack> allLootItems = new ArrayList<>();
             for (LootTable lootTable : lootTables) {
                 try {
@@ -136,7 +172,7 @@ public class LootTableIntegration {
                 LootSparkle.LOGGER.info("Placed {} items in random slots for tier {}", allLootItems.size(), tier.getName());
             }
 
-            LootSparkle.LOGGER.debug("Generated loot for tier {} sparkle with {} loot tables", tier.getName(), lootTables.size());
+            LootSparkle.LOGGER.debug("Generated loot for tier {} sparkle using {} selected loot tables", tier.getName(), lootTables.size());
 
         } catch (Exception e) {
             LootSparkle.LOGGER.error("Failed to generate loot for sparkle tier {}", tier.getName(), e);
@@ -219,7 +255,7 @@ public class LootTableIntegration {
     public static LootTable getSparkleLootTable(ServerWorld world) {
         // Load directly from resources
         ResourceManager resourceManager = world.getServer().getResourceManager();
-        Identifier resourceId = Identifier.of(LootSparkle.MOD_ID, "loot_tables/tiers/common.json");
+        Identifier resourceId = Identifier.of(LootSparkle.MOD_ID, "loot_tables/tiers/0_common.json");
         try {
             var resource = resourceManager.getResource(resourceId);
             if (resource.isPresent()) {
@@ -233,5 +269,37 @@ public class LootTableIntegration {
             LootSparkle.LOGGER.error("Error loading legacy loot table", e);
         }
         return LootTable.EMPTY;
+    }
+
+    private static String getBiomeCategory(Biome biome) {
+        // Temperature-based categories
+        if (biome.getTemperature() < 0.1) {
+            return "frozen";
+        } else if (biome.getTemperature() < 0.3) {
+            return "cold";
+        } else if (biome.getTemperature() > 0.9) {
+            return "hot";
+        } else if (biome.getTemperature() > 0.7) {
+            return "warm";
+        }
+
+        // For now, skip precipitation-based categories as the API might be different
+        // TODO: Add precipitation-based categories when API is clarified
+
+        return null; // No specific category
+    }
+
+    private static String getHeightCategory(int y) {
+        if (y < -80) {
+            return "deep_caverns";
+        } else if (y < 0) {
+            return "underground";
+        } else if (y > 128) {
+            return "sky_high";
+        } else if (y > 64) {
+            return "mountains";
+        }
+
+        return null; // Surface level
     }
 }

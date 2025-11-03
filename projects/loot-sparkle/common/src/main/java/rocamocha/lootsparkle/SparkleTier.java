@@ -12,28 +12,27 @@ import java.util.List;
  */
 public enum SparkleTier {
     COMMON(0, "common", 60, List.of(
-        "loot-sparkle:tiers/common/basic",
-        "loot-sparkle:tiers/common/underground"
+        "loot-sparkle:tiers/0_common/basic"
     )),
     UNCOMMON(1, "uncommon", 25, List.of(
-        "loot-sparkle:tiers/uncommon/treasure",
-        "loot-sparkle:tiers/uncommon/overworld"
+        "loot-sparkle:tiers/1_uncommon/treasure",
+        "loot-sparkle:tiers/1_uncommon/overworld"
     )),
     RARE(2, "rare", 12, List.of(
-        "loot-sparkle:tiers/rare/valuable",
-        "loot-sparkle:tiers/rare/special"
+        "loot-sparkle:tiers/2_rare/valuable",
+        "loot-sparkle:tiers/2_rare/special"
     )),
     EPIC(3, "epic", 3, List.of(
-        "loot-sparkle:tiers/epic/legendary",
-        "loot-sparkle:tiers/epic/enchanted"
+        "loot-sparkle:tiers/3_epic/legendary",
+        "loot-sparkle:tiers/3_epic/enchanted"
     )),
     LEGENDARY(4, "legendary", 1, List.of(
-        "loot-sparkle:tiers/legendary/mythical",
-        "loot-sparkle:tiers/legendary/artifacts"
+        "loot-sparkle:tiers/4_legendary/mythical",
+        "loot-sparkle:tiers/4_legendary/artifacts"
     )),
     DIVINE(5, "divine", 0, List.of(
-        "loot-sparkle:tiers/divine/divine",
-        "loot-sparkle:tiers/divine/celestial"
+        "loot-sparkle:tiers/5_divine/divine",
+        "loot-sparkle:tiers/5_divine/celestial"
     ));
 
     private final int level;
@@ -56,11 +55,25 @@ public enum SparkleTier {
         return name;
     }
 
+    /**
+     * Gets the numbered folder name for this tier (e.g., "0_common")
+     */
+    public String getNumberedName() {
+        return level + "_" + name;
+    }
+
     public int getWeight() {
         return weight;
     }
 
     public List<String> getLootTableIds() {
+        return lootTableIds;
+    }
+
+    /**
+     * Gets only the base loot table IDs for this tier (without biome/height modifiers)
+     */
+    public List<String> getBaseLootTableIds() {
         return lootTableIds;
     }
 
@@ -154,7 +167,7 @@ public enum SparkleTier {
         String biomeCategory = getBiomeCategory(biome);
 
         if (biomeCategory != null) {
-            tables.add("loot-sparkle:tiers/" + name + "/biomes/" + biomeCategory);
+            tables.add("loot-sparkle:tiers/" + getNumberedName() + "/biomes/" + biomeCategory);
         }
 
         // Add Y-level specific tables
@@ -162,7 +175,7 @@ public enum SparkleTier {
         String heightCategory = getHeightCategory(y);
 
         if (heightCategory != null) {
-            tables.add("loot-sparkle:tiers/" + name + "/heights/" + heightCategory);
+            tables.add("loot-sparkle:tiers/" + getNumberedName() + "/heights/" + heightCategory);
         }
 
         return tables;

@@ -16,13 +16,16 @@ public class LootSparkleConfig {
     private static final String SPARKLE_LIFETIME_KEY = "sparkle_lifetime_minutes";
     private static final String VERTICAL_RADIUS_KEY = "vertical_spawn_radius";
     private static final String TREASURE_COMPASS_DURABILITY_KEY = "treasure_compass_durability";
+    private static final String FAIRY_DUST_TICK_INTERVAL_KEY = "fairy_dust_tick_interval";
     private static final int DEFAULT_SPARKLE_LIFETIME_MINUTES = 10;
     private static final int DEFAULT_VERTICAL_RADIUS = 16;
-    private static final int DEFAULT_TREASURE_COMPASS_DURABILITY = 100;
+    private static final int DEFAULT_TREASURE_COMPASS_DURABILITY = 480;
+    private static final int DEFAULT_FAIRY_DUST_TICK_INTERVAL = 60;
 
     private static int sparkleLifetimeMinutes = DEFAULT_SPARKLE_LIFETIME_MINUTES;
     private static int verticalRadius = DEFAULT_VERTICAL_RADIUS;
     private static int treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
+    private static int fairyDustTickInterval = DEFAULT_FAIRY_DUST_TICK_INTERVAL;
 
     /**
      * Loads the configuration from the config file
@@ -99,12 +102,29 @@ public class LootSparkleConfig {
                 treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
             }
 
+            // Read fairy dust tick interval setting
+            String tickIntervalStr = properties.getProperty(FAIRY_DUST_TICK_INTERVAL_KEY,
+                String.valueOf(DEFAULT_FAIRY_DUST_TICK_INTERVAL));
+            try {
+                fairyDustTickInterval = Integer.parseInt(tickIntervalStr);
+                if (fairyDustTickInterval <= 0) {
+                    LootSparkle.LOGGER.warn("Invalid fairy dust tick interval {}, using default of {} ticks",
+                        fairyDustTickInterval, DEFAULT_FAIRY_DUST_TICK_INTERVAL);
+                    fairyDustTickInterval = DEFAULT_FAIRY_DUST_TICK_INTERVAL;
+                }
+            } catch (NumberFormatException e) {
+                LootSparkle.LOGGER.warn("Invalid fairy dust tick interval value '{}', using default of {} ticks",
+                    tickIntervalStr, DEFAULT_FAIRY_DUST_TICK_INTERVAL);
+                fairyDustTickInterval = DEFAULT_FAIRY_DUST_TICK_INTERVAL;
+            }
+
             // Save the config (this will create the file with current values if it doesn't exist)
             saveConfig();
 
             LootSparkle.LOGGER.info("Loot Sparkle sparkle lifetime set to {} minutes", sparkleLifetimeMinutes);
             LootSparkle.LOGGER.info("Loot Sparkle vertical spawn radius set to {} blocks", verticalRadius);
             LootSparkle.LOGGER.info("Loot Sparkle treasure compass durability set to {}", treasureCompassDurability);
+            LootSparkle.LOGGER.info("Loot Sparkle fairy dust tick interval set to {} ticks", fairyDustTickInterval);
 
         } catch (Exception e) {
             LootSparkle.LOGGER.error("Failed to load Loot Sparkle config, using defaults", e);
@@ -124,12 +144,14 @@ public class LootSparkleConfig {
             properties.setProperty(SPARKLE_LIFETIME_KEY, String.valueOf(sparkleLifetimeMinutes));
             properties.setProperty(VERTICAL_RADIUS_KEY, String.valueOf(verticalRadius));
             properties.setProperty(TREASURE_COMPASS_DURABILITY_KEY, String.valueOf(treasureCompassDurability));
+            properties.setProperty(FAIRY_DUST_TICK_INTERVAL_KEY, String.valueOf(fairyDustTickInterval));
 
             // Add comments
             String comments = "Loot Sparkle Mod Configuration\n" +
                 "sparkle_lifetime_minutes: How long sparkles last before disappearing (in minutes)\n" +
                 "vertical_spawn_radius: Maximum vertical distance sparkles can spawn from player (in blocks)\n" +
-                "treasure_compass_durability: Durability of the treasure compass item (0 = unbreakable)";
+                "treasure_compass_durability: Durability of the treasure compass item (0 = unbreakable)\n" +
+                "fairy_dust_tick_interval: How often (in ticks) the compass loses 1 durability when Fairy Dust is active (20 ticks = 1 second)";
 
             try (FileOutputStream fos = new FileOutputStream(configFile.toFile())) {
                 properties.store(fos, comments);
@@ -166,5 +188,12 @@ public class LootSparkleConfig {
      */
     public static int getTreasureCompassDurability() {
         return treasureCompassDurability;
+    }
+
+    /**
+     * Gets the fairy dust tick interval (how often compass loses durability)
+     */
+    public static int getFairyDustTickInterval() {
+        return fairyDustTickInterval;
     }
 }

@@ -306,6 +306,9 @@ public class SparkleParticleRenderer {
         ItemStack treasureCompass = getTreasureCompassStack(client);
         if (!TreasureCompassItem.hasFairyDust(treasureCompass)) return;
 
+        // Check if compass has durability remaining
+        if (treasureCompass.getDamage() >= treasureCompass.getMaxDamage()) return;
+
         // Find nearest sparkle (no Soul Sight filtering - fairy shows all sparkles)
         ClientSparkleManager.ClientSparkle nearestSparkle = findNearestSparkle(world, client);
         if (nearestSparkle == null) return;
