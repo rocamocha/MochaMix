@@ -2,16 +2,9 @@ package rocamocha.lootsparkle;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
@@ -174,10 +167,12 @@ public class LootSparkle implements ModInitializer {
                         // Check if our enchantments are registered
                         var soulSight = enchantmentRegistry.get(Identifier.of("loot-sparkle", "soul_sight"));
                         var fairyDust = enchantmentRegistry.get(Identifier.of("loot-sparkle", "fairy_dust"));
+                        var shimmerseek = enchantmentRegistry.get(Identifier.of("loot-sparkle", "shimmerseek"));
 
                         StringBuilder message = new StringBuilder("Enchantment status:\n");
                         message.append("Soul Sight: ").append(soulSight != null ? "REGISTERED" : "NOT FOUND").append("\n");
                         message.append("Fairy Dust: ").append(fairyDust != null ? "REGISTERED" : "NOT FOUND").append("\n");
+                        message.append("Shimmerseek: ").append(shimmerseek != null ? "REGISTERED" : "NOT FOUND").append("\n");
 
                         // List all loot-sparkle enchantments
                         var allEnchantments = enchantmentRegistry.getIds().stream()
@@ -190,27 +185,54 @@ public class LootSparkle implements ModInitializer {
                         return 1;
                     })
                 )
-                .then(CommandManager.literal("give_soul_sight_book")
+                .then(CommandManager.literal("show_weights")
                     .executes(context -> {
                         ServerCommandSource source = context.getSource();
-                        if (source.getPlayer() != null) {
-                            giveEnchantedBook(source.getPlayer(), "loot-sparkle:soul_sight");
-                            source.sendFeedback(() -> Text.literal("Attempted to give Soul Sight enchanted book"), true);
-                        } else {
+                        if (source.getPlayer() == null) {
                             source.sendError(Text.literal("This command can only be run by a player"));
+                            return 0;
                         }
-                        return 1;
-                    })
-                )
-                .then(CommandManager.literal("give_fairy_dust_book")
-                    .executes(context -> {
-                        ServerCommandSource source = context.getSource();
-                        if (source.getPlayer() != null) {
-                            giveEnchantedBook(source.getPlayer(), "loot-sparkle:fairy_dust");
-                            source.sendFeedback(() -> Text.literal("Attempted to give Fairy Dust enchanted book"), true);
+
+                        net.minecraft.server.network.ServerPlayerEntity player = source.getPlayer();
+                        StringBuilder message = new StringBuilder("Sparkle Tier Weights:\n");
+
+                        // Show base weights
+                        message.append("Base weights:\n");
+                        SparkleTier[] tiers = SparkleTier.values();
+                        for (SparkleTier tier : tiers) {
+                            message.append("  ").append(tier.getName()).append(": ").append(tier.getWeight()).append("\n");
+                        }
+
+                        // Show modified weights if player has Shimmerseek
+                        int[] shimmerseekInfo = getShimmerseekInfo(player);
+                        int shimmerseekLevel = shimmerseekInfo[0];
+                        int maxLevelCount = shimmerseekInfo[1];
+                        if (shimmerseekLevel > 0) {
+                            message.append("\nModified weights (Shimmerseek total level ").append(shimmerseekLevel);
+                            if (maxLevelCount > 0) {
+                                message.append(", ").append(maxLevelCount).append(" max level piece");
+                                if (maxLevelCount > 1) message.append("s");
+                            }
+                            message.append("):\n");
+                            int[] baseWeights = rocamocha.lootsparkle.enchantment.ShimmerseekWeightModifier.getBaseWeights();
+                            int[] modifiedWeights = rocamocha.lootsparkle.enchantment.ShimmerseekWeightModifier.modifyWeights(baseWeights, shimmerseekLevel, maxLevelCount);
+
+                            for (SparkleTier tier : tiers) {
+                                int baseWeight = tier.getWeight();
+                                int modifiedWeight = modifiedWeights[tier.getLevel()];
+                                int difference = modifiedWeight - baseWeight;
+                                String diffStr = difference > 0 ? "+" + difference : (difference < 0 ? "" + difference : "");
+                                message.append("  ").append(tier.getName()).append(": ").append(modifiedWeight);
+                                if (!diffStr.isEmpty()) {
+                                    message.append(" (").append(diffStr).append(")");
+                                }
+                                message.append("\n");
+                            }
                         } else {
-                            source.sendError(Text.literal("This command can only be run by a player"));
+                            message.append("\nNo Shimmerseek enchantment detected.");
                         }
+
+                        source.sendFeedback(() -> Text.literal(message.toString()), false);
                         return 1;
                     })
                 )
@@ -219,49 +241,27 @@ public class LootSparkle implements ModInitializer {
     }
 
     /**
-     * Gives an enchanted book with the specified enchantment to the player
+     * Gets the total Shimmerseek level (stacked) and count of pieces at max level
+     * @return int[] where [0] is total level, [1] is count of pieces at max level
      */
-    private void giveEnchantedBook(net.minecraft.server.network.ServerPlayerEntity player, String enchantmentId) {
-        ItemStack bookStack = new ItemStack(Items.ENCHANTED_BOOK);
-
-        try {
-            // Get the enchantment from the registry
-            Identifier id = Identifier.of(enchantmentId);
-            var enchantmentRegistry = player.getWorld().getRegistryManager().get(RegistryKeys.ENCHANTMENT);
-            Enchantment enchantment = enchantmentRegistry.get(id);
-
-            if (enchantment != null) {
-                // Create ItemEnchantmentsComponent with the enchantment using builder
-                var builder = new ItemEnchantmentsComponent.Builder(ItemEnchantmentsComponent.DEFAULT);
-                // Get the registry entry for the enchantment using the ID
-                var registryEntry = enchantmentRegistry.getEntry(id);
-                if (registryEntry.isPresent()) {
-                    builder.add(registryEntry.get(), 1);
-                    ItemEnchantmentsComponent component = builder.build();
-                    bookStack.set(DataComponentTypes.STORED_ENCHANTMENTS, component);
-                    LOGGER.info("Successfully created enchanted book with enchantment {}", enchantmentId);
-                } else {
-                    LOGGER.error("Could not get registry entry for enchantment {}", enchantmentId);
+    private static int[] getShimmerseekInfo(net.minecraft.server.network.ServerPlayerEntity player) {
+        int totalLevel = 0;
+        int maxLevelCount = 0;
+        for (var stack : player.getArmorItems()) {
+            if (!stack.isEmpty()) {
+                var enchantments = stack.getEnchantments();
+                for (var entry : enchantments.getEnchantments()) {
+                    if (entry.getIdAsString().equals("loot-sparkle:shimmerseek")) {
+                        int level = enchantments.getLevel(entry);
+                        totalLevel += level;
+                        if (level >= 12) {
+                            maxLevelCount++;
+                        }
+                    }
                 }
-            } else {
-                LOGGER.error("Enchantment {} not found in registry! Available loot-sparkle enchantments: {}",
-                    enchantmentId,
-                    enchantmentRegistry.getIds().stream()
-                        .filter(key -> key.getNamespace().equals("loot-sparkle"))
-                        .map(Identifier::toString)
-                        .toList());
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed to create enchanted book for {}: {}", enchantmentId, e.getMessage(), e);
         }
-
-        boolean addedToInventory = player.getInventory().insertStack(bookStack);
-
-        if (!addedToInventory) {
-            // If inventory is full, drop it on the ground
-            ItemEntity itemEntity = new ItemEntity(player.getWorld(), player.getX(), player.getY(), player.getZ(), bookStack);
-            player.getWorld().spawnEntity(itemEntity);
-        }
+        return new int[]{totalLevel, maxLevelCount};
     }
 
     /**

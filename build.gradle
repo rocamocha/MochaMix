@@ -160,6 +160,12 @@ if (targetProject != null) {
             modImplementation "dev.isxander:yet-another-config-lib:${activeConfig.yaclVersion}"
         }
         
+        processResources {
+            filesMatching('fabric.mod.json') {
+                expand 'version': project.version
+            }
+        }
+        
         loom {
             mixin.defaultRefmapName = "reactivemusic.refmap.json"
             
@@ -205,6 +211,12 @@ if (targetProject != null) {
             options.release = 21
         }
     }
+}
+
+// Task to clear the processedMods directory for the active adapter
+task clearProcessedMods(type: Delete) {
+    def processedModsDir = file("run/client/${activeAdapter}/.fabric/processedMods")
+    delete processedModsDir
 }
 
 // Task to clear logs for all adapters, excluding latest.log
@@ -285,7 +297,7 @@ task moveJarsToRootBuild {
             if (sourceDir.exists()) {
                 def sourceJars = sourceDir.listFiles() ?: []
                 sourceJars.each { jar ->
-                    if (jar.isFile() && (jar.name.endsWith('.jar'))) {
+                    if (jar.isFile() && (jar.name.endsWith('.jar') && !jar.name.contains('-sources'))) {
                         def targetJar = new File(targetDir, jar.name)
                         jar.renameTo(targetJar)
                         println "Moved ${jar.name} to root build/${activeAdapter}/libs/"
@@ -309,6 +321,8 @@ gradle.projectsEvaluated {
 
 // Task to copy all JAR files from root build directory to mods folder
 task copyModsToRunFolder {
+    dependsOn moveJarsToRootBuild
+    
     doLast {
         def sourceDir = file("build/${activeAdapter}/libs")
         def targetDir = file("run/client/${activeAdapter}/mods")
@@ -336,7 +350,7 @@ task copyModsToRunFolder {
 
 // Task to run the client with all mods loaded
 task runAllMods(type: JavaExec) {
-    dependsOn copyModsToRunFolder
+    dependsOn copyModsToRunFolder, clearProcessedMods
     
     doLast {
         println "Launching Minecraft with all mod projects loaded for ${activeAdapter}..."

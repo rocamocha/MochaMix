@@ -8,6 +8,7 @@ import net.minecraft.registry.Registerable;
 import net.minecraft.registry.RegistryEntryLookup;
 
 import rocamocha.lootsparkle.enchantment.FairyDustEnchantment;
+import rocamocha.lootsparkle.enchantment.ShimmerseekEnchantment;
 import rocamocha.lootsparkle.enchantment.SoulSightEnchantment;
 
 /**
@@ -37,6 +38,14 @@ public class EnchantmentBootstrap {
                 FairyDustEnchantment.builder(itemLookup)
             );
             System.err.println("[LootSparkle] Registered fairy_dust");
+            
+            // Register Shimmerseek
+            register(
+                registry,
+                RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("loot-sparkle", "shimmerseek")),
+                ShimmerseekEnchantment.builder(itemLookup)
+            );
+            System.err.println("[LootSparkle] Registered shimmerseek");
             
         } catch (Exception e) {
             System.err.println("[LootSparkle] Error registering enchantments: " + e.getMessage());

@@ -38,9 +38,11 @@ public class EnchantmentRegistration {
             
             var soulSight = enchantmentRegistry.get(Identifier.of("loot-sparkle", "soul_sight"));
             var fairyDust = enchantmentRegistry.get(Identifier.of("loot-sparkle", "fairy_dust"));
+            var shimmerseek = enchantmentRegistry.get(Identifier.of("loot-sparkle", "shimmerseek"));
             
             LOGGER.warn("Soul Sight: {}", soulSight != null ? "FOUND" : "NOT FOUND");
             LOGGER.warn("Fairy Dust: {}", fairyDust != null ? "FOUND" : "NOT FOUND");
+            LOGGER.warn("Shimmerseek: {}", shimmerseek != null ? "FOUND" : "NOT FOUND");
             
             var allLootSparkleEnchants = enchantmentRegistry.getIds().stream()
                 .filter(id -> id.getNamespace().equals("loot-sparkle"))

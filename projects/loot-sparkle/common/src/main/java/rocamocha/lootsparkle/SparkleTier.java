@@ -1,8 +1,11 @@
 package rocamocha.lootsparkle;
 
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+
+import rocamocha.lootsparkle.enchantment.ShimmerseekWeightModifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +14,10 @@ import java.util.List;
  * Represents the tier/rarity of a sparkle, which determines loot quality and sources
  */
 public enum SparkleTier {
-    COMMON(0, "common", 60, List.of(
+    COMMON(0, "common", 65, List.of(
         "loot-sparkle:tiers/0_common/basic"
     )),
-    UNCOMMON(1, "uncommon", 25, List.of(
+    UNCOMMON(1, "uncommon", 20, List.of(
         "loot-sparkle:tiers/1_uncommon/treasure",
         "loot-sparkle:tiers/1_uncommon/overworld"
     )),
@@ -78,15 +81,27 @@ public enum SparkleTier {
     }
 
     /**
-     * Selects a random tier based on weights, with optional modifiers from world context
+     * Selects a random tier based on weights, with optional modifiers from world context and player enchantments
      */
-    public static SparkleTier selectRandomTier(World world, BlockPos position) {
-        net.minecraft.util.math.random.Random random = world.getRandom();
+    public static SparkleTier selectRandomTier(World world, BlockPos position, PlayerEntity player) {
+        int[] baseWeights = ShimmerseekWeightModifier.getBaseWeights();
+        int[] weights = baseWeights.clone();
+
+        // Apply Shimmerseek enchantment modifier if player has it
+        if (player != null) {
+            int[] shimmerseekInfo = getShimmerseekInfo(player);
+            int totalLevel = shimmerseekInfo[0];
+            int maxLevelCount = shimmerseekInfo[1];
+            if (totalLevel > 0) {
+                weights = ShimmerseekWeightModifier.modifyWeights(weights, totalLevel, maxLevelCount);
+            }
+        }
+
         int totalWeight = 0;
 
         // Calculate base weights
-        for (SparkleTier tier : values()) {
-            totalWeight += tier.getWeight();
+        for (int weight : weights) {
+            totalWeight += weight;
         }
 
         // Apply world context modifiers
@@ -130,11 +145,11 @@ public enum SparkleTier {
         }
 
         // Select tier based on modified weights
-        int roll = random.nextInt(modifiedTotalWeight);
+        int roll = world.getRandom().nextInt(modifiedTotalWeight);
         int currentWeight = 0;
 
         for (SparkleTier tier : tiers) {
-            int tierWeight = tier.getWeight();
+            int tierWeight = weights[tier.getLevel()];
 
             // Add legendary weight if conditions met
             if (tier == LEGENDARY && canSpawnLegendary) {
@@ -156,8 +171,28 @@ public enum SparkleTier {
     }
 
     /**
-     * Gets loot table IDs for this tier, considering biome and Y-level modifiers
+     * Gets the total Shimmerseek level (stacked) and count of pieces at max level
+     * @return int[] where [0] is total level, [1] is count of pieces at max level
      */
+    private static int[] getShimmerseekInfo(PlayerEntity player) {
+        int totalLevel = 0;
+        int maxLevelCount = 0;
+        for (var stack : player.getArmorItems()) {
+            if (!stack.isEmpty()) {
+                var enchantments = stack.getEnchantments();
+                for (var entry : enchantments.getEnchantments()) {
+                    if (entry.getIdAsString().equals("loot-sparkle:shimmerseek")) {
+                        int level = enchantments.getLevel(entry);
+                        totalLevel += level;
+                        if (level >= 12) {
+                            maxLevelCount++;
+                        }
+                    }
+                }
+            }
+        }
+        return new int[]{totalLevel, maxLevelCount};
+    }
     public List<String> getLootTableIds(World world, BlockPos position) {
         // Start with base loot tables (create mutable copy)
         List<String> tables = new ArrayList<>(lootTableIds);

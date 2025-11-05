@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "id": "voidloom",
-    "version": "1.0.0",
+    "version": "${version}",
     "name": "Voidloom: Endless Dungeon",
     "description": "Data-driven endless dungeon crawling!",
     "authors": ["rocamocha"],

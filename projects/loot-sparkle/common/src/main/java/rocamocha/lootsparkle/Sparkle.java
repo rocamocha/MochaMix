@@ -36,8 +36,14 @@ public class Sparkle {
 
         LootSparkle.LOGGER.info("Creating sparkle at {} for player {}", position, playerId);
 
-        // Determine sparkle tier based on world context
-        this.tier = SparkleTier.selectRandomTier(world, position);
+        // Get the player entity to check for enchantments
+        net.minecraft.server.network.ServerPlayerEntity player = null;
+        if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+            player = serverWorld.getServer().getPlayerManager().getPlayer(playerId);
+        }
+
+        // Determine sparkle tier based on world context and player enchantments
+        this.tier = SparkleTier.selectRandomTier(world, position, player);
 
         LootSparkle.LOGGER.info("Selected tier {} for sparkle", this.tier.getName());
 

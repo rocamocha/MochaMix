@@ -32,7 +32,7 @@ public class PlayerMovementMixin {
     private int fairyDustTickCounter = 0;
 
     @Inject(method = "tick", at = @At("HEAD"))
-    private void onPlayerTick(CallbackInfo ci) {
+    private void lootsparkle$onPlayerTick(CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
         World world = player.getWorld();
 
