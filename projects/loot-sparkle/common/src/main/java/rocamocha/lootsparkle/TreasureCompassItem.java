@@ -14,13 +14,19 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
+import rocamocha.lootsparkle.core.LootSparkleConfig;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Treasure Compass item that enables sparkle visibility and progression mechanics
+ * Treasure Compass item that enables sparkle visibility and repair mechanics
+ *
+ * Features:
+ * - Points to nearest sparkles when enchanted with Fairy Dust
+ * - Can be repaired using various materials to restore durability
+ * - Supports enchantments like Fairy Dust and Soul Sight
  */
 public class TreasureCompassItem extends Item {
     // Repair material ranges (min, max essence restored)

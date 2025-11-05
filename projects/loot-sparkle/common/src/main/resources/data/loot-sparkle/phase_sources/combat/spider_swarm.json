@@ -1,0 +1,59 @@
+{
+    "spawns": [
+        {
+            "mobId": "minecraft:spider",
+            "weight": 12,
+            "count": 1,
+            "attributes": {
+                "max_health": 14.0,
+                "movement_speed": 0.32,
+                "scale": 0.85
+            }
+        },
+        {
+            "mobId": "minecraft:spider",
+            "weight": 8,
+            "count": 1,
+            "attributes": {
+                "max_health": 18.0,
+                "movement_speed": 0.34,
+                "attack_damage": 3.0,
+                "scale": 1.0
+            }
+        },
+        {
+            "mobId": "minecraft:spider",
+            "weight": 5,
+            "count": 1,
+            "attributes": {
+                "max_health": 22.0,
+                "movement_speed": 0.36,
+                "attack_damage": 3.5,
+                "scale": 1.15
+            },
+            "name": "Broodmother"
+        },
+        {
+            "mobId": "minecraft:cave_spider",
+            "weight": 10,
+            "count": 1,
+            "attributes": {
+                "max_health": 10.0,
+                "movement_speed": 0.35,
+                "scale": 0.9
+            }
+        },
+        {
+            "mobId": "minecraft:cave_spider",
+            "weight": 5,
+            "count": 1,
+            "attributes": {
+                "max_health": 14.0,
+                "movement_speed": 0.38,
+                "attack_damage": 3.0,
+                "scale": 1.0
+            }
+        }
+    ],
+    "rolls": 5
+}

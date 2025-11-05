@@ -1,0 +1,27 @@
+{
+    "phases": [
+        {
+            "type": "emitter",
+            "rate": 5,
+            "bonus": 5,
+            "sources": [
+                "zombie_horde",
+                "skeleton_crew"
+            ],
+            "duration": {
+                "value": 60,
+                "type": "limit"
+            }
+        },
+        {
+            "type": "challenge",
+            "sources": [
+                "target_practice_three"
+            ],
+            "duration": {
+                "value": 20,
+                "type": "limit"
+            }
+        }
+    ]
+}

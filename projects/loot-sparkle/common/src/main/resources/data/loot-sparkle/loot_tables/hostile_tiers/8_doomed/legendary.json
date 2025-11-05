@@ -1,0 +1,140 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 2,
+        "max": 4
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_ingot",
+          "weight": 50,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 2,
+                "max": 5
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:ancient_debris",
+          "weight": 40,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 8,
+                "max": 16
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:enchanted_golden_apple",
+          "weight": 10,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 3,
+                "max": 8
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:wither_skeleton_skull",
+          "weight": 30,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 2,
+                "max": 4
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:beacon",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "type": "minecraft:alternatives",
+          "weight": 25,
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:netherite_sword",
+              "functions": [
+                {
+                  "function": "minecraft:set_enchantments",
+                  "enchantments": [
+                    {
+                      "id": "minecraft:sharpness",
+                      "level": 5
+                    },
+                    {
+                      "id": "minecraft:looting",
+                      "level": 3
+                    },
+                    {
+                      "id": "minecraft:unbreaking",
+                      "level": 3
+                    }
+                  ]
+                },
+                {
+                  "function": "minecraft:set_count",
+                  "count": 1
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:netherite_axe",
+              "functions": [
+                {
+                  "function": "minecraft:set_enchantments",
+                  "enchantments": [
+                    {
+                      "id": "minecraft:sharpness",
+                      "level": 5
+                    },
+                    {
+                      "id": "minecraft:efficiency",
+                      "level": 5
+                    },
+                    {
+                      "id": "minecraft:fortune",
+                      "level": 3
+                    }
+                  ]
+                },
+                {
+                  "function": "minecraft:set_count",
+                  "count": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

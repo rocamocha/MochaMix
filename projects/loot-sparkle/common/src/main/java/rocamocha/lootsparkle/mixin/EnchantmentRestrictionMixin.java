@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import rocamocha.lootsparkle.EnchantmentRestrictionHandler;
+import rocamocha.lootsparkle.enchantment.EnchantmentRestrictionHandler;
 
 @Mixin(Enchantment.class)
 public abstract class EnchantmentRestrictionMixin {

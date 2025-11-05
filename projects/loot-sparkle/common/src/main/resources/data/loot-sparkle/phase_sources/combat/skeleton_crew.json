@@ -1,0 +1,80 @@
+{
+    "spawns": [
+        {
+            "mobId": "minecraft:skeleton",
+            "weight": 10,
+            "count": 2,
+            "attributes": {
+                "max_health": 15.0,
+                "scale": 0.95
+            }
+        },
+        {
+            "mobId": "minecraft:skeleton",
+            "weight": 8,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:leather_helmet",
+                "chestplate": "minecraft:leather_chestplate"
+            },
+            "attributes": {
+                "max_health": 18.0,
+                "movement_speed": 0.27,
+                "scale": 1.0
+            }
+        },
+        {
+            "mobId": "minecraft:skeleton",
+            "weight": 6,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:chainmail_helmet",
+                "chestplate": "minecraft:chainmail_chestplate",
+                "leggings": "minecraft:chainmail_leggings"
+            },
+            "attributes": {
+                "max_health": 22.0,
+                "armor": 8.0,
+                "movement_speed": 0.25,
+                "scale": 1.05
+            }
+        },
+        {
+            "mobId": "minecraft:skeleton",
+            "weight": 4,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:chainmail_helmet",
+                "chestplate": "minecraft:leather_chestplate",
+                "leggings": "minecraft:chainmail_leggings",
+                "boots": "minecraft:leather_boots"
+            },
+            "attributes": {
+                "max_health": 26.0,
+                "armor": 6.0,
+                "movement_speed": 0.26,
+                "scale": 1.1
+            }
+        },
+        {
+            "mobId": "minecraft:skeleton",
+            "weight": 2,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:iron_helmet",
+                "chestplate": "minecraft:chainmail_chestplate",
+                "leggings": "minecraft:chainmail_leggings",
+                "boots": "minecraft:iron_boots"
+            },
+            "attributes": {
+                "max_health": 30.0,
+                "armor": 10.0,
+                "movement_speed": 0.24,
+                "knockback_resistance": 0.2,
+                "scale": 1.15
+            },
+            "name": "Elite Archer"
+        }
+    ],
+    "rolls": 3
+}

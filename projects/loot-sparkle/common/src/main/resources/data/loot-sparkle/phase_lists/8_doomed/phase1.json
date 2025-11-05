@@ -1,0 +1,35 @@
+{
+    "phases": [
+        {
+            "type": "burst",
+            "sources": [
+                "creeper_squad"
+            ],
+            "duration": {
+                "value": 5,
+                "type": "advance"
+            }
+        },
+        {
+            "type": "challenge",
+            "sources": [
+                "target_practice"
+            ],
+            "duration": {
+                "value": 10,
+                "type": "limit"
+            }
+        },
+        {
+            "type": "emitter",
+            "sources": [
+                "zombie_horde",
+                "skeleton_crew"
+            ],
+            "duration": {
+                "value": 30,
+                "type": "limit"
+            }
+        }
+    ]
+}

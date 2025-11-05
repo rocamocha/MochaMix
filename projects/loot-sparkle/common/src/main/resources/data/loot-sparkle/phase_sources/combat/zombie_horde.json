@@ -1,0 +1,81 @@
+{
+    "spawns": [
+        {
+            "mobId": "minecraft:zombie",
+            "weight": 10,
+            "count": 3,
+            "attributes": {
+                "scale": 0.95
+            }
+        },
+        {
+            "mobId": "minecraft:zombie",
+            "weight": 8,
+            "count": 2,
+            "armor": {
+                "helmet": "minecraft:leather_helmet",
+                "chestplate": "minecraft:leather_chestplate"
+            },
+            "attributes": {
+                "max_health": 25.0,
+                "movement_speed": 0.28,
+                "scale": 1.0
+            }
+        },
+        {
+            "mobId": "minecraft:zombie",
+            "weight": 6,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:chainmail_helmet",
+                "chestplate": "minecraft:chainmail_chestplate",
+                "leggings": "minecraft:chainmail_leggings"
+            },
+            "attributes": {
+                "max_health": 30.0,
+                "armor": 10.0,
+                "movement_speed": 0.26,
+                "scale": 1.05
+            }
+        },
+        {
+            "mobId": "minecraft:zombie",
+            "weight": 4,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:chainmail_helmet",
+                "chestplate": "minecraft:leather_chestplate",
+                "leggings": "minecraft:chainmail_leggings",
+                "boots": "minecraft:leather_boots"
+            },
+            "attributes": {
+                "max_health": 35.0,
+                "armor": 8.0,
+                "attack_damage": 4.0,
+                "movement_speed": 0.27,
+                "scale": 1.1
+            }
+        },
+        {
+            "mobId": "minecraft:zombie",
+            "weight": 2,
+            "count": 1,
+            "armor": {
+                "helmet": "minecraft:leather_helmet",
+                "chestplate": "minecraft:chainmail_chestplate",
+                "leggings": "minecraft:chainmail_leggings",
+                "boots": "minecraft:golden_boots"
+            },
+            "attributes": {
+                "max_health": 40.0,
+                "armor": 12.0,
+                "attack_damage": 5.0,
+                "movement_speed": 0.25,
+                "knockback_resistance": 0.3,
+                "scale": 1.15
+            },
+            "name": "Fallen Warrior"
+        }
+    ],
+    "rolls": 3
+}

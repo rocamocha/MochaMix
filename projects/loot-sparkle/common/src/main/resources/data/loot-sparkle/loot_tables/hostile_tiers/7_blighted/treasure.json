@@ -1,0 +1,121 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 2,
+        "max": 3
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond",
+          "weight": 60,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 8,
+                "max": 16
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 50,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 12,
+                "max": 24
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:golden_apple",
+          "weight": 30,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 4,
+                "max": 8
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:experience_bottle",
+          "weight": 40,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "min": 16,
+                "max": 32
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:alternatives",
+          "weight": 25,
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:diamond_sword",
+              "functions": [
+                {
+                  "function": "minecraft:set_enchantments",
+                  "enchantments": [
+                    {
+                      "id": "minecraft:sharpness",
+                      "level": 4
+                    },
+                    {
+                      "id": "minecraft:looting",
+                      "level": 3
+                    }
+                  ]
+                },
+                {
+                  "function": "minecraft:set_count",
+                  "count": 1
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:diamond_pickaxe",
+              "functions": [
+                {
+                  "function": "minecraft:set_enchantments",
+                  "enchantments": [
+                    {
+                      "id": "minecraft:efficiency",
+                      "level": 4
+                    },
+                    {
+                      "id": "minecraft:fortune",
+                      "level": 3
+                    }
+                  ]
+                },
+                {
+                  "function": "minecraft:set_count",
+                  "count": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

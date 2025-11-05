@@ -1,6 +1,6 @@
 package rocamocha.lootsparkle.enchantment;
 
-import rocamocha.lootsparkle.SparkleTier;
+import rocamocha.lootsparkle.sparkle.SparkleTier;
 
 /**
  * Weight modifier for Shimmerseek enchantment.

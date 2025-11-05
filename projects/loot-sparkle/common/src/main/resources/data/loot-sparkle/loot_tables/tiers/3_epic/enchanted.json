@@ -13,7 +13,12 @@
           "weight": 40,
           "functions": [
             {
-              "function": "minecraft:enchant_randomly"
+              "function": "minecraft:enchant_with_levels",
+              "levels": {
+                "min": 5,
+                "max": 25
+              },
+              "treasure": true
             }
           ]
         },

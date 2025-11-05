@@ -10,10 +10,10 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "rocamocha.lootsparkle.LootSparkle"
+            "rocamocha.lootsparkle.core.LootSparkle"
         ],
         "client": [
-            "rocamocha.lootsparkle.LootSparkleClient"
+            "rocamocha.lootsparkle.core.LootSparkleClient"
         ]
     },
     "mixins": [

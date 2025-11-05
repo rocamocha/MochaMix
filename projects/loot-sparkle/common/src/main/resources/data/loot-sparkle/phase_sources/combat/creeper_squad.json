@@ -1,0 +1,39 @@
+{
+    "spawns": [
+        {
+            "mobId": "minecraft:creeper",
+            "weight": 10,
+            "count": 1,
+            "name": "Scuttler",
+            "attributes": {
+                "max_health": 12.0,
+                "movement_speed": 0.35,
+                "knockback_resistance": 0.0,
+                "scale": 0.75
+            }
+        },
+        {
+            "mobId": "minecraft:creeper",
+            "weight": 8,
+            "count": 2,
+            "attributes": {
+                "max_health": 20.0,
+                "movement_speed": 0.25,
+                "scale": 1.0
+            }
+        },
+        {
+            "mobId": "minecraft:creeper",
+            "weight": 5,
+            "count": 1,
+            "name": "Unstable Hulk",
+            "attributes": {
+                "max_health": 35.0,
+                "movement_speed": 0.18,
+                "knockback_resistance": 0.4,
+                "scale": 1.4
+            }
+        }
+    ],
+    "rolls": 1
+}

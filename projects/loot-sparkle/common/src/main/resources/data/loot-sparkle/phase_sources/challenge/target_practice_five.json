@@ -1,0 +1,9 @@
+{
+    "challenges": [
+        {
+            "type": "target",
+            "camo": false,
+            "count": 5
+        }
+    ]
+}

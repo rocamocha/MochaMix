@@ -1,0 +1,46 @@
+{
+    "phases": [
+        {
+            "type": "challenge",
+            "sources": [
+                "target_practice_three"
+            ],
+            "duration": {
+                "value": 12,
+                "type": "limit"
+            }
+        },
+        {
+            "type": "emitter",
+            "sources": [
+                "zombie_horde",
+                "skeleton_crew",
+                "spider_swarm"
+            ],
+            "duration": {
+                "value": 25,
+                "type": "limit"
+            }
+        },
+        {
+            "type": "burst",
+            "sources": [
+                "creeper_squad"
+            ],
+            "duration": {
+                "value": 5,
+                "type": "advance"
+            }
+        },
+        {
+            "type": "challenge",
+            "sources": [
+                "target_practice_five"
+            ],
+            "duration": {
+                "value": 12,
+                "type": "limit"
+            }
+        }
+    ]
+}

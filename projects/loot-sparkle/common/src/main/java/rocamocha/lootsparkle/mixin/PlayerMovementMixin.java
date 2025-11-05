@@ -10,12 +10,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import rocamocha.lootsparkle.ClientSparkleManager;
-import rocamocha.lootsparkle.LootSparkle;
-import rocamocha.lootsparkle.LootSparkleConfig;
-import rocamocha.lootsparkle.SparkleManager;
-import rocamocha.lootsparkle.SparkleNetworking;
-import rocamocha.lootsparkle.TreasureCompassItem;
+import rocamocha.lootsparkle.sparkle.ClientSparkleManager;
+import rocamocha.lootsparkle.core.LootSparkle;
+import rocamocha.lootsparkle.core.LootSparkleConfig;
+import rocamocha.lootsparkle.sparkle.SparkleManager;
+import rocamocha.lootsparkle.network.SparkleNetworking;
+import rocamocha.lootsparkle.item.TreasureCompassItem;
 
 /**
  * Mixin to handle player movement and sparkle spawning/interaction
@@ -130,16 +130,14 @@ public class PlayerMovementMixin {
     }
 
     private void checkForNearbySparkles(PlayerEntity player) {
-        // Only allow sparkle interaction if player has a Treasure Compass in inventory
-        if (!hasCompassInInventory(player)) {
-            return;
-        }
-        
         // Check if player is near any sparkles
         ClientSparkleManager.ClientSparkle nearbySparkle = findNearbySparkle(player);
         if (nearbySparkle != null) {
-            // Send interaction packet to server
-            ClientPlayNetworking.send(new SparkleNetworking.InteractSparklePacket(nearbySparkle.getSparkleId()));
+            // For hostile sparkles, allow interaction without compass
+            if (nearbySparkle.getPlayerId() == null || hasCompassInInventory(player)) {
+                // Send interaction packet to server
+                ClientPlayNetworking.send(new SparkleNetworking.InteractSparklePacket(nearbySparkle.getSparkleId()));
+            }
         }
     }
     
@@ -173,7 +171,20 @@ public class PlayerMovementMixin {
         Vec3d playerPos = player.getPos();
         final double INTERACTION_RADIUS = 3.0;
 
+        // Check player sparkles first
         for (ClientSparkleManager.ClientSparkle sparkle : playerSparkles) {
+            BlockPos sparklePos = sparkle.getPosition();
+            Vec3d sparkleVec = new Vec3d(sparklePos.getX() + 0.5, sparklePos.getY() + 0.5, sparklePos.getZ() + 0.5);
+
+            double distance = playerPos.distanceTo(sparkleVec);
+            if (distance <= INTERACTION_RADIUS) {
+                return sparkle;
+            }
+        }
+
+        // Also check hostile sparkles
+        var hostileSparkles = ClientSparkleManager.getHostileSparkles();
+        for (ClientSparkleManager.ClientSparkle sparkle : hostileSparkles) {
             BlockPos sparklePos = sparkle.getPosition();
             Vec3d sparkleVec = new Vec3d(sparklePos.getX() + 0.5, sparklePos.getY() + 0.5, sparklePos.getZ() + 0.5);
 
