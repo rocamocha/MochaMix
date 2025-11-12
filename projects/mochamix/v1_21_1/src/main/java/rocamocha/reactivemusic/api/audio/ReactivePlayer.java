@@ -5,14 +5,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public interface ReactivePlayer extends AutoCloseable {
     String id();                         // unique handle, e.g. "myplugin:ambient-1"
     boolean isPlaying();
-    // boolean isPaused();
+    boolean isPaused();
     boolean isIdle();
     boolean isFinished();
 
     void play();                         // (re)start from beginning
     void stop();                         // stop + release decoder
-    // void pause();                        // pause without releasing resources
-    // void resume();
+    void pause();                        // pause without releasing resources
+    void resume();                       // resume from paused position
+    void skip(int frames);               // skip forward (+) or backward (-) by frames
+    int getPosition();                   // get current frame position
 
     // Source
     void setSong(String songId);         // e.g. "music/ForestTheme" -> resolves to music/ForestTheme.mp3 in active songpack
