@@ -62,8 +62,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile boolean playing;        // simplified “is playing”
     private volatile boolean complete;       // set by AdvancedPlayer when finished
     private volatile float realGainDb;       // last applied dB
-    private volatile int currentFrame;       // current playback position in frames
-    private volatile int requestedSkipFrames; // requested skip amount (can be negative for rewind)
 
     private AdvancedPlayer player;           // JavaZoom player
     private AudioDevice audio;               // audio device for gain control
@@ -158,8 +156,8 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 
     @Override public void stop() {
         LOGGER.info("Stopping player...");
+        paused = false; // Clear pause state on stop
         if(player != null) {
-            currentFrame = player.getFrames(); // Save position before closing
             player.close();
             queuedToStop = true;
             complete = true;
@@ -174,7 +172,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
             }
         }
 		currentResource = null;
-        paused = false; // Clear pause state on stop
     }
 
     /** Uses the primary gain supplier. */
@@ -213,26 +210,25 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     @Override public void pause() { 
         if (playing && !paused) {
             paused = true;
-            LOGGER.info("Player paused at frame " + getCurrentFrame());
+            LOGGER.info("Player paused: " + id);
         }
     }
     
     @Override public void resume() { 
         if (paused) {
             paused = false;
-            LOGGER.info("Player resumed from frame " + getCurrentFrame());
+            LOGGER.info("Player resumed: " + id);
         }
     }
     
     @Override public void skip(int frames) {
-        // Skip forward (positive) or backward (negative) by the specified number of frames
-        // This is a request that will be handled by the playback thread
-        requestedSkipFrames += frames;
-        LOGGER.info("Skip requested: " + frames + " frames");
+        // Skip is not implemented for streaming playback
+        // This would require seekable input streams
+        LOGGER.warn("Skip not supported with streaming MP3 playback for player: " + id);
     }
     
     @Override public int getPosition() {
-        return getCurrentFrame();
+        return player != null ? player.getFrames() : 0;
     }
     
 
@@ -251,10 +247,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 
     @Override public void onComplete(Runnable r) { if (r != null) completeHandlers.add(r); }
     @Override public void onError(Consumer<Throwable> c) { if (c != null) errorHandlers.add(c); }
-    
-    private int getCurrentFrame() {
-        return player != null ? player.getFrames() : currentFrame;
-    }
 
     @Override public void close() {
         stop();
@@ -272,110 +264,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         this.complete = false;
         this.queued = true;       // worker will open & play
         this.paused = false;
-    }
-    
-    /**
-     * Custom playback method that supports pause, resume, and seeking.
-     * Uses a custom AdvancedPlayer extension to decode frames without triggering 
-     * close/flush on every frame.
-     */
-    private void playWithControls() throws rm_javazoom.jl.decoder.JavaLayerException {
-        // Use a custom player that exposes frame-by-frame control
-        ControllablePlayer controllable = new ControllablePlayer(player);
-        boolean hasMoreFrames = true;
-        
-        while (hasMoreFrames && !queuedToStop) {
-            // Handle pause
-            if (paused) {
-                try {
-                    Thread.sleep(10); // Small sleep to avoid busy-waiting
-                } catch (InterruptedException e) {
-                    break;
-                }
-                continue;
-            }
-            
-            // Handle skip/seek requests
-            if (requestedSkipFrames != 0) {
-                int skipAmount = requestedSkipFrames;
-                requestedSkipFrames = 0;
-                
-                if (skipAmount < 0) {
-                    // Can't rewind with streaming - would need to restart from beginning
-                    LOGGER.warn("Rewind not supported with streaming playback. Use play() to restart.");
-                } else {
-                    // Skip forward by decoding frames without playing audio
-                    LOGGER.info("Skipping forward " + skipAmount + " frames");
-                    hasMoreFrames = controllable.skip(skipAmount);
-                    currentFrame = player.getFrames();
-                }
-            }
-            
-            // Decode and play one frame
-            if (hasMoreFrames && !queuedToStop && !paused) {
-                hasMoreFrames = controllable.playOneFrame();
-                currentFrame = player.getFrames();
-            }
-        }
-        
-        // Properly finalize playback
-        controllable.finish();
-    }
-    
-    /**
-     * Wrapper around AdvancedPlayer that provides frame-by-frame control
-     * without triggering flush/close on every frame.
-     */
-    private static class ControllablePlayer {
-        private final AdvancedPlayer player;
-        private final java.lang.reflect.Method decodeFrameMethod;
-        private final java.lang.reflect.Method skipFrameMethod;
-        
-        ControllablePlayer(AdvancedPlayer player) {
-            this.player = player;
-            java.lang.reflect.Method decode = null;
-            java.lang.reflect.Method skip = null;
-            try {
-                decode = AdvancedPlayer.class.getDeclaredMethod("decodeFrame");
-                decode.setAccessible(true);
-                skip = AdvancedPlayer.class.getDeclaredMethod("skipFrame");
-                skip.setAccessible(true);
-            } catch (NoSuchMethodException e) {
-                LOGGER.error("Failed to access AdvancedPlayer decode methods", e);
-            }
-            this.decodeFrameMethod = decode;
-            this.skipFrameMethod = skip;
-        }
-        
-        boolean playOneFrame() throws rm_javazoom.jl.decoder.JavaLayerException {
-            if (decodeFrameMethod == null) return false;
-            try {
-                return (Boolean) decodeFrameMethod.invoke(player);
-            } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                throw new rm_javazoom.jl.decoder.JavaLayerException("Failed to decode frame", e);
-            }
-        }
-        
-        boolean skip(int frames) throws rm_javazoom.jl.decoder.JavaLayerException {
-            if (skipFrameMethod == null) return false;
-            boolean hasMore = true;
-            for (int i = 0; i < frames && hasMore; i++) {
-                try {
-                    hasMore = (Boolean) skipFrameMethod.invoke(player);
-                } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                    throw new rm_javazoom.jl.decoder.JavaLayerException("Failed to skip frame", e);
-                }
-            }
-            return hasMore;
-        }
-        
-        void finish() {
-            // Flush audio buffer and properly close
-            AudioDevice audio = player.getAudioDevice();
-            if (audio != null) {
-                audio.flush();
-            }
-        }
     }
 
     private void runLoop() {
@@ -411,12 +299,10 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                         queued = false;
                         playing = true;
                         complete = false;
-                        currentFrame = 0;
-                        requestedSkipFrames = 0;
 
 
                         if (player.getAudioDevice() != null && !queuedToStop) {
-                            playWithControls();
+                            player.play();
                         }
                     } finally {
                         // Cleanup player & audio
@@ -614,6 +500,20 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         @Override
         public void write(short[] samples, int offs, int len)
                 throws rm_javazoom.jl.decoder.JavaLayerException {
+            // Handle pause - block until resumed
+            while (paused && !queuedToStop && !kill) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    return; // Exit if interrupted
+                }
+            }
+            
+            // Stop writing if we're supposed to stop
+            if (queuedToStop || kill) {
+                return;
+            }
+            
             // If mixer didn't call open(AudioFormat) before first write (some forks do this),
             // do best-effort: synthesize a sensible format just for primer sizing.
             if (!opened && fmt == null) {
