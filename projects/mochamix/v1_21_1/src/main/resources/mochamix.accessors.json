@@ -2,7 +2,7 @@
   "required": true,
   "package": "rocamocha.mochamix.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [
+  "client": [
     "accessor.PlayerEntityAccess",
     "accessor.LivingEntityAccess"
   ],

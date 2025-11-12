@@ -167,7 +167,7 @@ if (targetProject != null) {
         }
         
         loom {
-            mixin.defaultRefmapName = "reactivemusic.refmap.json"
+            // mixin.defaultRefmapName = "reactivemusic.refmap.json"
             
             // Use organized nested run directories by client/server and version
             runConfigs {

@@ -24,12 +24,40 @@ public class TargetFallingBlockEntity extends net.minecraft.entity.FallingBlockE
         this.prevY = y;
         this.prevZ = z;
         this.setFallingBlockPos(this.getBlockPos());
-        // Set the block state using reflection since the field is private
-        try {
-            java.lang.reflect.Field blockField = net.minecraft.entity.FallingBlockEntity.class.getDeclaredField("block");
-            blockField.setAccessible(true);
-            blockField.set(this, block);
-        } catch (Exception e) {
+        
+        // Try multiple approaches to set the block state
+        boolean success = false;
+        
+        // Method 1: Try common field names across different mappings
+        String[] possibleFieldNames = {"block", "field_145850_b", "blockState", "f_31950_"};
+        for (String fieldName : possibleFieldNames) {
+            try {
+                java.lang.reflect.Field blockField = net.minecraft.entity.FallingBlockEntity.class.getDeclaredField(fieldName);
+                blockField.setAccessible(true);
+                blockField.set(this, block);
+                success = true;
+                break;
+            } catch (Exception e) {
+                // Try next field name
+            }
+        }
+        
+        // Method 2: If all field names fail, search for the field by type
+        if (!success) {
+            try {
+                for (java.lang.reflect.Field field : net.minecraft.entity.FallingBlockEntity.class.getDeclaredFields()) {
+                    if (field.getType() == net.minecraft.block.BlockState.class) {
+                        field.setAccessible(true);
+                        field.set(this, block);
+                        success = true;
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                // Log the error since we couldn't set the block
+                System.err.println("Failed to set block state for TargetFallingBlockEntity - targets will appear as sand!");
+                e.printStackTrace();
+            }
         }
     }
 
