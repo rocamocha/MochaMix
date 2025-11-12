@@ -1,5 +1,6 @@
 package rocamocha.reactivemusic.commands;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
@@ -35,6 +36,8 @@ public class PlayerCommandHandlers {
 
         .line("id", player.id(), Formatting.AQUA)
         .line("isPlaying", player.isPlaying() ? "YES" : "NO", player.isPlaying() ? Formatting.GREEN : Formatting.GRAY)
+        .line("isPaused", player.isPaused() ? "YES" : "NO", player.isPaused() ? Formatting.YELLOW : Formatting.GRAY)
+        .line("position", Integer.toString(player.getPosition()) + " frames", Formatting.AQUA)
         .line("stopOnFadeOut", player.stopOnFadeOut() ? "YES" : "NO", player.stopOnFadeOut() ? Formatting.GREEN : Formatting.GRAY)
         .line("resetOnFadeOut", player.resetOnFadeOut() ? "YES" : "NO", player.resetOnFadeOut() ? Formatting.GREEN : Formatting.GRAY)
         .line("gainSuppliers", "", Formatting.WHITE);
@@ -67,6 +70,64 @@ public class PlayerCommandHandlers {
         .line("isFadingIn", gainSupplier.isFadingIn() ? "YES" : "NO", gainSupplier.isFadingIn() ? Formatting.GREEN : Formatting.GRAY);
 
         ctx.getSource().sendFeedback(supplierInfo.build());
+        return 1;
+    }
+    
+    public static int playerPause(CommandContext<FabricClientCommandSource> ctx) {
+        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
+        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
+        
+        if (player == null) {
+            TextBuilder feedback = new TextBuilder();
+            feedback.line("Player not found: " + id, Formatting.RED);
+            ctx.getSource().sendFeedback(feedback.build());
+            return 0;
+        }
+        
+        player.pause();
+        TextBuilder feedback = new TextBuilder();
+        feedback.line("Player paused: " + id, Formatting.GREEN);
+        feedback.line("Position: " + player.getPosition() + " frames", Formatting.AQUA);
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int playerResume(CommandContext<FabricClientCommandSource> ctx) {
+        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
+        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
+        
+        if (player == null) {
+            TextBuilder feedback = new TextBuilder();
+            feedback.line("Player not found: " + id, Formatting.RED);
+            ctx.getSource().sendFeedback(feedback.build());
+            return 0;
+        }
+        
+        player.resume();
+        TextBuilder feedback = new TextBuilder();
+        feedback.line("Player resumed: " + id, Formatting.GREEN);
+        feedback.line("Position: " + player.getPosition() + " frames", Formatting.AQUA);
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int playerSkip(CommandContext<FabricClientCommandSource> ctx) {
+        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
+        int frames = IntegerArgumentType.getInteger(ctx, "frames");
+        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
+        
+        if (player == null) {
+            TextBuilder feedback = new TextBuilder();
+            feedback.line("Player not found: " + id, Formatting.RED);
+            ctx.getSource().sendFeedback(feedback.build());
+            return 0;
+        }
+        
+        player.skip(frames);
+        TextBuilder feedback = new TextBuilder();
+        feedback.line("Skip requested: " + frames + " frames", Formatting.GREEN);
+        feedback.line("Current position: " + player.getPosition() + " frames", Formatting.AQUA);
+        ctx.getSource().sendFeedback(feedback.build());
         return 1;
     }
     
