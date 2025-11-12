@@ -276,15 +276,17 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     
     /**
      * Custom playback method that supports pause, resume, and seeking.
-     * Decodes frames one at a time to allow for responsive control.
+     * Uses a custom AdvancedPlayer extension to decode frames without triggering 
+     * close/flush on every frame.
      */
     private void playWithControls() throws rm_javazoom.jl.decoder.JavaLayerException {
+        // Use a custom player that exposes frame-by-frame control
+        ControllablePlayer controllable = new ControllablePlayer(player);
         boolean hasMoreFrames = true;
         
         while (hasMoreFrames && !queuedToStop) {
             // Handle pause
             if (paused) {
-                Thread.yield(); // Give up CPU while paused
                 try {
                     Thread.sleep(10); // Small sleep to avoid busy-waiting
                 } catch (InterruptedException e) {
@@ -302,18 +304,77 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                     // Can't rewind with streaming - would need to restart from beginning
                     LOGGER.warn("Rewind not supported with streaming playback. Use play() to restart.");
                 } else {
-                    // Skip forward by decoding frames without writing audio
+                    // Skip forward by decoding frames without playing audio
                     LOGGER.info("Skipping forward " + skipAmount + " frames");
-                    for (int i = 0; i < skipAmount && hasMoreFrames; i++) {
-                        hasMoreFrames = player.play(1);
-                        if (!hasMoreFrames) break;
-                    }
+                    hasMoreFrames = controllable.skip(skipAmount);
+                    currentFrame = player.getFrames();
                 }
             }
             
             // Decode and play one frame
-            hasMoreFrames = player.play(1);
-            currentFrame = player.getFrames();
+            if (hasMoreFrames && !queuedToStop && !paused) {
+                hasMoreFrames = controllable.playOneFrame();
+                currentFrame = player.getFrames();
+            }
+        }
+        
+        // Properly finalize playback
+        controllable.finish();
+    }
+    
+    /**
+     * Wrapper around AdvancedPlayer that provides frame-by-frame control
+     * without triggering flush/close on every frame.
+     */
+    private static class ControllablePlayer {
+        private final AdvancedPlayer player;
+        private final java.lang.reflect.Method decodeFrameMethod;
+        private final java.lang.reflect.Method skipFrameMethod;
+        
+        ControllablePlayer(AdvancedPlayer player) {
+            this.player = player;
+            java.lang.reflect.Method decode = null;
+            java.lang.reflect.Method skip = null;
+            try {
+                decode = AdvancedPlayer.class.getDeclaredMethod("decodeFrame");
+                decode.setAccessible(true);
+                skip = AdvancedPlayer.class.getDeclaredMethod("skipFrame");
+                skip.setAccessible(true);
+            } catch (NoSuchMethodException e) {
+                LOGGER.error("Failed to access AdvancedPlayer decode methods", e);
+            }
+            this.decodeFrameMethod = decode;
+            this.skipFrameMethod = skip;
+        }
+        
+        boolean playOneFrame() throws rm_javazoom.jl.decoder.JavaLayerException {
+            if (decodeFrameMethod == null) return false;
+            try {
+                return (Boolean) decodeFrameMethod.invoke(player);
+            } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+                throw new rm_javazoom.jl.decoder.JavaLayerException("Failed to decode frame", e);
+            }
+        }
+        
+        boolean skip(int frames) throws rm_javazoom.jl.decoder.JavaLayerException {
+            if (skipFrameMethod == null) return false;
+            boolean hasMore = true;
+            for (int i = 0; i < frames && hasMore; i++) {
+                try {
+                    hasMore = (Boolean) skipFrameMethod.invoke(player);
+                } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+                    throw new rm_javazoom.jl.decoder.JavaLayerException("Failed to skip frame", e);
+                }
+            }
+            return hasMore;
+        }
+        
+        void finish() {
+            // Flush audio buffer and properly close
+            AudioDevice audio = player.getAudioDevice();
+            if (audio != null) {
+                audio.flush();
+            }
         }
     }
 
