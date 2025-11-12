@@ -13,9 +13,9 @@ public record CreateLoadoutFromDataPayload(Loadout loadout) implements CustomPay
         Identifier.of(LogicalLoadouts.MOD_ID, "create_loadout_from_data")
     );
     
-    public static final PacketCodec<RegistryByteBuf, CreateLoadoutFromDataPayload> CODEC = PacketCodec.tuple(
-        PacketCodecs.NBT_COMPOUND, payload -> payload.loadout.toNbt(),
-        nbt -> new CreateLoadoutFromDataPayload(Loadout.fromNbt(nbt))
+    public static final PacketCodec<RegistryByteBuf, CreateLoadoutFromDataPayload> CODEC = PacketCodec.of(
+        (value, buf) -> PacketCodecs.NBT_COMPOUND.encode(buf, value.loadout.toNbt(buf.getRegistryManager())),
+        buf -> new CreateLoadoutFromDataPayload(Loadout.fromNbt(buf.getRegistryManager(), PacketCodecs.NBT_COMPOUND.decode(buf)))
     );
     
     @Override

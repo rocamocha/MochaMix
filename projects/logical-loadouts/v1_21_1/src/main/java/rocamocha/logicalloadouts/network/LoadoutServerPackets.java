@@ -213,7 +213,10 @@ public class LoadoutServerPackets {
         server.execute(() -> {
             try {
                 LoadoutManager manager = getLoadoutManager(server);
-                Loadout loadout = Loadout.fromNbt(loadoutNbt);
+                
+                // Get the server's registry manager for proper enchantment deserialization
+                net.minecraft.registry.DynamicRegistryManager registryManager = server.getRegistryManager();
+                Loadout loadout = Loadout.fromNbt(registryManager, loadoutNbt);
                 
                 LoadoutManager.LoadoutOperationResult result = manager.updateLoadout(player.getUuid(), loadout);
                 
@@ -559,13 +562,16 @@ public class LoadoutServerPackets {
         // Get server-shared loadouts (available to all players)
         List<Loadout> serverSharedLoadouts = manager.getServerSharedLoadouts();
         
+        // Get the server's registry manager for proper enchantment serialization
+        net.minecraft.registry.DynamicRegistryManager registryManager = player.getServer().getRegistryManager();
+        
         // Convert to NBT for transmission
         List<NbtCompound> personalLoadoutNbts = personalLoadouts.stream()
-            .map(Loadout::toNbt)
+            .map(l -> l.toNbt(registryManager))
             .collect(Collectors.toList());
             
         List<NbtCompound> serverSharedLoadoutNbts = serverSharedLoadouts.stream()
-            .map(Loadout::toNbt)
+            .map(l -> l.toNbt(registryManager))
             .collect(Collectors.toList());
         
         // Send using modern CustomPayload system

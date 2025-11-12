@@ -84,13 +84,16 @@ public class LoadoutManager {
             return;
         }
         
+        // Get the server's registry manager for proper enchantment deserialization
+        net.minecraft.registry.DynamicRegistryManager registryManager = server.getRegistryManager();
+        
         try {
             Files.walk(serverLoadoutsPath)
                 .filter(path -> path.toString().endsWith(LOADOUTS_FILE_EXTENSION))
                 .forEach(path -> {
                     try {
                         NbtCompound nbt = NbtIo.readCompressed(path, net.minecraft.nbt.NbtSizeTracker.ofUnlimitedBytes());
-                        Loadout loadout = Loadout.fromNbt(nbt);
+                        Loadout loadout = Loadout.fromNbt(registryManager, nbt);
                         
                         if (loadout.isValid()) {
                             serverSharedLoadouts.put(loadout.getId(), loadout);
@@ -136,10 +139,13 @@ public class LoadoutManager {
                 if (playerData.contains("loadouts")) {
                     NbtCompound loadoutsNbt = playerData.getCompound("loadouts");
                     
+                    // Get the server's registry manager for proper enchantment deserialization
+                    net.minecraft.registry.DynamicRegistryManager registryManager = server.getRegistryManager();
+                    
                     for (String key : loadoutsNbt.getKeys()) {
                         try {
                             UUID loadoutId = UUID.fromString(key);
-                            Loadout loadout = Loadout.fromNbt(loadoutsNbt.getCompound(key));
+                            Loadout loadout = Loadout.fromNbt(registryManager, loadoutsNbt.getCompound(key));
                             
                             if (loadout.isValid()) {
                                 loadouts.put(loadoutId, loadout);
@@ -174,8 +180,11 @@ public class LoadoutManager {
             NbtCompound playerData = new NbtCompound();
             NbtCompound loadoutsNbt = new NbtCompound();
             
+            // Get the server's registry manager for proper enchantment serialization
+            net.minecraft.registry.DynamicRegistryManager registryManager = server.getRegistryManager();
+            
             for (Map.Entry<UUID, Loadout> entry : loadouts.entrySet()) {
-                loadoutsNbt.put(entry.getKey().toString(), entry.getValue().toNbt());
+                loadoutsNbt.put(entry.getKey().toString(), entry.getValue().toNbt(registryManager));
             }
             
             playerData.put("loadouts", loadoutsNbt);
@@ -344,7 +353,10 @@ public class LoadoutManager {
             // Save to disk with sanitized filename
             String sanitizedFilename = newLoadout.getName().replaceAll("[^a-zA-Z0-9_-]", "_");
             Path loadoutFile = serverLoadoutsPath.resolve(sanitizedFilename + LOADOUTS_FILE_EXTENSION);
-            NbtIo.writeCompressed(newLoadout.toNbt(), loadoutFile);
+            
+            // Get the server's registry manager for proper enchantment serialization
+            net.minecraft.registry.DynamicRegistryManager registryManager = server.getRegistryManager();
+            NbtIo.writeCompressed(newLoadout.toNbt(registryManager), loadoutFile);
             
             // Add to in-memory cache
             serverSharedLoadouts.put(newLoadout.getId(), newLoadout);

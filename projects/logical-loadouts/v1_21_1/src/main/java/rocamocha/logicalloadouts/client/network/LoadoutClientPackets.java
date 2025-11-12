@@ -42,15 +42,20 @@ public class LoadoutClientPackets {
         
         client.execute(() -> {
             try {
+                // Get the client world's registry manager for proper enchantment deserialization
+                net.minecraft.registry.DynamicRegistryManager registryManager = client.world != null ? 
+                    client.world.getRegistryManager() : 
+                    net.minecraft.registry.DynamicRegistryManager.EMPTY;
+                
                 List<Loadout> personalLoadouts = new ArrayList<>();
                 for (NbtCompound nbt : personalLoadoutNbts) {
-                    Loadout loadout = Loadout.fromNbt(nbt);
+                    Loadout loadout = Loadout.fromNbt(registryManager, nbt);
                     personalLoadouts.add(loadout);
                 }
                 
                 List<Loadout> serverSharedLoadouts = new ArrayList<>();
                 for (NbtCompound nbt : serverSharedLoadoutNbts) {
-                    Loadout loadout = Loadout.fromNbt(nbt);
+                    Loadout loadout = Loadout.fromNbt(registryManager, nbt);
                     serverSharedLoadouts.add(loadout);
                 }
                 

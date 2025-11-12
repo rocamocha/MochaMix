@@ -255,11 +255,17 @@ public class LocalLoadoutStorage {
             if (data.contains("loadouts")) {
                 NbtCompound loadoutsNbt = data.getCompound("loadouts");
                 
+                // Get the client's registry manager for proper enchantment deserialization
+                MinecraftClient client = MinecraftClient.getInstance();
+                net.minecraft.registry.DynamicRegistryManager registryManager = client.world != null ? 
+                    client.world.getRegistryManager() : 
+                    net.minecraft.registry.DynamicRegistryManager.EMPTY;
+                
                 for (String key : loadoutsNbt.getKeys()) {
                     try {
                         UUID loadoutId = UUID.fromString(key);
                         NbtCompound loadoutNbt = loadoutsNbt.getCompound(key);
-                        Loadout loadout = Loadout.fromNbt(loadoutNbt);
+                        Loadout loadout = Loadout.fromNbt(registryManager, loadoutNbt);
                         localLoadouts.put(loadoutId, loadout);
                         System.out.println("Loaded loadout: " + loadout.getName() + " with " + countNonEmptyItems(loadout) + " items");
                     } catch (Exception e) {
@@ -287,12 +293,18 @@ public class LocalLoadoutStorage {
         try {
             NbtCompound data = NbtIo.readCompressed(globalFile, NbtSizeTracker.ofUnlimitedBytes());
             
+            // Get the client's registry manager for proper enchantment deserialization
+            MinecraftClient client = MinecraftClient.getInstance();
+            net.minecraft.registry.DynamicRegistryManager registryManager = client.world != null ? 
+                client.world.getRegistryManager() : 
+                net.minecraft.registry.DynamicRegistryManager.EMPTY;
+            
             for (int i = 0; i < GLOBAL_LOADOUT_SLOTS; i++) {
                 String slotKey = "slot_" + i;
                 if (data.contains(slotKey)) {
                     try {
                         NbtCompound loadoutNbt = data.getCompound(slotKey);
-                        globalLoadouts[i] = Loadout.fromNbt(loadoutNbt);
+                        globalLoadouts[i] = Loadout.fromNbt(registryManager, loadoutNbt);
                     } catch (Exception e) {
                         LogicalLoadouts.LOGGER.error("Failed to load global loadout from slot {}", i, e);
                     }
@@ -313,8 +325,14 @@ public class LocalLoadoutStorage {
             NbtCompound data = new NbtCompound();
             NbtCompound loadoutsNbt = new NbtCompound();
             
+            // Get the client's registry manager for proper enchantment serialization
+            MinecraftClient client = MinecraftClient.getInstance();
+            net.minecraft.registry.DynamicRegistryManager registryManager = client.world != null ? 
+                client.world.getRegistryManager() : 
+                net.minecraft.registry.DynamicRegistryManager.EMPTY;
+            
             for (Map.Entry<UUID, Loadout> entry : localLoadouts.entrySet()) {
-                loadoutsNbt.put(entry.getKey().toString(), entry.getValue().toNbt());
+                loadoutsNbt.put(entry.getKey().toString(), entry.getValue().toNbt(registryManager));
             }
             
             data.put("loadouts", loadoutsNbt);
@@ -336,9 +354,15 @@ public class LocalLoadoutStorage {
         try {
             NbtCompound data = new NbtCompound();
             
+            // Get the client's registry manager for proper enchantment serialization
+            MinecraftClient client = MinecraftClient.getInstance();
+            net.minecraft.registry.DynamicRegistryManager registryManager = client.world != null ? 
+                client.world.getRegistryManager() : 
+                net.minecraft.registry.DynamicRegistryManager.EMPTY;
+            
             for (int i = 0; i < GLOBAL_LOADOUT_SLOTS; i++) {
                 if (globalLoadouts[i] != null) {
-                    data.put("slot_" + i, globalLoadouts[i].toNbt());
+                    data.put("slot_" + i, globalLoadouts[i].toNbt(registryManager));
                 }
             }
             

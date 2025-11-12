@@ -120,31 +120,38 @@ public class Loadout {
     /**
      * NBT Serialization for persistence and networking
      */
+    public NbtCompound toNbt(net.minecraft.registry.DynamicRegistryManager registryManager) {
+        NbtCompound nbt = new NbtCompound();
+        // Basic data
+        nbt.putUuid("id", id);
+        nbt.putString("name", name);
+        nbt.putLong("lastModified", lastModified);
+
+        // Serialize inventory slots
+        nbt.put("hotbar", serializeItemArray(hotbar, registryManager));
+        nbt.put("mainInventory", serializeItemArray(mainInventory, registryManager));
+        nbt.put("armor", serializeItemArray(armor, registryManager));
+        nbt.put("offhand", serializeItemArray(offhand, registryManager));
+
+        // Serialize metadata
+        NbtCompound metaNbt = new NbtCompound();
+        metadata.forEach(metaNbt::putString);
+        nbt.put("metadata", metaNbt);
+
+        return nbt;
+    }
+    
+    /**
+     * NBT Serialization for persistence and networking (uses empty registry manager for backwards compatibility)
+     */
     public NbtCompound toNbt() {
-    NbtCompound nbt = new NbtCompound();
-    // Basic data
-    nbt.putUuid("id", id);
-    nbt.putString("name", name);
-    nbt.putLong("lastModified", lastModified);
-
-    // Serialize inventory slots
-    nbt.put("hotbar", serializeItemArray(hotbar));
-    nbt.put("mainInventory", serializeItemArray(mainInventory));
-    nbt.put("armor", serializeItemArray(armor));
-    nbt.put("offhand", serializeItemArray(offhand));
-
-    // Serialize metadata
-    NbtCompound metaNbt = new NbtCompound();
-    metadata.forEach(metaNbt::putString);
-    nbt.put("metadata", metaNbt);
-
-    return nbt;
+        return toNbt(net.minecraft.registry.DynamicRegistryManager.EMPTY);
     }
     
     /**
      * NBT Deserialization
      */
-    public static Loadout fromNbt(NbtCompound nbt) {
+    public static Loadout fromNbt(net.minecraft.registry.DynamicRegistryManager registryManager, NbtCompound nbt) {
         UUID id = nbt.getUuid("id");
         String name = nbt.getString("name");
 
@@ -152,10 +159,10 @@ public class Loadout {
         loadout.lastModified = nbt.getLong("lastModified");
 
         // Deserialize inventory slots
-        deserializeItemArray(nbt.getList("hotbar", 10), loadout.hotbar);
-        deserializeItemArray(nbt.getList("mainInventory", 10), loadout.mainInventory);
-        deserializeItemArray(nbt.getList("armor", 10), loadout.armor);
-        deserializeItemArray(nbt.getList("offhand", 10), loadout.offhand);
+        deserializeItemArray(nbt.getList("hotbar", 10), loadout.hotbar, registryManager);
+        deserializeItemArray(nbt.getList("mainInventory", 10), loadout.mainInventory, registryManager);
+        deserializeItemArray(nbt.getList("armor", 10), loadout.armor, registryManager);
+        deserializeItemArray(nbt.getList("offhand", 10), loadout.offhand, registryManager);
 
         // Deserialize metadata
         if (nbt.contains("metadata")) {
@@ -168,13 +175,20 @@ public class Loadout {
         return loadout;
     }
     
-    private NbtList serializeItemArray(ItemStack[] items) {
+    /**
+     * NBT Deserialization (uses empty registry manager for backwards compatibility)
+     */
+    public static Loadout fromNbt(NbtCompound nbt) {
+        return fromNbt(net.minecraft.registry.DynamicRegistryManager.EMPTY, nbt);
+    }
+    
+    private NbtList serializeItemArray(ItemStack[] items, net.minecraft.registry.DynamicRegistryManager registryManager) {
         NbtList list = new NbtList();
         for (int i = 0; i < items.length; i++) {
             NbtCompound itemNbt = new NbtCompound();
             if (!items[i].isEmpty()) {
                 // Use encode method with proper registry manager
-                NbtCompound itemData = (NbtCompound) items[i].encode(net.minecraft.registry.DynamicRegistryManager.EMPTY);
+                NbtCompound itemData = (NbtCompound) items[i].encode(registryManager);
                 // Copy all keys from itemData to itemNbt except for the Slot key we'll add
                 for (String key : itemData.getKeys()) {
                     itemNbt.put(key, itemData.get(key));
@@ -186,7 +200,7 @@ public class Loadout {
         return list;
     }
     
-    private static void deserializeItemArray(NbtList list, ItemStack[] items) {
+    private static void deserializeItemArray(NbtList list, ItemStack[] items, net.minecraft.registry.DynamicRegistryManager registryManager) {
         Arrays.fill(items, ItemStack.EMPTY);
         for (int i = 0; i < list.size(); i++) {
             NbtCompound itemNbt = list.getCompound(i);
@@ -201,7 +215,7 @@ public class Loadout {
                             itemData.put(key, itemNbt.get(key));
                         }
                     }
-                    ItemStack stack = ItemStack.fromNbt(net.minecraft.registry.DynamicRegistryManager.EMPTY, itemData).orElse(ItemStack.EMPTY);
+                    ItemStack stack = ItemStack.fromNbt(registryManager, itemData).orElse(ItemStack.EMPTY);
                     items[slot] = stack;
                 } else {
                     items[slot] = ItemStack.EMPTY;

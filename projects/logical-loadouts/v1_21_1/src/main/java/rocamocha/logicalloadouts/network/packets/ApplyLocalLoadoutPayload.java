@@ -13,10 +13,16 @@ public record ApplyLocalLoadoutPayload(Loadout loadout, boolean consumeAfterAppl
         Identifier.of(LogicalLoadouts.MOD_ID, "apply_local_loadout")
     );
     
-    public static final PacketCodec<RegistryByteBuf, ApplyLocalLoadoutPayload> CODEC = PacketCodec.tuple(
-        PacketCodecs.NBT_COMPOUND, payload -> payload.loadout.toNbt(),
-        PacketCodecs.BOOL, payload -> payload.consumeAfterApply,
-        (nbt, consume) -> new ApplyLocalLoadoutPayload(Loadout.fromNbt(nbt), consume)
+    public static final PacketCodec<RegistryByteBuf, ApplyLocalLoadoutPayload> CODEC = PacketCodec.of(
+        (value, buf) -> {
+            PacketCodecs.NBT_COMPOUND.encode(buf, value.loadout.toNbt(buf.getRegistryManager()));
+            PacketCodecs.BOOL.encode(buf, value.consumeAfterApply);
+        },
+        buf -> {
+            var nbt = PacketCodecs.NBT_COMPOUND.decode(buf);
+            var consume = PacketCodecs.BOOL.decode(buf);
+            return new ApplyLocalLoadoutPayload(Loadout.fromNbt(buf.getRegistryManager(), nbt), consume);
+        }
     );
     
     @Override

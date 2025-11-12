@@ -13,10 +13,16 @@ public record UploadLoadoutPayload(Loadout loadout, String name) implements Cust
         Identifier.of(LogicalLoadouts.MOD_ID, "upload_loadout")
     );
 
-    public static final PacketCodec<RegistryByteBuf, UploadLoadoutPayload> CODEC = PacketCodec.tuple(
-        PacketCodecs.NBT_COMPOUND, payload -> payload.loadout.toNbt(),
-        PacketCodecs.STRING, payload -> payload.name,
-        (nbt, name) -> new UploadLoadoutPayload(Loadout.fromNbt(nbt), name)
+    public static final PacketCodec<RegistryByteBuf, UploadLoadoutPayload> CODEC = PacketCodec.of(
+        (value, buf) -> {
+            PacketCodecs.NBT_COMPOUND.encode(buf, value.loadout.toNbt(buf.getRegistryManager()));
+            PacketCodecs.STRING.encode(buf, value.name);
+        },
+        buf -> {
+            var nbt = PacketCodecs.NBT_COMPOUND.decode(buf);
+            var name = PacketCodecs.STRING.decode(buf);
+            return new UploadLoadoutPayload(Loadout.fromNbt(buf.getRegistryManager(), nbt), name);
+        }
     );
 
     @Override
