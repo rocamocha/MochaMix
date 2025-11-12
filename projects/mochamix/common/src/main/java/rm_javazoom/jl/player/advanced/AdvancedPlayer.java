@@ -52,6 +52,7 @@ public class AdvancedPlayer
 
 
 	public boolean queuedToStop = false;
+	public volatile boolean paused = false;
 
 	/**
 	 * Creates a new <code>Player</code> instance.
@@ -150,6 +151,14 @@ public class AdvancedPlayer
 	{
 		try
 		{
+			// Handle pause - wait until unpaused
+			while (paused && !queuedToStop) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					return false;
+				}
+			}
 
 			if (queuedToStop) {
 				queuedToStop = false;

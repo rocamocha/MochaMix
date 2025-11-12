@@ -210,6 +210,10 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     @Override public void pause() { 
         if (playing && !paused) {
             paused = true;
+            // Also set pause on the AdvancedPlayer to pause decoding
+            if (player != null) {
+                player.paused = true;
+            }
             LOGGER.info("Player paused: " + id);
         }
     }
@@ -217,6 +221,10 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     @Override public void resume() { 
         if (paused) {
             paused = false;
+            // Also clear pause on the AdvancedPlayer to resume decoding
+            if (player != null) {
+                player.paused = false;
+            }
             LOGGER.info("Player resumed: " + id);
         }
     }
@@ -500,20 +508,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         @Override
         public void write(short[] samples, int offs, int len)
                 throws rm_javazoom.jl.decoder.JavaLayerException {
-            // Handle pause - block until resumed
-            while (paused && !queuedToStop && !kill) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    return; // Exit if interrupted
-                }
-            }
-            
-            // Stop writing if we're supposed to stop
-            if (queuedToStop || kill) {
-                return;
-            }
-            
             // If mixer didn't call open(AudioFormat) before first write (some forks do this),
             // do best-effort: synthesize a sensible format just for primer sizing.
             if (!opened && fmt == null) {
