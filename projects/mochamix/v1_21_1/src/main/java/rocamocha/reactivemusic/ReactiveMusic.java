@@ -252,12 +252,36 @@ public class ReactiveMusic implements ModInitializer {
 					)
 				)
 
-				.then(literal("skip")
-					.executes(ctx -> {
-						ReactiveMusicState.currentEntry = null;
-						ReactiveMusicState.currentSong = null;
-						return 1;
-					})
+				.then(literal("playback")
+					.then(literal("pause")
+						.executes(PlayerCommandHandlers::pause)
+					)
+					.then(literal("resume")
+						.executes(PlayerCommandHandlers::resume)
+					)
+					.then(literal("rwnd")
+						.then(argument("frames", IntegerArgumentType.integer())
+							.executes(PlayerCommandHandlers::rewind)
+						)
+					)
+					.then(literal("ffwd")
+						.then(argument("frames", IntegerArgumentType.integer())
+							.executes(PlayerCommandHandlers::fastForward)
+						)
+					)
+					.then(literal("skip")
+						.executes(ctx -> {
+							ReactiveMusicState.currentEntry = null;
+							ReactiveMusicState.currentSong = null;
+							// Stop the currently playing music to trigger immediate track change
+							ReactivePlayer musicPlayer = audio().get("reactive:music");
+							if (musicPlayer != null && musicPlayer.isPlaying()) {
+								musicPlayer.stop();
+							}
+							ctx.getSource().sendFeedback(Text.literal("Skipping to next track...").styled(style -> style.withColor(net.minecraft.util.Formatting.GREEN)));
+							return 1;
+						})
+					)
 				)
 			);
 		});

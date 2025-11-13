@@ -1,5 +1,6 @@
 package rocamocha.reactivemusic.commands;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
@@ -35,6 +36,8 @@ public class PlayerCommandHandlers {
 
         .line("id", player.id(), Formatting.AQUA)
         .line("isPlaying", player.isPlaying() ? "YES" : "NO", player.isPlaying() ? Formatting.GREEN : Formatting.GRAY)
+        .line("isPaused", player.isPaused() ? "YES" : "NO", player.isPaused() ? Formatting.YELLOW : Formatting.GRAY)
+        .line("position", Integer.toString(player.getPosition()) + " frames", Formatting.AQUA)
         .line("stopOnFadeOut", player.stopOnFadeOut() ? "YES" : "NO", player.stopOnFadeOut() ? Formatting.GREEN : Formatting.GRAY)
         .line("resetOnFadeOut", player.resetOnFadeOut() ? "YES" : "NO", player.resetOnFadeOut() ? Formatting.GREEN : Formatting.GRAY)
         .line("gainSuppliers", "", Formatting.WHITE);
@@ -67,6 +70,117 @@ public class PlayerCommandHandlers {
         .line("isFadingIn", gainSupplier.isFadingIn() ? "YES" : "NO", gainSupplier.isFadingIn() ? Formatting.GREEN : Formatting.GRAY);
 
         ctx.getSource().sendFeedback(supplierInfo.build());
+        return 1;
+    }
+    
+    public static int pause(CommandContext<FabricClientCommandSource> ctx) {
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
+        
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("PAUSING PLAYBACK");
+        
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            musicPlayer.pause();
+            feedback.line("Music player paused at frame: " + musicPlayer.getPosition(), Formatting.GREEN);
+        }
+        
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            overlayPlayer.pause();
+            feedback.line("Overlay player paused at frame: " + overlayPlayer.getPosition(), Formatting.GREEN);
+        }
+        
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int resume(CommandContext<FabricClientCommandSource> ctx) {
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
+        
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("RESUMING PLAYBACK");
+        
+        if (musicPlayer != null && musicPlayer.isPaused()) {
+            musicPlayer.resume();
+            feedback.line("Music player resumed from frame: " + musicPlayer.getPosition(), Formatting.GREEN);
+        }
+        
+        if (overlayPlayer != null && overlayPlayer.isPaused()) {
+            overlayPlayer.resume();
+            feedback.line("Overlay player resumed from frame: " + overlayPlayer.getPosition(), Formatting.GREEN);
+        }
+        
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int rewind(CommandContext<FabricClientCommandSource> ctx) {
+        int frames = IntegerArgumentType.getInteger(ctx, "frames");
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
+        
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("REWIND");
+        
+        int rewound = 0;
+        
+        // Rewind music player
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            if (musicPlayer instanceof rocamocha.reactivemusic.impl.audio.RMPlayer) {
+                rocamocha.reactivemusic.impl.audio.RMPlayer rmPlayer = 
+                    (rocamocha.reactivemusic.impl.audio.RMPlayer) musicPlayer;
+                rmPlayer.rewind(frames);
+                feedback.line("Music player: Rewinding " + frames + " frames", Formatting.GREEN);
+                rewound++;
+            }
+        }
+        
+        // Rewind overlay player
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            if (overlayPlayer instanceof rocamocha.reactivemusic.impl.audio.RMPlayer) {
+                rocamocha.reactivemusic.impl.audio.RMPlayer rmPlayer = 
+                    (rocamocha.reactivemusic.impl.audio.RMPlayer) overlayPlayer;
+                rmPlayer.rewind(frames);
+                feedback.line("Overlay player: Rewinding " + frames + " frames", Formatting.GREEN);
+                rewound++;
+            }
+        }
+        
+        if (rewound == 0) {
+            feedback.line("No players currently playing", Formatting.GRAY);
+        }
+        
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int fastForward(CommandContext<FabricClientCommandSource> ctx) {
+        int frames = IntegerArgumentType.getInteger(ctx, "frames");
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
+        
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("FAST-FORWARD");
+        
+        int skipped = 0;
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            musicPlayer.skip(frames);
+            feedback.line("Music player: Skipping " + frames + " frames forward", Formatting.GREEN);
+            skipped++;
+        }
+        
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            overlayPlayer.skip(frames);
+            feedback.line("Overlay player: Skipping " + frames + " frames forward", Formatting.GREEN);
+            skipped++;
+        }
+        
+        if (skipped == 0) {
+            feedback.line("No players currently playing", Formatting.GRAY);
+        }
+        
+        ctx.getSource().sendFeedback(feedback.build());
         return 1;
     }
     

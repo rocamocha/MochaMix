@@ -62,6 +62,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile boolean playing;        // simplified “is playing”
     private volatile boolean complete;       // set by AdvancedPlayer when finished
     private volatile float realGainDb;       // last applied dB
+    private volatile int startAtFrame;       // frame position to start at when restarting playback (for rewind)
 
     private AdvancedPlayer player;           // JavaZoom player
     private AudioDevice audio;               // audio device for gain control
@@ -125,9 +126,9 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 
     @Override public String id() { return id; }
 
-    @Override public boolean isPlaying() { return playing && !complete; }
+    @Override public boolean isPlaying() { return playing && !complete && !paused; }
 
-    // @Override public boolean isPaused() { return paused; }
+    @Override public boolean isPaused() { return paused; }
 
     @Override public boolean isFinished() { return complete && !playing; }
 
@@ -156,6 +157,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 
     @Override public void stop() {
         LOGGER.info("Stopping player...");
+        paused = false; // Clear pause state on stop
         if(player != null) {
             player.close();
             queuedToStop = true;
@@ -206,9 +208,64 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         return !playing && !queued;
     }
     
-    // TODO: Figure out how to implement pausing.
-    // @Override public void pause() { paused = true; }
-    // @Override public void resume() { paused = false; }
+    @Override public void pause() { 
+        if (playing && !paused) {
+            paused = true;
+            // Also set pause on the AdvancedPlayer to pause decoding
+            if (player != null) {
+                player.paused = true;
+            }
+            LOGGER.info("Player paused: " + id);
+        }
+    }
+    
+    @Override public void resume() { 
+        if (paused) {
+            paused = false;
+            // Also clear pause on the AdvancedPlayer to resume decoding
+            if (player != null) {
+                player.paused = false;
+            }
+            LOGGER.info("Player resumed: " + id);
+        }
+    }
+    
+    @Override public void skip(int frames) {
+        if (player != null && frames > 0) {
+            // Set skip frames on the AdvancedPlayer to skip forward
+            player.skipFrames = frames;
+            LOGGER.info("Skipping forward " + frames + " frames for player: " + id);
+        } else if (frames < 0) {
+            // Cannot rewind streaming playback
+            LOGGER.warn("Cannot rewind streaming MP3 playback for player: " + id);
+        }
+    }
+    
+    @Override public int getPosition() {
+        return player != null ? player.getFrames() : 0;
+    }
+    
+    /**
+     * Rewind by restarting playback and skipping to the target position.
+     * @param frames Number of frames to rewind
+     */
+    public void rewind(int frames) {
+        if (player != null && playing) {
+            int currentPos = player.getFrames();
+            int targetPos = Math.max(0, currentPos - frames);
+            LOGGER.info("Rewinding from frame " + currentPos + " to frame " + targetPos);
+            startAtFrame = targetPos;
+            
+            // Stop current playback first
+            queuedToStop = true;
+            if (player != null) {
+                player.queuedToStop = true;
+            }
+            
+            // Queue restart which will skip to startAtFrame
+            queueStart();
+        }
+    }
     
 
     @Override public void reset() {
@@ -274,6 +331,12 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                         audio = new FirstWritePrimerAudioDevice(250, () -> requestGainRecompute());
                         player = new AdvancedPlayer(in, audio);
                         
+                        // Set initial skip position if rewinding
+                        if (startAtFrame > 0) {
+                            player.skipFrames = startAtFrame;
+                            LOGGER.info("Starting playback at frame " + startAtFrame);
+                            startAtFrame = 0; // Reset for next play
+                        }
                         
                         queued = false;
                         playing = true;

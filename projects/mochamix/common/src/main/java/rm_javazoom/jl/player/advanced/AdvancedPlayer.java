@@ -52,6 +52,8 @@ public class AdvancedPlayer
 
 
 	public boolean queuedToStop = false;
+	public volatile boolean paused = false;
+	public volatile int skipFrames = 0;
 
 	/**
 	 * Creates a new <code>Player</code> instance.
@@ -150,6 +152,23 @@ public class AdvancedPlayer
 	{
 		try
 		{
+			// Handle pause - wait until unpaused
+			while (paused && !queuedToStop) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					return false;
+				}
+			}
+
+			// Handle skip frames - skip without playing audio
+			while (skipFrames > 0 && !queuedToStop) {
+				if (!skipFrame()) {
+					return false;
+				}
+				skipFrames--;
+				frames++; // Track frame position
+			}
 
 			if (queuedToStop) {
 				queuedToStop = false;
