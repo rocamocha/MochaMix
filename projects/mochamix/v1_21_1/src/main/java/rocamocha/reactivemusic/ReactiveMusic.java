@@ -273,6 +273,7 @@ public class ReactiveMusic implements ModInitializer {
 						.executes(ctx -> {
 							ReactiveMusicState.currentEntry = null;
 							ReactiveMusicState.currentSong = null;
+							ctx.getSource().sendFeedback(Text.literal("Skipping to next track...").styled(style -> style.withColor(net.minecraft.util.Formatting.GREEN)));
 							return 1;
 						})
 					)
