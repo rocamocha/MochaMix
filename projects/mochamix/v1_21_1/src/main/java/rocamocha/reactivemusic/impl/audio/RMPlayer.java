@@ -62,6 +62,7 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     private volatile boolean playing;        // simplified “is playing”
     private volatile boolean complete;       // set by AdvancedPlayer when finished
     private volatile float realGainDb;       // last applied dB
+    private volatile int startAtFrame;       // frame position to start at when restarting playback (for rewind)
 
     private AdvancedPlayer player;           // JavaZoom player
     private AudioDevice audio;               // audio device for gain control
@@ -244,6 +245,20 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         return player != null ? player.getFrames() : 0;
     }
     
+    /**
+     * Rewind by restarting playback and skipping to the target position.
+     * @param frames Number of frames to rewind
+     */
+    public void rewind(int frames) {
+        if (player != null && playing) {
+            int currentPos = player.getFrames();
+            int targetPos = Math.max(0, currentPos - frames);
+            LOGGER.info("Rewinding from frame " + currentPos + " to frame " + targetPos);
+            startAtFrame = targetPos;
+            play(); // Restart playback, will skip to startAtFrame
+        }
+    }
+    
 
     @Override public void reset() {
         primaryGainSupplier.setFadePercent(1f);
@@ -308,6 +323,12 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                         audio = new FirstWritePrimerAudioDevice(250, () -> requestGainRecompute());
                         player = new AdvancedPlayer(in, audio);
                         
+                        // Set initial skip position if rewinding
+                        if (startAtFrame > 0) {
+                            player.skipFrames = startAtFrame;
+                            LOGGER.info("Starting playback at frame " + startAtFrame);
+                            startAtFrame = 0; // Reset for next play
+                        }
                         
                         queued = false;
                         playing = true;

@@ -117,11 +117,39 @@ public class PlayerCommandHandlers {
     
     public static int rewind(CommandContext<FabricClientCommandSource> ctx) {
         int frames = IntegerArgumentType.getInteger(ctx, "frames");
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
         
         TextBuilder feedback = new TextBuilder();
         feedback.header("REWIND");
-        feedback.line("Cannot rewind streaming MP3 playback", Formatting.YELLOW);
-        feedback.line("Use /reactivemusic skip to restart the current track", Formatting.GRAY);
+        
+        int rewound = 0;
+        
+        // Rewind music player
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            if (musicPlayer instanceof rocamocha.reactivemusic.impl.audio.RMPlayer) {
+                rocamocha.reactivemusic.impl.audio.RMPlayer rmPlayer = 
+                    (rocamocha.reactivemusic.impl.audio.RMPlayer) musicPlayer;
+                rmPlayer.rewind(frames);
+                feedback.line("Music player: Rewinding " + frames + " frames", Formatting.GREEN);
+                rewound++;
+            }
+        }
+        
+        // Rewind overlay player
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            if (overlayPlayer instanceof rocamocha.reactivemusic.impl.audio.RMPlayer) {
+                rocamocha.reactivemusic.impl.audio.RMPlayer rmPlayer = 
+                    (rocamocha.reactivemusic.impl.audio.RMPlayer) overlayPlayer;
+                rmPlayer.rewind(frames);
+                feedback.line("Overlay player: Rewinding " + frames + " frames", Formatting.GREEN);
+                rewound++;
+            }
+        }
+        
+        if (rewound == 0) {
+            feedback.line("No players currently playing", Formatting.GRAY);
+        }
         
         ctx.getSource().sendFeedback(feedback.build());
         return 1;
