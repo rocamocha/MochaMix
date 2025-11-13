@@ -1,0 +1,79 @@
+# MochaMix Unused Code Structure
+
+## Unused Third-Party Code (rm_javazoom library)
+
+projects/mochamix/common/src/main/java/rm_javazoom/jl/
+│
+├── converter/  [UNUSED - 5 files, ~800 lines]
+│   ├── Converter.java          ❌ Remove
+│   ├── RiffFile.java           ❌ Remove
+│   ├── WaveFile.java           ❌ Remove
+│   ├── WaveFileObuffer.java    ❌ Remove
+│   └── jlc.java                ❌ Remove
+│
+├── player/  [MOSTLY UNUSED - 10 files]
+│   ├── Player.java                        ⚠️  Evaluate (unused basic player)
+│   ├── PlayerApplet.java                  ❌ Remove (deprecated Java Applet)
+│   ├── jlp.java                           ❌ Remove (CLI tool)
+│   ├── NullAudioDevice.java               ⚠️  Evaluate (unused device)
+│   ├── AudioDevice.java                   ✅ KEEP (used by AdvancedPlayer)
+│   ├── AudioDeviceBase.java               ⚠️  Evaluate (base for JavaSound)
+│   ├── AudioDeviceFactory.java            ⚠️  Evaluate (unused factory)
+│   ├── JavaSoundAudioDevice.java          ✅ KEEP (actively used)
+│   ├── JavaSoundAudioDeviceFactory.java   ⚠️  Evaluate (unused factory)
+│   ├── FactoryRegistry.java               ⚠️  Evaluate (internal use only)
+│   │
+│   └── advanced/  [PARTIALLY UNUSED - 4 files]
+│       ├── AdvancedPlayer.java            ✅ KEEP (core playback)
+│       ├── PlaybackListener.java          ⚠️  Evaluate (events not used)
+│       ├── PlaybackEvent.java             ⚠️  Evaluate (events not used)
+│       └── jlap.java                      ❌ Remove (CLI tool)
+│
+└── decoder/  [28 files]
+    └── (all files)                        ✅ KEEP (MP3 decoding core)
+
+
+## Unused Example/Documentation Code
+
+projects/mochamix/v1_21_1/src/main/java/rocamocha/mochamix/zones/
+│
+├── ZoneData.java                    ✅ KEEP (core data class)
+├── ZoneDataManager.java             ✅ KEEP (persistence layer)
+├── ZoneUtils.java                   ✅ KEEP (utility functions)
+├── ZoneFactory.java                 ✅ KEEP (factory methods)
+├── ZoneManagementExamples.java      ⚠️  MOVE TO TESTS or Remove (178 lines)
+├── ZoneUsageGuide.java              ❌ Remove (169 lines, redundant)
+└── README.md                        ✅ KEEP (documentation)
+
+
+## Unused Methods
+
+v1_21_1/src/main/java/rocamocha/
+│
+├── reactivemusic/impl/audio/RMPlayer.java
+│   └── normalizeSongFileName()      ⚠️  Evaluate (~10 lines, marked unused)
+│
+└── mochamix/impl/vector3/Vector3Math.java
+    └── sqrt()                       ❌ Remove (~10 lines, custom impl not used)
+
+
+## Legend
+
+✅ KEEP       - Actively used in production
+❌ Remove     - Safe to remove immediately (0 references)
+⚠️  Evaluate   - Needs assessment before removal
+
+## Statistics by Category
+
+Category                    Files  Lines  Status
+─────────────────────────────────────────────────
+Converter Package              5    ~800   ❌ Remove
+Basic Player Classes           8  ~1,200   ⚠️  Evaluate
+Event Classes                  3    ~200   ⚠️  Evaluate
+Example Classes                2    ~347   ⚠️  Evaluate/Remove
+Unused Methods                 2     ~20   ❌ Remove
+─────────────────────────────────────────────────
+TOTAL                         20  ~2,567
+
+Safe to Remove Now:            8    ~980
+Requires Evaluation:          12  ~1,587
