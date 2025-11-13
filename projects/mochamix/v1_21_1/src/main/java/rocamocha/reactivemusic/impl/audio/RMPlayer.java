@@ -230,9 +230,14 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     }
     
     @Override public void skip(int frames) {
-        // Skip is not implemented for streaming playback
-        // This would require seekable input streams
-        LOGGER.warn("Skip not supported with streaming MP3 playback for player: " + id);
+        if (player != null && frames > 0) {
+            // Set skip frames on the AdvancedPlayer to skip forward
+            player.skipFrames = frames;
+            LOGGER.info("Skipping forward " + frames + " frames for player: " + id);
+        } else if (frames < 0) {
+            // Cannot rewind streaming playback
+            LOGGER.warn("Cannot rewind streaming MP3 playback for player: " + id);
+        }
     }
     
     @Override public int getPosition() {

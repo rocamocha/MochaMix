@@ -73,60 +73,85 @@ public class PlayerCommandHandlers {
         return 1;
     }
     
-    public static int playerPause(CommandContext<FabricClientCommandSource> ctx) {
-        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
-        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
+    public static int pause(CommandContext<FabricClientCommandSource> ctx) {
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
         
-        if (player == null) {
-            TextBuilder feedback = new TextBuilder();
-            feedback.line("Player not found: " + id, Formatting.RED);
-            ctx.getSource().sendFeedback(feedback.build());
-            return 0;
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("PAUSING PLAYBACK");
+        
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            musicPlayer.pause();
+            feedback.line("Music player paused at frame: " + musicPlayer.getPosition(), Formatting.GREEN);
         }
         
-        player.pause();
-        TextBuilder feedback = new TextBuilder();
-        feedback.line("Player paused: " + id, Formatting.GREEN);
-        feedback.line("Position: " + player.getPosition() + " frames", Formatting.AQUA);
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            overlayPlayer.pause();
+            feedback.line("Overlay player paused at frame: " + overlayPlayer.getPosition(), Formatting.GREEN);
+        }
+        
         ctx.getSource().sendFeedback(feedback.build());
         return 1;
     }
     
-    public static int playerResume(CommandContext<FabricClientCommandSource> ctx) {
-        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
-        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
+    public static int resume(CommandContext<FabricClientCommandSource> ctx) {
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
         
-        if (player == null) {
-            TextBuilder feedback = new TextBuilder();
-            feedback.line("Player not found: " + id, Formatting.RED);
-            ctx.getSource().sendFeedback(feedback.build());
-            return 0;
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("RESUMING PLAYBACK");
+        
+        if (musicPlayer != null && musicPlayer.isPaused()) {
+            musicPlayer.resume();
+            feedback.line("Music player resumed from frame: " + musicPlayer.getPosition(), Formatting.GREEN);
         }
         
-        player.resume();
-        TextBuilder feedback = new TextBuilder();
-        feedback.line("Player resumed: " + id, Formatting.GREEN);
-        feedback.line("Position: " + player.getPosition() + " frames", Formatting.AQUA);
+        if (overlayPlayer != null && overlayPlayer.isPaused()) {
+            overlayPlayer.resume();
+            feedback.line("Overlay player resumed from frame: " + overlayPlayer.getPosition(), Formatting.GREEN);
+        }
+        
         ctx.getSource().sendFeedback(feedback.build());
         return 1;
     }
     
-    public static int playerSkip(CommandContext<FabricClientCommandSource> ctx) {
-        String id = StringArgumentType.getString(ctx, "namespace") + ":" + StringArgumentType.getString(ctx, "path");
+    public static int rewind(CommandContext<FabricClientCommandSource> ctx) {
         int frames = IntegerArgumentType.getInteger(ctx, "frames");
-        ReactivePlayer player = ReactiveMusicAPI.audioManager().get(id);
         
-        if (player == null) {
-            TextBuilder feedback = new TextBuilder();
-            feedback.line("Player not found: " + id, Formatting.RED);
-            ctx.getSource().sendFeedback(feedback.build());
-            return 0;
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("REWIND");
+        feedback.line("Cannot rewind streaming MP3 playback", Formatting.YELLOW);
+        feedback.line("Use /reactivemusic skip to restart the current track", Formatting.GRAY);
+        
+        ctx.getSource().sendFeedback(feedback.build());
+        return 1;
+    }
+    
+    public static int fastForward(CommandContext<FabricClientCommandSource> ctx) {
+        int frames = IntegerArgumentType.getInteger(ctx, "frames");
+        ReactivePlayer musicPlayer = ReactiveMusicAPI.audioManager().get("reactive:music");
+        ReactivePlayer overlayPlayer = ReactiveMusicAPI.audioManager().get("reactive:overlay");
+        
+        TextBuilder feedback = new TextBuilder();
+        feedback.header("FAST-FORWARD");
+        
+        int skipped = 0;
+        if (musicPlayer != null && musicPlayer.isPlaying()) {
+            musicPlayer.skip(frames);
+            feedback.line("Music player: Skipping " + frames + " frames forward", Formatting.GREEN);
+            skipped++;
         }
         
-        player.skip(frames);
-        TextBuilder feedback = new TextBuilder();
-        feedback.line("Skip requested: " + frames + " frames", Formatting.GREEN);
-        feedback.line("Current position: " + player.getPosition() + " frames", Formatting.AQUA);
+        if (overlayPlayer != null && overlayPlayer.isPlaying()) {
+            overlayPlayer.skip(frames);
+            feedback.line("Overlay player: Skipping " + frames + " frames forward", Formatting.GREEN);
+            skipped++;
+        }
+        
+        if (skipped == 0) {
+            feedback.line("No players currently playing", Formatting.GRAY);
+        }
+        
         ctx.getSource().sendFeedback(feedback.build());
         return 1;
     }
