@@ -255,7 +255,15 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
             int targetPos = Math.max(0, currentPos - frames);
             LOGGER.info("Rewinding from frame " + currentPos + " to frame " + targetPos);
             startAtFrame = targetPos;
-            play(); // Restart playback, will skip to startAtFrame
+            
+            // Stop current playback first
+            queuedToStop = true;
+            if (player != null) {
+                player.queuedToStop = true;
+            }
+            
+            // Queue restart which will skip to startAtFrame
+            queueStart();
         }
     }
     
