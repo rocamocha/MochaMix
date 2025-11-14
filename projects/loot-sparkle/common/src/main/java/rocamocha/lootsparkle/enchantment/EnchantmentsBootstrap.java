@@ -37,6 +37,11 @@ public class EnchantmentsBootstrap {
             var fairyDustBuilder = FairyDustEnchantment.builder(itemLookup);
             registry.register(fairyDustKey, fairyDustBuilder.build(fairyDustKey.getValue()));
 
+            // Register Shimmerseek enchantment
+            var shimmerseekKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("loot-sparkle", "shimmerseek"));
+            var shimmerseekBuilder = ShimmerseekEnchantment.builder(itemLookup);
+            registry.register(shimmerseekKey, shimmerseekBuilder.build(shimmerseekKey.getValue()));
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to bootstrap custom enchantments", e);
         }
