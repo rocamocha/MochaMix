@@ -149,13 +149,13 @@ public class LoadoutClientManager {
      * Apply a loadout by UUID
      */
     public boolean applyLoadout(UUID loadoutId) {
-        System.out.println("DEBUG: applyLoadout called for UUID: " + loadoutId);
+        LogicalLoadouts.LOGGER.debug("Applying loadout by UUID: {}", loadoutId);
         
         // Check global loadouts first
         Loadout[] globalLoadouts = localStorage.getGlobalLoadouts();
         for (Loadout loadout : globalLoadouts) {
             if (loadout != null && loadout.getId().equals(loadoutId)) {
-                System.out.println("DEBUG: Found in global loadouts, applying...");
+                LogicalLoadouts.LOGGER.debug("Found in global loadouts, applying");
                 return applyGlobalLoadout(loadout);
             }
         }
@@ -163,21 +163,21 @@ public class LoadoutClientManager {
         // Check local loadouts
         for (Loadout loadout : localStorage.getLocalLoadouts()) {
             if (loadout.getId().equals(loadoutId)) {
-                System.out.println("DEBUG: Found in local loadouts, applying...");
+                LogicalLoadouts.LOGGER.debug("Found in local loadouts, applying");
                 return applyLocalLoadout(loadout);
             }
         }
         
         // Check server loadouts if connected
         if (isConnectedToServer && serverLoadouts.containsKey(loadoutId)) {
-            System.out.println("DEBUG: Found in server loadouts, applying...");
+            LogicalLoadouts.LOGGER.debug("Found in server loadouts, applying");
             Loadout loadout = serverLoadouts.get(loadoutId);
             return applyLocalLoadout(loadout);  // Use same approach as local/global loadouts
         }
         
         // Check server-shared loadouts if connected
         if (isConnectedToServer && serverSharedLoadouts.containsKey(loadoutId)) {
-            System.out.println("DEBUG: Found in server-shared loadouts, applying...");
+            LogicalLoadouts.LOGGER.debug("Found in server-shared loadouts, applying");
             Loadout loadout = serverSharedLoadouts.get(loadoutId);
             return applyLocalLoadout(loadout);  // Use same approach as local/global loadouts
         }
@@ -379,18 +379,13 @@ public class LoadoutClientManager {
      */
     public boolean createLoadout(String name) {
         MinecraftClient client = MinecraftClient.getInstance();
-        boolean hasIntegratedServer = client.getServer() != null;
         boolean compatibleServer = isConnectedToCompatibleServer();
         
-        System.out.println("CreateLoadout: isConnectedToServer = " + isConnectedToServer);
-        System.out.println("CreateLoadout: hasIntegratedServer = " + hasIntegratedServer);
-        System.out.println("CreateLoadout: isConnectedToCompatibleServer = " + compatibleServer);
+        LogicalLoadouts.LOGGER.debug("Creating loadout '{}': compatibleServer={}", name, compatibleServer);
         
         if (compatibleServer) {
-            System.out.println("Taking server path...");
             return createServerLoadout(name);
         } else {
-            System.out.println("Taking local path...");
             return saveLocalLoadout(name);
         }
     }
@@ -401,7 +396,7 @@ public class LoadoutClientManager {
     private boolean createServerLoadout(String name) {
         try {
             // Send create loadout request to server using modern CustomPayload system
-            System.out.println("CLIENT: Sending CreateLoadoutPayload to server for: " + name);
+            LogicalLoadouts.LOGGER.debug("Sending CreateLoadoutPayload to server for: {}", name);
             ClientPlayNetworking.send(new CreateLoadoutPayload(name));
             
             lastOperationSuccess = true;
@@ -419,19 +414,13 @@ public class LoadoutClientManager {
      * Create a new loadout from provided data (hybrid: local if offline, server if online)
      */
     public boolean createLoadoutFromData(Loadout loadout) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        boolean hasIntegratedServer = client.getServer() != null;
         boolean compatibleServer = isConnectedToCompatibleServer();
         
-        System.out.println("CreateLoadoutFromData: isConnectedToServer = " + isConnectedToServer);
-        System.out.println("CreateLoadoutFromData: hasIntegratedServer = " + hasIntegratedServer);
-        System.out.println("CreateLoadoutFromData: isConnectedToCompatibleServer = " + compatibleServer);
+        LogicalLoadouts.LOGGER.debug("Creating loadout from data '{}': compatibleServer={}", loadout.getName(), compatibleServer);
         
         if (compatibleServer) {
-            System.out.println("Taking server path...");
             return createServerLoadoutFromData(loadout);
         } else {
-            System.out.println("Taking local path...");
             return saveLocalLoadoutFromData(loadout);
         }
     }
@@ -442,7 +431,7 @@ public class LoadoutClientManager {
     private boolean createServerLoadoutFromData(Loadout loadout) {
         try {
             // Send create loadout from data request to server using modern CustomPayload system
-            System.out.println("CLIENT: Sending CreateLoadoutFromDataPayload to server for: " + loadout.getName());
+            LogicalLoadouts.LOGGER.debug("Sending CreateLoadoutFromDataPayload to server for: {}", loadout.getName());
             ClientPlayNetworking.send(new CreateLoadoutFromDataPayload(loadout));
             
             lastOperationSuccess = true;
@@ -582,27 +571,15 @@ public class LoadoutClientManager {
      * Delete a loadout by UUID
      */
     public boolean deleteLoadout(UUID loadoutId) {
-        System.out.println("DeleteLoadout called for: " + loadoutId);
+        LogicalLoadouts.LOGGER.debug("Deleting loadout: {}", loadoutId);
         
-        // Debug: Show all available loadouts
-        System.out.println("Available local loadouts:");
-        for (Loadout loadout : localStorage.getLocalLoadouts()) {
-            System.out.println("  - " + loadout.getName() + " (" + loadout.getId() + ")");
-        }
-        System.out.println("Available global loadouts:");
         Loadout[] globalLoadouts = localStorage.getGlobalLoadouts();
-        for (int i = 0; i < globalLoadouts.length; i++) {
-            if (globalLoadouts[i] != null) {
-                System.out.println("  - Global slot " + i + ": " + globalLoadouts[i].getName() + " (" + globalLoadouts[i].getId() + ")");
-            }
-        }
         
         // Check global loadouts first
         for (int i = 0; i < globalLoadouts.length; i++) {
             if (globalLoadouts[i] != null && globalLoadouts[i].getId().equals(loadoutId)) {
-                System.out.println("Found loadout in global slot " + i + ", clearing it...");
+                LogicalLoadouts.LOGGER.debug("Found loadout in global slot {}, clearing it", i);
                 if (localStorage.clearGlobalLoadout(i)) {
-                    System.out.println("Successfully cleared global slot " + i);
                     lastOperationSuccess = true;
                     lastOperationResult = "Deleted global loadout from slot " + i;
                     notifyListeners();
@@ -612,36 +589,32 @@ public class LoadoutClientManager {
         }
         
         // Check local loadouts
-        System.out.println("Calling localStorage.deleteLocalLoadout...");
         if (localStorage.deleteLocalLoadout(loadoutId)) {
-            System.out.println("Successfully deleted from local storage");
+            LogicalLoadouts.LOGGER.debug("Successfully deleted from local storage");
             lastOperationSuccess = true;
             lastOperationResult = "Deleted local loadout";
             notifyListeners();
             return true;
-        } else {
-            System.out.println("localStorage.deleteLocalLoadout returned false");
         }
         
         // Check server loadouts if connected
         if (isConnectedToServer && serverLoadouts.containsKey(loadoutId)) {
-            System.out.println("Attempting to delete from server...");
+            LogicalLoadouts.LOGGER.debug("Attempting to delete from server");
             return deleteServerLoadout(loadoutId);
         }
         
         // Check server-shared loadouts if connected (send to server for permission validation)
         if (isConnectedToServer && serverSharedLoadouts.containsKey(loadoutId)) {
-            System.out.println("Attempting to delete server-shared loadout from server...");
+            LogicalLoadouts.LOGGER.debug("Attempting to delete server-shared loadout from server");
             return deleteServerLoadout(loadoutId);
         }
         
-        System.out.println("Loadout not found in local or server storage");
-        System.out.println("Attempting to fix broken storage and retry...");
+        LogicalLoadouts.LOGGER.debug("Loadout not found, attempting to fix broken storage and retry");
         localStorage.fixBrokenStorage();
         
         // Retry after fixing storage
         if (localStorage.deleteLocalLoadout(loadoutId)) {
-            System.out.println("Successfully deleted after storage fix");
+            LogicalLoadouts.LOGGER.debug("Successfully deleted after storage fix");
             lastOperationSuccess = true;
             lastOperationResult = "Deleted local loadout after fixing storage";
             notifyListeners();

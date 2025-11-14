@@ -24,8 +24,7 @@ public class LoadoutServerPackets {
      * Handle client request to create a new loadout
      */
     public static void handleCreateLoadout(CreateLoadoutPayload payload, ServerPlayNetworking.Context context) {
-        LogicalLoadouts.LOGGER.info("SERVER: Received CreateLoadoutPayload from client");
-        System.out.println("SERVER: handleCreateLoadout called for loadout: " + payload.loadoutName());
+        LogicalLoadouts.LOGGER.debug("Received CreateLoadoutPayload for loadout: {}", payload.loadoutName());
         
         ServerPlayerEntity player = context.player();
         MinecraftServer server = context.server();
@@ -61,27 +60,20 @@ public class LoadoutServerPackets {
      * Handle client request to create a new loadout from provided data
      */
     public static void handleCreateLoadoutFromData(CreateLoadoutFromDataPayload payload, ServerPlayNetworking.Context context) {
-        LogicalLoadouts.LOGGER.info("SERVER: Received CreateLoadoutFromDataPayload from client");
-        System.out.println("SERVER: handleCreateLoadoutFromData called for loadout: " + payload.loadout().getName());
-        
         ServerPlayerEntity player = context.player();
         MinecraftServer server = context.server();
         Loadout loadout = payload.loadout();
         
-        // Debug: Check what items are in the received loadout
-        System.out.println("SERVER: Received loadout '" + loadout.getName() + "' with:");
-        System.out.println("  Hotbar: " + countNonEmptyItems(loadout.getHotbar()) + " items");
-        System.out.println("  MainInventory: " + countNonEmptyItems(loadout.getMainInventory()) + " items");
-        System.out.println("  Armor: " + countNonEmptyItems(loadout.getArmor()) + " items");
-        System.out.println("  Offhand: " + (loadout.getOffhand().length > 0 && !loadout.getOffhand()[0].isEmpty() ? 1 : 0) + " items");
+        LogicalLoadouts.LOGGER.debug("Received CreateLoadoutFromDataPayload for loadout '{}': Hotbar={}, MainInv={}, Armor={}, Offhand={}", 
+            loadout.getName(), 
+            countNonEmptyItems(loadout.getHotbar()), 
+            countNonEmptyItems(loadout.getMainInventory()),
+            countNonEmptyItems(loadout.getArmor()),
+            (loadout.getOffhand().length > 0 && !loadout.getOffhand()[0].isEmpty() ? 1 : 0));
         
         // Validate that the loadout is not empty before creating it
         if (isLoadoutEmpty(loadout)) {
-            System.out.println("SERVER: Rejecting empty loadout creation for '" + loadout.getName() + "'");
-            System.out.println("  Hotbar items: " + countNonEmptyItems(loadout.getHotbar()));
-            System.out.println("  MainInventory items: " + countNonEmptyItems(loadout.getMainInventory()));
-            System.out.println("  Armor items: " + countNonEmptyItems(loadout.getArmor()));
-            System.out.println("  Offhand items: " + countNonEmptyItems(loadout.getOffhand()));
+            LogicalLoadouts.LOGGER.debug("Rejecting empty loadout creation for '{}'", loadout.getName());
             server.execute(() -> {
                 sendOperationResult(player, "create", LoadoutManager.LoadoutOperationResult.error("Cannot create empty loadout"));
             });
@@ -286,7 +278,8 @@ public class LoadoutServerPackets {
         
         server.execute(() -> {
             try {
-                System.out.println("DEBUG: Server received local loadout: " + loadout.getName() + " for player " + player.getName().getString() + ", consume=" + consumeAfterApply);
+                LogicalLoadouts.LOGGER.debug("Server received local loadout '{}' for player {}, consume={}", 
+                    loadout.getName(), player.getName().getString(), consumeAfterApply);
                 
                 LoadoutManager manager = getLoadoutManager(server);
                 ensurePlayerDataLoaded(manager, player.getUuid());
@@ -296,7 +289,7 @@ public class LoadoutServerPackets {
                 
                 if (getResult.isSuccess()) {
                     // Server-stored loadout - implement swap behavior
-                    System.out.println("DEBUG: Found server loadout, implementing swap behavior");
+                    LogicalLoadouts.LOGGER.debug("Found server loadout, implementing swap behavior");
                     
                     // Capture current player inventory before applying the loadout
                     Loadout currentInventory = capturePlayerInventory(player, getResult.getLoadout());
@@ -307,13 +300,13 @@ public class LoadoutServerPackets {
                     // Update the server-stored loadout with the captured inventory
                     LoadoutManager.LoadoutOperationResult updateResult = manager.updateLoadout(player.getUuid(), currentInventory);
                     if (updateResult.isSuccess()) {
-                        System.out.println("DEBUG: Successfully swapped inventory with server loadout");
+                        LogicalLoadouts.LOGGER.debug("Successfully swapped inventory with server loadout");
                         
                         // Check if the updated loadout is now empty and delete it if so
                         if (isLoadoutEmpty(currentInventory)) {
                             LoadoutManager.LoadoutOperationResult deleteResult = manager.deleteLoadout(player, loadout.getId());
                             if (deleteResult.isSuccess()) {
-                                System.out.println("DEBUG: Deleted empty loadout after swap: " + loadout.getName());
+                                LogicalLoadouts.LOGGER.debug("Deleted empty loadout after swap: {}", loadout.getName());
                             } else {
                                 LogicalLoadouts.LOGGER.warn("Failed to delete empty loadout after swap: {}", deleteResult.getMessage());
                             }
@@ -326,12 +319,12 @@ public class LoadoutServerPackets {
                     }
                 } else {
                     // Not a server-stored loadout (local/global) - just apply it
-                    System.out.println("DEBUG: Local/global loadout, just applying");
+                    LogicalLoadouts.LOGGER.debug("Local/global loadout, just applying");
                     applyLoadoutToPlayer(player, loadout);
                     
                     // If consumeAfterApply is true, delete the personal loadout after applying
                     if (consumeAfterApply) {
-                        System.out.println("DEBUG: Consuming personal loadout after application");
+                        LogicalLoadouts.LOGGER.debug("Consuming personal loadout after application");
                         // For personal loadouts, we need to notify the client to remove it from their local storage
                         // Since personal loadouts are client-side, we can't delete them server-side
                         // The client has already handled the consumption in the GUI

@@ -16,7 +16,6 @@ public class LoadoutNetworking {
      */
     public static void registerNetworking() {
         LogicalLoadouts.LOGGER.info("Registering modern CustomPayload networking system");
-        System.out.println("LoadoutNetworking.registerNetworking() called");
         
         PayloadTypeRegistry.playC2S().register(CreateLoadoutPayload.ID, CreateLoadoutPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(CreateLoadoutFromDataPayload.ID, CreateLoadoutFromDataPayload.CODEC);
@@ -43,7 +42,6 @@ public class LoadoutNetworking {
      */
     public static void registerServerPackets() {
         LogicalLoadouts.LOGGER.info("Registering server-side network handlers");
-        System.out.println("LoadoutNetworking.registerServerPackets() called");
         
         ServerPlayNetworking.registerGlobalReceiver(CreateLoadoutPayload.ID, LoadoutServerPackets::handleCreateLoadout);
         ServerPlayNetworking.registerGlobalReceiver(CreateLoadoutFromDataPayload.ID, LoadoutServerPackets::handleCreateLoadoutFromData);
