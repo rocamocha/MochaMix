@@ -774,19 +774,40 @@ public class Sparkle {
                 spawnPos = position; // Fallback to sparkle position
             }
 
-            // Spawn the mob directly
-            net.minecraft.entity.Entity mob = entityType.spawn(world, spawnPos, SpawnReason.NATURAL);
-            if (mob != null && mob.isAlive() && !mob.isRemoved()) {
+            // Create and initialize the entity on the SERVER to avoid client-only ghosts
+            net.minecraft.entity.Entity entity = entityType.create(world);
+            if (entity == null) return;
+
+            // Position the entity
+            entity.refreshPositionAndAngles(
+                spawnPos.getX() + 0.5,
+                spawnPos.getY(),
+                spawnPos.getZ() + 0.5,
+                world.getRandom().nextFloat() * 360f,
+                0
+            );
+
+            // If it's a MobEntity, run proper spawn initialization
+            if (entity instanceof net.minecraft.entity.mob.MobEntity mobEntity) {
+                mobEntity.initialize(
+                    world,
+                    world.getLocalDifficulty(spawnPos),
+                    SpawnReason.EVENT,
+                    null
+                );
+            }
+
+            // Spawn into the world (server will sync to clients)
+            if (world.spawnEntity(entity)) {
                 // Apply customizations
-                applySpawnEntryToMob(spawn, mob, world);
+                applySpawnEntryToMob(spawn, entity, world);
 
                 // Set the mob to target the activating player immediately
-                if (activatingPlayer != null && mob instanceof net.minecraft.entity.mob.MobEntity mobEntity) {
+                if (activatingPlayer != null && entity instanceof net.minecraft.entity.mob.MobEntity mobEntity) {
                     mobEntity.setTarget(activatingPlayer);
                 }
 
-                spawnedMobs.add(mob);
-            } else {
+                spawnedMobs.add(entity);
             }
         } catch (Exception e) {
         }
