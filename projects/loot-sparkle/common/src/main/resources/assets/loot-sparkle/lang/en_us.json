@@ -5,5 +5,7 @@
   "item.loot-sparkle.treasure_compass.repair_success": "Restored %d Essence",
   "enchantment.loot-sparkle.fairy_dust": "Fairy Dust",
   "enchantment.loot-sparkle.soul_sight": "Soul Sight",
-  "enchantment.loot-sparkle.shimmerseek": "Shimmerseek"
+  "enchantment.loot-sparkle.shimmerseek": "Shimmerseek",
+  "enchantment.level.11": "XI",
+  "enchantment.level.12": "XII"
 }
