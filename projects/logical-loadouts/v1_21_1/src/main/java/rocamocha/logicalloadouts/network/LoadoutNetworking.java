@@ -16,7 +16,6 @@ public class LoadoutNetworking {
      */
     public static void registerNetworking() {
         LogicalLoadouts.LOGGER.info("Registering modern CustomPayload networking system");
-        System.out.println("LoadoutNetworking.registerNetworking() called");
         
         PayloadTypeRegistry.playC2S().register(CreateLoadoutPayload.ID, CreateLoadoutPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(CreateLoadoutFromDataPayload.ID, CreateLoadoutFromDataPayload.CODEC);
@@ -24,7 +23,6 @@ public class LoadoutNetworking {
         PayloadTypeRegistry.playC2S().register(UpdateLoadoutPayload.ID, UpdateLoadoutPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(ApplyLoadoutPayload.ID, ApplyLoadoutPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(ApplyLocalLoadoutPayload.ID, ApplyLocalLoadoutPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(SaveLoadoutPayload.ID, SaveLoadoutPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(RequestLoadoutsPayload.ID, RequestLoadoutsPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(ApplySectionPayload.ID, ApplySectionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(DepositSectionPayload.ID, DepositSectionPayload.CODEC);
@@ -44,7 +42,6 @@ public class LoadoutNetworking {
      */
     public static void registerServerPackets() {
         LogicalLoadouts.LOGGER.info("Registering server-side network handlers");
-        System.out.println("LoadoutNetworking.registerServerPackets() called");
         
         ServerPlayNetworking.registerGlobalReceiver(CreateLoadoutPayload.ID, LoadoutServerPackets::handleCreateLoadout);
         ServerPlayNetworking.registerGlobalReceiver(CreateLoadoutFromDataPayload.ID, LoadoutServerPackets::handleCreateLoadoutFromData);
@@ -52,7 +49,6 @@ public class LoadoutNetworking {
         ServerPlayNetworking.registerGlobalReceiver(UpdateLoadoutPayload.ID, LoadoutServerPackets::handleUpdateLoadout);
         ServerPlayNetworking.registerGlobalReceiver(ApplyLoadoutPayload.ID, LoadoutServerPackets::handleApplyLoadout);
         ServerPlayNetworking.registerGlobalReceiver(ApplyLocalLoadoutPayload.ID, LoadoutServerPackets::handleApplyLocalLoadout);
-        ServerPlayNetworking.registerGlobalReceiver(SaveLoadoutPayload.ID, LoadoutServerPackets::handleSaveLoadout);
         ServerPlayNetworking.registerGlobalReceiver(RequestLoadoutsPayload.ID, LoadoutServerPackets::handleRequestLoadouts);
         ServerPlayNetworking.registerGlobalReceiver(ApplySectionPayload.ID, LoadoutServerPackets::handleApplySection);
         ServerPlayNetworking.registerGlobalReceiver(DepositSectionPayload.ID, LoadoutServerPackets::handleDepositSection);
