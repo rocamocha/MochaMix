@@ -370,31 +370,6 @@ public class LoadoutManager {
     }
     
     /**
-     * Create a new loadout for a player (deprecated - use createLoadout(PlayerEntity, String) instead)
-     */
-    // public LoadoutOperationResult createLoadout(UUID playerUuid, String name) {
-    //     Map<UUID, Loadout> loadouts = playerLoadouts.get(playerUuid);
-    //     if (loadouts == null) {
-    //         return LoadoutOperationResult.error("Player data not loaded");
-    //     }
-        
-    //     // Check limits
-    //     if (loadouts.size() >= maxLoadoutsPerPlayer) {
-    //         return LoadoutOperationResult.error("Maximum number of loadouts reached (" + maxLoadoutsPerPlayer + ")");
-    //     }
-        
-    //     // Check for duplicate names
-    //     for (Loadout existingLoadout : loadouts.values()) {
-    //         if (existingLoadout.getName().equalsIgnoreCase(name)) {
-    //             return LoadoutOperationResult.error("A loadout with that name already exists");
-    //         }
-    //     }
-        
-    //     // This method is deprecated - use createLoadout(PlayerEntity, String) instead
-    //     return LoadoutOperationResult.error("createLoadout requires player entity - use createLoadout(PlayerEntity, String) instead");
-    // }
-    
-    /**
      * Delete a loadout
      */
     public LoadoutOperationResult deleteLoadout(ServerPlayerEntity player, UUID loadoutId) {

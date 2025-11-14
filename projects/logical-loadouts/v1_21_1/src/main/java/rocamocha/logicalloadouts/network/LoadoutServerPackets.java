@@ -350,44 +350,7 @@ public class LoadoutServerPackets {
         });
     }
 
-    /**
-     * Handle client request to save current inventory as a loadout
-     */
-    public static void handleSaveLoadout(SaveLoadoutPayload payload, ServerPlayNetworking.Context context) {
-        ServerPlayerEntity player = context.player();
-        MinecraftServer server = context.server();
-        UUID loadoutId = payload.loadoutId();
-        
-        server.execute(() -> {
-            try {
-                LoadoutManager manager = getLoadoutManager(server);
-                LoadoutManager.LoadoutOperationResult getResult = manager.getLoadout(player.getUuid(), loadoutId);
-                
-                if (getResult.isSuccess()) {
-                    Loadout loadout = capturePlayerInventory(player, getResult.getLoadout());
-                    LoadoutManager.LoadoutOperationResult saveResult = manager.updateLoadout(player.getUuid(), loadout);
-                    
-                    if (saveResult.isSuccess()) {
-                        // Clear the player's inventory after saving (bank behavior - prevents duplication)
-                        player.getInventory().clear();
-                        player.getInventory().markDirty();
-                        
-                        sendLoadoutsSync(player, manager);
-                        LogicalLoadouts.LOGGER.debug("Saved current inventory to loadout '{}' and cleared player inventory for player {}", 
-                                                    loadout.getName(), player.getName().getString());
-                    }
-                    
-                    sendOperationResult(player, "save", saveResult);
-                } else {
-                    sendOperationResult(player, "save", getResult);
-                }
-            } catch (Exception e) {
-                LogicalLoadouts.LOGGER.error("Error handling save loadout packet", e);
-                sendOperationResult(player, "save", LoadoutManager.LoadoutOperationResult.error("Failed to save loadout"));
-            }
-        });
-    }
-    
+
     /**
      * Handle client request to apply a section from a loadout to their inventory
      */
