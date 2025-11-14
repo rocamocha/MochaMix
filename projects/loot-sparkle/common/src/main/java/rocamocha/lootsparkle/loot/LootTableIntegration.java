@@ -238,29 +238,6 @@ public class LootTableIntegration {
         }
     }
 
-    /**
-     * Gets the sparkle loot table from the server (legacy method)
-     * @deprecated Use generateLootForSparkle with tier instead
-     */
-    @Deprecated
-    public static LootTable getSparkleLootTable(ServerWorld world) {
-        // Load directly from resources
-        ResourceManager resourceManager = world.getServer().getResourceManager();
-        Identifier resourceId = Identifier.of(LootSparkle.MOD_ID, "loot_tables/tiers/0_common.json");
-        try {
-            var resource = resourceManager.getResource(resourceId);
-            if (resource.isPresent()) {
-                var reader = resource.get().getReader();
-                var jsonElement = JsonParser.parseReader(reader);
-                var lootTableResult = LootTable.CODEC.parse(JsonOps.INSTANCE, jsonElement);
-                reader.close();
-                return lootTableResult.result().orElse(LootTable.EMPTY);
-            }
-        } catch (Exception e) {
-        }
-        return LootTable.EMPTY;
-    }
-
     private static String getBiomeCategory(Biome biome) {
         // Temperature-based categories
         if (biome.getTemperature() < 0.1) {
