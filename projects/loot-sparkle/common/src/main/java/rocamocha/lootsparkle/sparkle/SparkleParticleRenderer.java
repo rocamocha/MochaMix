@@ -8,6 +8,7 @@ import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
@@ -145,13 +146,51 @@ public class SparkleParticleRenderer {
 
             Vec3d particlePos = center.add(offsetX, offsetY, offsetZ);
 
-            // Spawn colored dust particles based on tier
-            DustParticleEffect dustEffect = new DustParticleEffect(particleColor, 1.0f);
-            particleManager.addParticle(
-                dustEffect,
-                particlePos.x, particlePos.y, particlePos.z,
-                0.0, 0.01, 0.0 // Slight upward motion
-            );
+            // Underwater tiers get bubbles plus tinted dust
+            if (isUnderwaterTier(sparkle.getTierLevel())) {
+                // Visual separation:
+                // - Lower ONLY the bubbles so they appear in water and don't pop instantly at the surface
+                // - Keep sparkle dust at original height so core sparkle remains readable above bubbles
+                Vec3d bubblePos = particlePos.add(0.0, -0.5, 0.0);
+                particleManager.addParticle(
+                    ParticleTypes.BUBBLE,
+                    bubblePos.x, bubblePos.y, bubblePos.z,
+                    0.0, 0.05, 0.0
+                );
+
+                // Keep sparkle dust at original height; adjust color slightly per-tier
+                Vector3f dustColor;
+                if (sparkle.getTierLevel() == 9) { // DRIFTWOOD: mix in a lighter, less saturated tone
+                    // Base driftwood tone and a lighter/beige variant to avoid muddy look
+                    Vector3f base = new Vector3f(0.78f, 0.65f, 0.46f);
+                    Vector3f light = new Vector3f(0.88f, 0.80f, 0.65f);
+                    float t = 0.35f + (float)world.random.nextDouble() * 0.25f; // 0.35 - 0.60
+                    dustColor = new Vector3f(
+                        base.x + (light.x - base.x) * t,
+                        base.y + (light.y - base.y) * t,
+                        base.z + (light.z - base.z) * t
+                    );
+                } else {
+                    dustColor = new Vector3f(particleColor);
+                    // Slight cool tint for non-driftwood underwater tiers to feel aquatic
+                    dustColor.mul(0.9f, 0.95f, 0.95f);
+                }
+
+                DustParticleEffect dustEffect = new DustParticleEffect(dustColor, 0.9f);
+                particleManager.addParticle(
+                    dustEffect,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    0.0, 0.01, 0.0
+                );
+            } else {
+                // Spawn colored dust particles based on tier
+                DustParticleEffect dustEffect = new DustParticleEffect(particleColor, 1.0f);
+                particleManager.addParticle(
+                    dustEffect,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    0.0, 0.01, 0.0 // Slight upward motion
+                );
+            }
         }
     }
 
@@ -286,6 +325,104 @@ public class SparkleParticleRenderer {
         return nearest;
     }
 
+    // Normal sparkles only (exclude underwater tiers)
+    private static ClientSparkleManager.ClientSparkle findNearestNormalSparkle(ClientWorld world, MinecraftClient client) {
+        if (client.player == null) return null;
+
+        UUID playerId = client.player.getUuid();
+        Vec3d playerPos = client.player.getPos();
+
+        ClientSparkleManager.ClientSparkle nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        List<ClientSparkleManager.ClientSparkle> playerSparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+        for (ClientSparkleManager.ClientSparkle sparkle : playerSparkles) {
+            if (isUnderwaterTier(sparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = sparkle;
+            }
+        }
+
+        List<ClientSparkleManager.ClientSparkle> hostileSparkles = ClientSparkleManager.getHostileSparkles();
+        for (ClientSparkleManager.ClientSparkle hostileSparkle : hostileSparkles) {
+            if (isUnderwaterTier(hostileSparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(hostileSparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = hostileSparkle;
+            }
+        }
+
+        return nearest;
+    }
+
+    // Underwater sparkles only
+    private static ClientSparkleManager.ClientSparkle findNearestUnderwaterSparkle(ClientWorld world, MinecraftClient client) {
+        if (client.player == null) return null;
+
+        UUID playerId = client.player.getUuid();
+        Vec3d playerPos = client.player.getPos();
+
+        ClientSparkleManager.ClientSparkle nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        List<ClientSparkleManager.ClientSparkle> playerSparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+        for (ClientSparkleManager.ClientSparkle sparkle : playerSparkles) {
+            if (!isUnderwaterTier(sparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = sparkle;
+            }
+        }
+
+        return nearest;
+    }
+
+    // Normal detectable (Soul Sight), excluding underwater tiers
+    private static ClientSparkleManager.ClientSparkle findNearestNormalDetectableSparkle(ClientWorld world, MinecraftClient client) {
+        if (client.player == null) return null;
+
+        UUID playerId = client.player.getUuid();
+        Vec3d playerPos = client.player.getPos();
+
+        int soulSightLevel = getSoulSightLevel(client);
+        int maxDetectableTier = soulSightLevel > 0 ? soulSightLevel - 1 : -1;
+
+        ClientSparkleManager.ClientSparkle nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        List<ClientSparkleManager.ClientSparkle> playerSparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+        for (ClientSparkleManager.ClientSparkle sparkle : playerSparkles) {
+            if (isUnderwaterTier(sparkle.getTierLevel())) continue;
+            if (soulSightLevel == 0 || sparkle.getTierLevel() > maxDetectableTier) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = sparkle;
+            }
+        }
+
+        List<ClientSparkleManager.ClientSparkle> hostileSparkles = ClientSparkleManager.getHostileSparkles();
+        for (ClientSparkleManager.ClientSparkle hostileSparkle : hostileSparkles) {
+            if (isUnderwaterTier(hostileSparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(hostileSparkle.getPosition());
+            double distance = playerPos.distanceTo(sparklePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = hostileSparkle;
+            }
+        }
+
+        return nearest;
+    }
+
     /**
      * Finds the nearest sparkle to the player that can be detected by the current Soul Sight level
      * Used for directional particles - requires Soul Sight
@@ -352,58 +489,89 @@ public class SparkleParticleRenderer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || !isPlayerHoldingCompass(client)) return;
 
-        // Check if treasure compass has Fairy Dust enchantment
         ItemStack treasureCompass = getTreasureCompassStack(client);
-        if (!TreasureCompassItem.hasFairyDust(treasureCompass)) return;
+        if (treasureCompass.isEmpty()) return;
 
-        // Check if compass has durability remaining
         if (treasureCompass.getDamage() >= treasureCompass.getMaxDamage()) return;
 
-        // Find nearest sparkle (no Soul Sight filtering - fairy shows all sparkles)
-        ClientSparkleManager.ClientSparkle nearestSparkle = findNearestSparkle(world, client);
-        if (nearestSparkle == null) return;
+        boolean hasFairyDust = TreasureCompassItem.hasFairyDust(treasureCompass);
+        int diversLevel = getDiversCrystalLevel(client);
+        int eldertideLevel = getEldertideLevel(client);
 
         ParticleManager particleManager = client.particleManager;
         Vec3d playerPos = client.player.getPos();
 
         // Update fairy animation time for figure-eight pattern
-        fairyAnimationTime += 0.1; // Slow, smooth animation
+        fairyAnimationTime += 0.1;
 
-        // Determine fairy color based on sparkle targeting
-        Vector3f particleColor = getFairyColor(client, nearestSparkle);
-
-        // Get player's facing direction
+        // Base vectors
         Vec3d playerFacing = client.player.getRotationVector();
         Vec3d frontOffset = new Vec3d(playerFacing.x, 0, playerFacing.z).normalize().multiply(COMPASS_FAIRY_DISTANCE);
-
-        // Calculate left offset (opposite of right - cross product with down vector)
         Vec3d leftOffset = frontOffset.crossProduct(new Vec3d(0, -1, 0)).normalize().multiply(0.7);
-
-        // Calculate figure-eight pattern offset
+        Vec3d rightOffset = frontOffset.crossProduct(new Vec3d(0, 1, 0)).normalize().multiply(0.7);
         double figureEightX = Math.sin(fairyAnimationTime) * COMPASS_FAIRY_FIGURE_EIGHT_SIZE;
         double figureEightY = Math.sin(fairyAnimationTime * 2) * COMPASS_FAIRY_FIGURE_EIGHT_SIZE * 0.5;
 
-        // Position fairy with figure-eight animation
-        Vec3d fairyPos = playerPos.add(frontOffset).add(leftOffset)
-            .add(figureEightX, figureEightY + COMPASS_FAIRY_HEIGHT, 0);
+        // 1) Normal guidance (Fairy Dust) - exclude underwater tiers
+        if (hasFairyDust) {
+            ClientSparkleManager.ClientSparkle nearestNormal = findNearestNormalSparkle(world, client);
+            if (nearestNormal != null) {
+                Vector3f fairyColor = getFairyColorNormal(client, nearestNormal);
+                Vec3d fairyPos = playerPos.add(frontOffset).add(leftOffset)
+                    .add(figureEightX, figureEightY + COMPASS_FAIRY_HEIGHT, 0);
 
-        // Create colored fairy particle
-        DustParticleEffect fairyParticle = new DustParticleEffect(particleColor, 1.0f);
-        particleManager.addParticle(
-            fairyParticle,
-            fairyPos.x, fairyPos.y, fairyPos.z,
-            0.0, 0.01, 0.0 // Slight upward drift for magical effect
-        );
+                DustParticleEffect fairyParticle = new DustParticleEffect(fairyColor, 1.0f);
+                particleManager.addParticle(
+                    fairyParticle,
+                    fairyPos.x, fairyPos.y, fairyPos.z,
+                    0.0, 0.01, 0.0
+                );
 
-        // Spawn directional particles if compass is held in hand AND player has Soul Sight helmet
-        if (isPlayerHoldingCompassInHand(client) && hasSoulSightHelmet(client)) {
-            // Find the nearest DETECTABLE sparkle for directional particles
-            ClientSparkleManager.ClientSparkle detectableSparkle = findNearestDetectableSparkle(world, client);
-            if (detectableSparkle != null) {
-                // Get the color for the detectable sparkle (may be different from fairy color)
-                Vector3f detectableColor = getTierColor(detectableSparkle.getTierLevel());
-                spawnDirectionalParticles(world, particleManager, detectableSparkle, fairyPos, detectableColor);
-                spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+                if (isPlayerHoldingCompassInHand(client) && hasSoulSightHelmet(client)) {
+                    ClientSparkleManager.ClientSparkle detectable = findNearestNormalDetectableSparkle(world, client);
+                    if (detectable != null) {
+                        Vector3f color = getTierColor(detectable.getTierLevel());
+                        spawnDirectionalParticles(world, particleManager, detectable, fairyPos, color);
+                        spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+                    }
+                }
+            }
+        }
+
+        // 2) Underwater guidance (Eldertide Resonance + Diver's Crystal) - underwater tiers only
+        if (eldertideLevel > 0 && diversLevel > 0) {
+            ClientSparkleManager.ClientSparkle nearestUnderwater = findNearestUnderwaterSparkle(world, client);
+            if (nearestUnderwater != null) {
+                Vector3f uwFairyColor = getFairyColorUnderwater(client, nearestUnderwater);
+                Vec3d uwFairyPos = playerPos.add(frontOffset).add(rightOffset)
+                    .add(figureEightX, figureEightY + COMPASS_FAIRY_HEIGHT, 0);
+
+                DustParticleEffect uwFairyParticle = new DustParticleEffect(uwFairyColor, 1.0f);
+                particleManager.addParticle(
+                    uwFairyParticle,
+                    uwFairyPos.x, uwFairyPos.y, uwFairyPos.z,
+                    0.0, 0.01, 0.0
+                );
+
+                if (isPlayerHoldingCompassInHand(client)) {
+                    UUID playerId = client.player.getUuid();
+                    List<ClientSparkleManager.ClientSparkle> all = ClientSparkleManager.getPlayerSparkles(playerId);
+                    if (eldertideLevel >= 2) {
+                        for (ClientSparkleManager.ClientSparkle s : all) {
+                            if (!isUnderwaterTier(s.getTierLevel())) continue;
+                            Vec3d pos = Vec3d.ofCenter(s.getPosition());
+                            if (pos.distanceTo(playerPos) <= 64.0) {
+                                Vector3f c = getTierColor(s.getTierLevel());
+                                spawnDirectionalParticles(world, particleManager, s, uwFairyPos, c);
+                            }
+                        }
+                        spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+                    } else {
+                        Vector3f c = getTierColor(nearestUnderwater.getTierLevel());
+                        spawnDirectionalParticles(world, particleManager, nearestUnderwater, uwFairyPos, c);
+                        spawnPlayerSurroundParticles(world, particleManager, playerPos, client);
+                    }
+                }
             }
         }
     }
@@ -814,6 +982,16 @@ public class SparkleParticleRenderer {
                 return getBlightedColor();
             case 8: // DOOMED - Red and Black
                 return getDoomedColor();
+            case 9: // DRIFTWOOD - Light, desaturated wood tone
+                return new Vector3f(0.78f, 0.58f, 0.27f);
+            case 10: // KELP - Sea green
+                return new Vector3f(0.2f, 0.8f, 0.6f);
+            case 11: // CORAL - Coral pink
+                return new Vector3f(1.0f, 0.4f, 0.5f);
+            case 12: // CAVERN - Deep teal
+                return new Vector3f(0.0f, 0.6f, 0.6f);
+            case 13: // SEABED - Sandy gold
+                return new Vector3f(0.9f, 0.8f, 0.4f);
             default:
                 return new Vector3f(1.0f, 1.0f, 1.0f); // White fallback
         }
@@ -870,6 +1048,117 @@ public class SparkleParticleRenderer {
             return getTierColor(highestTier);
         }
         return getTierColor(nearestSparkle.getTierLevel());
+    }
+
+    // Fairy color for normal guidance: ignore underwater tiers when scanning
+    private static Vector3f getFairyColorNormal(MinecraftClient client, ClientSparkleManager.ClientSparkle nearestSparkle) {
+        if (client.player == null) return getTierColor(nearestSparkle.getTierLevel());
+
+        UUID playerId = client.player.getUuid();
+        List<ClientSparkleManager.ClientSparkle> sparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+
+        Vec3d playerPos = client.player.getPos();
+        Vec3d playerLookVec = client.player.getRotationVector();
+
+        int highestTier = -1;
+
+        for (ClientSparkleManager.ClientSparkle sparkle : sparkles) {
+            if (isUnderwaterTier(sparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            Vec3d toSparkle = sparklePos.subtract(playerPos).normalize();
+            double dotProduct = playerLookVec.dotProduct(toSparkle);
+            if (dotProduct > 0) {
+                if (sparkle.getTierLevel() > highestTier) {
+                    highestTier = sparkle.getTierLevel();
+                }
+            }
+        }
+
+        List<ClientSparkleManager.ClientSparkle> hostileSparkles = ClientSparkleManager.getHostileSparkles();
+        for (ClientSparkleManager.ClientSparkle hostileSparkle : hostileSparkles) {
+            if (isUnderwaterTier(hostileSparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(hostileSparkle.getPosition());
+            Vec3d toSparkle = sparklePos.subtract(playerPos).normalize();
+            double dotProduct = playerLookVec.dotProduct(toSparkle);
+            if (dotProduct > 0) {
+                if (hostileSparkle.getTierLevel() > highestTier) {
+                    highestTier = hostileSparkle.getTierLevel();
+                }
+            }
+        }
+
+        if (highestTier >= 0) return getTierColor(highestTier);
+        return getTierColor(nearestSparkle.getTierLevel());
+    }
+
+    // Fairy color for underwater guidance: only consider underwater tiers
+    private static Vector3f getFairyColorUnderwater(MinecraftClient client, ClientSparkleManager.ClientSparkle nearestSparkle) {
+        if (client.player == null) return getTierColor(nearestSparkle.getTierLevel());
+
+        UUID playerId = client.player.getUuid();
+        List<ClientSparkleManager.ClientSparkle> sparkles = ClientSparkleManager.getPlayerSparkles(playerId);
+
+        Vec3d playerPos = client.player.getPos();
+        Vec3d playerLookVec = client.player.getRotationVector();
+
+        int highestTier = -1;
+
+        for (ClientSparkleManager.ClientSparkle sparkle : sparkles) {
+            if (!isUnderwaterTier(sparkle.getTierLevel())) continue;
+            Vec3d sparklePos = Vec3d.ofCenter(sparkle.getPosition());
+            Vec3d toSparkle = sparklePos.subtract(playerPos).normalize();
+            double dotProduct = playerLookVec.dotProduct(toSparkle);
+            if (dotProduct > 0) {
+                if (sparkle.getTierLevel() > highestTier) {
+                    highestTier = sparkle.getTierLevel();
+                }
+            }
+        }
+
+        if (highestTier >= 0) return getTierColor(highestTier);
+        return getTierColor(nearestSparkle.getTierLevel());
+    }
+
+    private static boolean isUnderwaterTier(int tierLevel) {
+        return tierLevel >= 9; // Underwater tiers: 9-13
+    }
+
+    // Detect Diver's Crystal on treasure compass
+    private static int getDiversCrystalLevel(MinecraftClient client) {
+        ItemStack compass = getTreasureCompassStack(client);
+        if (compass.isEmpty()) return 0;
+        var enchantments = compass.getEnchantments();
+        for (var entry : enchantments.getEnchantments()) {
+            if (entry.getIdAsString().equals("loot-sparkle:divers_crystal")) {
+                return enchantments.getLevel(entry);
+            }
+        }
+        return 0;
+    }
+
+    // Detect Eldertide Resonance on held items (trident)
+    private static int getEldertideLevel(MinecraftClient client) {
+        if (client.player == null) return 0;
+        int level = 0;
+        ItemStack main = client.player.getMainHandStack();
+        if (!main.isEmpty()) {
+            var ench = main.getEnchantments();
+            for (var entry : ench.getEnchantments()) {
+                if (entry.getIdAsString().equals("loot-sparkle:eldertide_resonance")) {
+                    level = Math.max(level, ench.getLevel(entry));
+                }
+            }
+        }
+        ItemStack off = client.player.getOffHandStack();
+        if (!off.isEmpty()) {
+            var ench = off.getEnchantments();
+            for (var entry : ench.getEnchantments()) {
+                if (entry.getIdAsString().equals("loot-sparkle:eldertide_resonance")) {
+                    level = Math.max(level, ench.getLevel(entry));
+                }
+            }
+        }
+        return level;
     }
 
     /**

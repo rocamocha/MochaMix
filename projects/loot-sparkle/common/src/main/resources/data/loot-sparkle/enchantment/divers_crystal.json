@@ -1,0 +1,26 @@
+{
+  "description": {
+    "translate": "enchantment.loot-sparkle.divers_crystal"
+  },
+  "supported_items": [
+    "loot-sparkle:treasure_compass"
+  ],
+  "primary_items": [
+    "loot-sparkle:treasure_compass"
+  ],
+  "weight": 2,
+  "max_level": 3,
+  "min_cost": {
+    "base": 12,
+    "per_level_above_first": 8
+  },
+  "max_cost": {
+    "base": 24,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand"
+  ],
+  "exclusive_set": []
+}

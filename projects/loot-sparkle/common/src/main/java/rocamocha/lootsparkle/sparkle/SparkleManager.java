@@ -354,20 +354,50 @@ public class SparkleManager {
     }
 
     private static void updateSparkles(ServerWorld world) {
+        // Collect underwater respawn requests to avoid modifying lists during iteration
+        java.util.List<UUID> underwaterRespawnOwners = new java.util.ArrayList<>();
+
         // Update all player sparkles and remove expired ones
         playerSparkles.values().forEach(sparkles ->
             sparkles.removeIf(sparkle -> {
                 sparkle.update(world);
-                if (sparkle.isExpired() || isSparkleExpiredDueToDistance(sparkle, world)) {
+                boolean expired = sparkle.isExpired() || isSparkleExpiredDueToDistance(sparkle, world);
+                if (expired) {
+                    // Capture data before cleanup
+                    UUID ownerId = sparkle.getPlayerId();
+                    SparkleTier tier = sparkle.getTier();
                     // Clean up all associated entities before removing
                     sparkle.cleanupAllEntities(world);
                     // Send remove packet to the player
-                    sendSparkleRemovePacket(sparkle.getPlayerId(), sparkle.getSparkleId());
+                    sendSparkleRemovePacket(ownerId, sparkle.getSparkleId());
+
+                    // Eldertide Resonance L3: queue underwater respawn when an underwater sparkle expires
+                    if (tier.getCategory() == SparkleCategory.UNDERWATER) {
+                        ServerPlayerEntity owner = world.getServer().getPlayerManager().getPlayer(ownerId);
+                        if (owner != null && owner.isAlive() && !owner.isSpectator()) {
+                            int eldertide = getEldertideLevel(owner);
+                            if (eldertide >= 3 && owner.isSubmergedInWater() && getDiversCrystalLevel(owner) > 0 && hasTreasureCompass(owner)) {
+                                // Defer respawn until after iteration to avoid ConcurrentModificationException
+                                underwaterRespawnOwners.add(ownerId);
+                            }
+                        }
+                    }
+
                     return true;
                 }
                 return false;
             })
         );
+
+        // Process deferred underwater respawns now that iteration is complete
+        if (!underwaterRespawnOwners.isEmpty()) {
+            for (UUID ownerId : underwaterRespawnOwners) {
+                ServerPlayerEntity owner = world.getServer().getPlayerManager().getPlayer(ownerId);
+                if (owner != null && owner.isAlive() && !owner.isSpectator()) {
+                    spawnUnderwaterSparkleForPlayer(owner, world);
+                }
+            }
+        }
 
         // Update hostile sparkles and check for activation
         hostileSparkles.removeIf(sparkle -> {
@@ -392,6 +422,9 @@ public class SparkleManager {
 
         // Spawn sparkles for active players
         spawnSparklesForActivePlayers(world);
+
+        // Spawn underwater sparkles for eligible players
+        spawnUnderwaterSparklesForActivePlayers(world);
 
         // Spawn hostile sparkles occasionally
         spawnHostileSparkles(world);
@@ -450,6 +483,251 @@ public class SparkleManager {
         if (world.getRandom().nextFloat() < trialSpawnProbability) {
             spawnHostileSparkle(world, randomPlayer.getBlockPos());
         }
+    }
+
+    private static boolean hasTreasureCompass(ServerPlayerEntity player) {
+        if (player.getMainHandStack().getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) return true;
+        if (player.getOffHandStack().getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) return true;
+        for (int slot = 0; slot < 9; slot++) {
+            if (player.getInventory().getStack(slot).getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) return true;
+        }
+        return false;
+    }
+
+    private static int getDiversCrystalLevel(ServerPlayerEntity player) {
+        // Check main hand, off hand, then hotbar for the treasure compass
+        java.util.function.Function<net.minecraft.item.ItemStack, Integer> levelFn = (stack) -> {
+            var ench = stack.getEnchantments();
+            for (var entry : ench.getEnchantments()) {
+                if (entry.getIdAsString().equals("loot-sparkle:divers_crystal")) {
+                    return ench.getLevel(entry);
+                }
+            }
+            return 0;
+        };
+
+        var main = player.getMainHandStack();
+        if (main.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+            int lvl = levelFn.apply(main);
+            if (lvl > 0) return lvl;
+        }
+        var off = player.getOffHandStack();
+        if (off.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+            int lvl = levelFn.apply(off);
+            if (lvl > 0) return lvl;
+        }
+        for (int slot = 0; slot < 9; slot++) {
+            var st = player.getInventory().getStack(slot);
+            if (st.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+                int lvl = levelFn.apply(st);
+                if (lvl > 0) return lvl;
+            }
+        }
+        return 0;
+    }
+
+    private static int getEldertideLevel(ServerPlayerEntity player) {
+        java.util.function.Function<net.minecraft.item.ItemStack, Integer> levelFn = (stack) -> {
+            var ench = stack.getEnchantments();
+            for (var entry : ench.getEnchantments()) {
+                if (entry.getIdAsString().equals("loot-sparkle:eldertide_resonance")) {
+                    return ench.getLevel(entry);
+                }
+            }
+            return 0;
+        };
+
+        int level = 0;
+        var main = player.getMainHandStack();
+        if (main.isOf(net.minecraft.item.Items.TRIDENT)) level = Math.max(level, levelFn.apply(main));
+        var off = player.getOffHandStack();
+        if (off.isOf(net.minecraft.item.Items.TRIDENT)) level = Math.max(level, levelFn.apply(off));
+        return level;
+    }
+
+    /**
+     * Spawns underwater sparkles for eligible players.
+     * Rules:
+     * - Requires an active Treasure Compass for any underwater tier consideration.
+     * - When submerged: all underwater tiers are eligible, gated by Diver's Crystal levels.
+     *   - L0: driftwood only
+     *   - L1: + kelp, coral
+     *   - L2: + cavern
+     *   - L3: + seabed
+     * - When not submerged: only the driftwood exception is considered (may spawn near water surface).
+     * - Spawns share the same per-player cap as normal sparkles and use the same probability curve.
+     * - Eldertide Resonance L3: expired underwater sparkles will queue an immediate respawn (same tick) after iteration to avoid CME.
+     */
+    private static void spawnUnderwaterSparklesForActivePlayers(ServerWorld world) {
+        for (ServerPlayerEntity player : world.getPlayers()) {
+            if (player.isSpectator() || !player.isAlive()) continue;
+
+            // Require an active Treasure Compass for all underwater spawns (driftwood does not require the enchantment)
+            if (!hasTreasureCompass(player)) continue;
+
+            // Respect per-player sparkle limit (shared with normal sparkles)
+            List<Sparkle> list = playerSparkles.computeIfAbsent(player.getUuid(), k -> new ArrayList<>());
+            if (list.size() >= MAX_SPARKLES_PER_PLAYER) continue;
+
+            boolean submerged = player.isSubmergedInWater();
+            int divers = getDiversCrystalLevel(player); // May be 0; driftwood is allowed at 0
+
+            long aggregateInhabitedTime = calculateAggregateInhabitedTime(world, player.getBlockPos());
+            float spawnProbability = calculateSpawnProbability(aggregateInhabitedTime);
+            if (world.getRandom().nextFloat() >= spawnProbability) continue;
+
+            if (submerged) {
+                // When submerged: allow normal underwater spawning; with Divers>0 includes higher tiers; with 0 it will attempt driftwood only
+                spawnUnderwaterSparkleForPlayer(player, world);
+            } else {
+                // On land: only allow the driftwood exception
+                BlockPos spawnPos = findUnderwaterSpawnPosition(world, player.getBlockPos(), SPAWN_RADIUS, SparkleTier.DRIFTWOOD);
+                if (spawnPos != null) {
+                    spawnSparkleOfTierForPlayer(player.getUuid(), world, spawnPos, SparkleTier.DRIFTWOOD);
+                }
+            }
+        }
+    }
+
+    private static void spawnUnderwaterSparkleForPlayer(ServerPlayerEntity player, World world) {
+        int diversLevel = getDiversCrystalLevel(player);
+
+        // Determine candidate tiers based on level
+        java.util.List<SparkleTier> candidates = new java.util.ArrayList<>();
+        // Driftwood always allowed (even without Divers Crystal per spec), but here we already have diversLevel>0 for normal path
+        candidates.add(SparkleTier.DRIFTWOOD);
+        if (diversLevel >= 1) {
+            candidates.add(SparkleTier.KELP);
+            candidates.add(SparkleTier.CORAL);
+        }
+        if (diversLevel >= 2) {
+            candidates.add(SparkleTier.CAVERN);
+        }
+        if (diversLevel >= 3) {
+            candidates.add(SparkleTier.SEABED);
+        }
+
+        java.util.Collections.shuffle(candidates);
+
+        BlockPos center = player.getBlockPos();
+        BlockPos spawnPos = null;
+        SparkleTier chosenTier = null;
+        for (SparkleTier t : candidates) {
+            spawnPos = findUnderwaterSpawnPosition(world, center, SPAWN_RADIUS, t);
+            if (spawnPos != null) {
+                chosenTier = t;
+                break;
+            }
+        }
+
+        // As a last resort, try driftwood near any water surface even if player on land
+        if (spawnPos == null) {
+            spawnPos = findUnderwaterSpawnPosition(world, center, SPAWN_RADIUS, SparkleTier.DRIFTWOOD);
+            if (spawnPos != null) chosenTier = SparkleTier.DRIFTWOOD;
+        }
+
+        if (spawnPos != null && chosenTier != null) {
+            spawnSparkleOfTierForPlayer(player.getUuid(), world, spawnPos, chosenTier);
+        }
+    }
+
+    private static BlockPos findUnderwaterSpawnPosition(World world, BlockPos center, int radius, SparkleTier tier) {
+        java.util.Random random = new java.util.Random();
+        for (int attempts = 0; attempts < 64; attempts++) {
+            int x = center.getX() + random.nextInt(radius * 2) - radius;
+            int z = center.getZ() + random.nextInt(radius * 2) - radius;
+
+            switch (tier) {
+                case DRIFTWOOD -> {
+                    // Find water surface: a water block with air above
+                    for (int y = Math.min(center.getY() + 16, world.getTopY() - 2); y >= world.getBottomY() + 1; y--) {
+                        BlockPos pos = new BlockPos(x, y, z);
+                        var state = world.getBlockState(pos);
+                        if (state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER)) {
+                            BlockPos above = pos.up();
+                            if (world.getBlockState(above).isAir()) {
+                                // Place sparkle just above the surface for visibility
+                                return above;
+                            }
+                        }
+                    }
+                }
+                case KELP -> {
+                    // Search small vertical range for kelp blocks
+                    for (int y = center.getY() + 16; y >= center.getY() - 16; y--) {
+                        if (y <= world.getBottomY() + 1 || y >= world.getTopY() - 1) continue;
+                        BlockPos pos = new BlockPos(x, y, z);
+                        var state = world.getBlockState(pos);
+                        if (state.isOf(net.minecraft.block.Blocks.KELP) || state.isOf(net.minecraft.block.Blocks.KELP_PLANT)) {
+                            // Spawn inside water near kelp
+                            return pos.up();
+                        }
+                    }
+                }
+                case CORAL -> {
+                    // Look for coral blocks via tag if available, else check common coral blocks
+                    for (int y = center.getY() + 16; y >= center.getY() - 16; y--) {
+                        if (y <= world.getBottomY() + 1 || y >= world.getTopY() - 1) continue;
+                        BlockPos pos = new BlockPos(x, y, z);
+                        var state = world.getBlockState(pos);
+                        boolean isCoral = state.isIn(net.minecraft.registry.tag.BlockTags.CORAL_BLOCKS)
+                            || state.isOf(net.minecraft.block.Blocks.TUBE_CORAL_BLOCK)
+                            || state.isOf(net.minecraft.block.Blocks.BRAIN_CORAL_BLOCK)
+                            || state.isOf(net.minecraft.block.Blocks.BUBBLE_CORAL_BLOCK)
+                            || state.isOf(net.minecraft.block.Blocks.FIRE_CORAL_BLOCK)
+                            || state.isOf(net.minecraft.block.Blocks.HORN_CORAL_BLOCK);
+                        if (isCoral) {
+                            // Choose adjacent water block if coral block itself is solid
+                            BlockPos waterPos = findAdjacentWater(world, pos);
+                            if (waterPos != null) return waterPos;
+                        }
+                    }
+                }
+                case CAVERN -> {
+                    // Find water-filled enclosed spaces (no sky visibility)
+                    for (int y = center.getY() + 16; y >= center.getY() - 32; y--) {
+                        if (y <= world.getBottomY() + 1 || y >= world.getTopY() - 1) continue;
+                        BlockPos pos = new BlockPos(x, y, z);
+                        var state = world.getBlockState(pos);
+                        if (state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER) && !world.isSkyVisible(pos)) {
+                            return pos;
+                        }
+                    }
+                }
+                case SEABED -> {
+                    // Find ocean floor: solid block with water above and minimum depth
+                    for (int y = center.getY(); y >= world.getBottomY() + 1; y--) {
+                        BlockPos floor = new BlockPos(x, y, z);
+                        var floorState = world.getBlockState(floor);
+                        if (floorState.isSolidBlock(world, floor) && world.getBlockState(floor.up()).getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER)) {
+                            int depth = 0;
+                            BlockPos check = floor.up();
+                            while (world.getBlockState(check).getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER) && depth < 16) {
+                                depth++;
+                                check = check.up();
+                            }
+                            if (depth >= 5) {
+                                return floor.up(); // place sparkle one block above floor in water
+                            }
+                        }
+                    }
+                }
+                default -> {
+                    // Not an underwater tier
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BlockPos findAdjacentWater(World world, BlockPos pos) {
+        BlockPos[] neighbors = new BlockPos[]{pos.up(), pos.down(), pos.north(), pos.south(), pos.east(), pos.west()};
+        for (BlockPos n : neighbors) {
+            if (world.getBlockState(n).getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER)) {
+                return n;
+            }
+        }
+        return null;
     }
 
     private static BlockPos findValidSpawnPosition(World world, BlockPos center, int radius, boolean skyVisibleToPlayer) {
@@ -676,6 +954,11 @@ public class SparkleManager {
             case CURSED -> 3;
             case BLIGHTED -> 6;
             case DOOMED -> 10;
+            case DRIFTWOOD -> 1;
+            case KELP -> 2;
+            case CORAL -> 3;
+            case CAVERN -> 4;
+            case SEABED -> 5;
         };
     }
 

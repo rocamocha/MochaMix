@@ -12,5 +12,10 @@ public enum SparkleCategory {
     /**
      * Trial sparkles - shared loot with mob spawning phases
      */
-    TRIAL
+    TRIAL,
+
+    /**
+     * Underwater sparkles - per-player loot that spawns in/near water
+     */
+    UNDERWATER
 }

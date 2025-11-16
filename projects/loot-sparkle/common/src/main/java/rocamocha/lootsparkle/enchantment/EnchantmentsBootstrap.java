@@ -42,6 +42,16 @@ public class EnchantmentsBootstrap {
             var shimmerseekBuilder = ShimmerseekEnchantment.builder(itemLookup);
             registry.register(shimmerseekKey, shimmerseekBuilder.build(shimmerseekKey.getValue()));
 
+            // Register Diver's Crystal enchantment
+            var diversKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("loot-sparkle", "divers_crystal"));
+            var diversBuilder = DiversCrystalEnchantment.builder(itemLookup);
+            registry.register(diversKey, diversBuilder.build(diversKey.getValue()));
+
+            // Register Eldertide Resonance enchantment
+            var eldertideKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("loot-sparkle", "eldertide_resonance"));
+            var eldertideBuilder = EldertideResonanceEnchantment.builder(itemLookup);
+            registry.register(eldertideKey, eldertideBuilder.build(eldertideKey.getValue()));
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to bootstrap custom enchantments", e);
         }

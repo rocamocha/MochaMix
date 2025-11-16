@@ -11,7 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the tier/rarity of a sparkle, which determines loot quality and sources
+ * Represents the tier/rarity of a sparkle, which determines loot quality and sources.
+ * Notes:
+ * - Underwater tiers (levels 9-13) have weight 0 so normal tier rolls never pick them; they are spawned by dedicated underwater logic.
+ * - Underwater base loot tables use the namespace path: loot-sparkle:underwater/<tier>/basic
+ * - Trial tiers are handled by the trial system and use different base paths.
  */
 public enum SparkleTier {
     COMMON(0, "common", 65, List.of(
@@ -50,6 +54,23 @@ public enum SparkleTier {
     DOOMED(8, "doomed", 1, List.of(
         "loot-sparkle:trials/doomed/legendary",
         "loot-sparkle:trials/doomed/mythical"
+    )),
+
+    // underwater sparkle tiers (weights set to 0 so they are not selected by normal tier rolls)
+    DRIFTWOOD(9, "driftwood", 0, List.of(
+        "loot-sparkle:underwater/driftwood/basic"
+    )),
+    KELP(10, "kelp", 0, List.of(
+        "loot-sparkle:underwater/kelp/basic"
+    )),
+    CORAL(11, "coral", 0, List.of(
+        "loot-sparkle:underwater/coral/basic"
+    )),
+    CAVERN(12, "cavern", 0, List.of(
+        "loot-sparkle:underwater/cavern/basic"
+    )),
+    SEABED(13, "seabed", 0, List.of(
+        "loot-sparkle:underwater/seabed/basic"
     ));
 
     private final int level;
@@ -271,8 +292,10 @@ public enum SparkleTier {
     public SparkleCategory getCategory() {
         if (this == CURSED || this == BLIGHTED || this == DOOMED) {
             return SparkleCategory.TRIAL;
-        } else {
-            return SparkleCategory.NORMAL;
         }
+        if (this == DRIFTWOOD || this == KELP || this == CORAL || this == CAVERN || this == SEABED) {
+            return SparkleCategory.UNDERWATER;
+        }
+        return SparkleCategory.NORMAL;
     }
 }
