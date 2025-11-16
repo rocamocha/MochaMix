@@ -1,45 +1,29 @@
-You are a Minecraft modding expert, targeting version 1.21.1.
-Reference relevant documentation to plan your implementation.
-Analyze the source code when you are not sure if an implementation is possible.
-Do not presumptively use the first solution that comes to mind - carefully analyze whether it is the best course of action before implementation.
+# Copilot Agent Profile:
 
-Let's restructure the spawn phases for hostile sparkles to be sourced differently. I would like for each hostile sparkle tiers' combat phases to be sourced from its own subdirectory, in a new directory in the datapack named `phase_lists`.
+- Write clean, maintainable, and well-documented code.
+- Reference relevant documentation to plan your implementation.
+- You are a Minecraft modding expert, targeting version 1.21.1.
+- Analyze the source code located at `.gradle\loom-cache\minecraftMaven\net\minecraft\minecraft-merged-ec8ce118e3\1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2\minecraft-merged-ec8ce118e3-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2-sources` when you are not sure if an implementation is possible.
+- Do not presumptively use the first solution that comes to mind - carefully analyze whether it is the best course of action before implementation.
+- When editing code, make sure to update comments and documentation to reflect your changes - not just in the modified files, but in related files as well.
+- When implementing new features, ensure they integrate seamlessly with existing systems and follow established coding conventions.
 
-Each tiers' subdirectory will contain `json` files with a schema that outlines the following information:
+# Task:
 
-At least 1 entry in `phases`, with inner fields for:
-- `sources` - takes multiple strings, pointing to `json` files in `phase_sources`.
-- `type` - a string value, can be `emitter`, `burst`, `boss`, `challenge`, or `puzzle` -- represents the spawning logic that will be used for the phase. For now, we will focus on `emitter`, `burst`, and `boss`. Let's leave `challenge` and `puzzle` just as a scaffolding in the actual code.
-- `duration` - has two inner fields: `value` - an integer representing real time seconds; and `type` - a string determining what happens at the end of the duration, can be `advance`, `limit`, `survive`.
+In the `loot-sparkle` mod, implement the following features:
 
-```json
-{
-    "phases": [
-        {
-            "type": "emitter",
-            "sources": [
-                "zombie_horde",
-                "skeleton_crew"
-            ],
-            "duration": {
-                "value": 30,
-                "type": "advance"
-            }
-        }
-    ]
-}
-```
+## (a). Underwater Sparkle Tiers
+- Introduce four new tiers of underwater loot sparkles: `driftwood`, `kelp`, `coral`, `seabed`, and `cavern`.
+- The loot tables for these new tiers should be defined in JSON files located in the `data/loot_sparkle/loot_tables/underwater/<tier>/` directories.
+- Sparkles from these tiers will only spawn when the player has an active `Treasure Compass` item enchanted with the new `Diver's Crystal` enchantment.
+- Underwater sparkles will be tracked and synchronized by the server per-player, in the same list as the normal sparkles, unlike the trial sparkle system, which synchronizes included sparkles globally.
+- Functionality of the `Shimmerseek` enchantment will exclude these new underwater tiers.
+- The new underwater sparkle tiers should be visually distinct from existing sparkle types, with unique particle effects and colors.
 
----
+## (b). Eldertide Resonance Enchantment
+1. A new enchantment called `Eldertide Resonance` with a maximum level of 3 that can be applied to tridents.
+2. When a player holds a trident enchanted with `Eldertide Resonance`, and has a `Treasure Compass` enchanted with `Diver's Crystal`, it will function like the `Shimmerseek` enchantment but specifically for the new underwater sparkle tiers.
 
-The sources `json` will contain a parent `spawns` with entries containing fields for:
-
-- `mobId`
-- `armor` (optional) - with possible fields for each armor slot, accepting item IDs for mod compat.
-- `attributes` (optional) - accepts minecraft mob attributes such as health, scale, movement speed, armor, armor toughness, attack damage, attack knockback, etc.
-- `name` (optional) - a name to be displayed above the mob like with a nametag
-- `boss` a boolean value - when true, the mobs health will show up as a boss bar
-- `weight` (optional) - when the entry has this field, it will be considered as a candidate for the randomized spawning for the phase; when this field is not present, the entry will be included as a guaranteed spawn for the phase
-- `count` (optional) - determines the number of these that will spawn; accepts either an integer for a fixed number, or an entry that has `min` and `max` fields; if the field is not present, defaults to 1
-
-Alongside `spawns` will be `rolls` which can accept an integer or an entry with `min` and `max` fields.
+## (c). Diver's Crystal Enchantment
+1. A new enchantment called `Diver's Crystal` with a maximum level of 3 that can be applied to the modded `Treasure Compass` item.
+2. This enchantment allows players to detect and spawn underwater loot sparkles of the new tiers when equipped.

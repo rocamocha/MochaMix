@@ -37,17 +37,19 @@ public enum SparkleTier {
         "loot-sparkle:tiers/5_divine/divine",
         "loot-sparkle:tiers/5_divine/celestial"
     )),
-    // Hostile sparkle tiers
+
+    
+    // trial sparkle tiers
     CURSED(6, "cursed", 8, List.of(
-        "loot-sparkle:hostile_tiers/6_cursed/basic"
+        "loot-sparkle:trials/cursed/basic"
     )),
     BLIGHTED(7, "blighted", 4, List.of(
-        "loot-sparkle:hostile_tiers/7_blighted/treasure",
-        "loot-sparkle:hostile_tiers/7_blighted/special"
+        "loot-sparkle:trials/blighted/treasure",
+        "loot-sparkle:trials/blighted/special"
     )),
     DOOMED(8, "doomed", 1, List.of(
-        "loot-sparkle:hostile_tiers/8_doomed/legendary",
-        "loot-sparkle:hostile_tiers/8_doomed/mythical"
+        "loot-sparkle:trials/doomed/legendary",
+        "loot-sparkle:trials/doomed/mythical"
     ));
 
     private final int level;
@@ -165,11 +167,11 @@ public enum SparkleTier {
 
             // Add legendary weight if conditions met
             if (tier == LEGENDARY && canSpawnLegendary) {
-                tierWeight += 5;
+                tierWeight += 2;
             }
             // Add divine weight if conditions met
             if (tier == DIVINE && canSpawnDivine) {
-                tierWeight += 2;
+                tierWeight += 1;
             }
 
             currentWeight += tierWeight;
