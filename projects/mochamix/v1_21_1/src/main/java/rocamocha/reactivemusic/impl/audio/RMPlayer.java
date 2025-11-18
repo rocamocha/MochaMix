@@ -392,8 +392,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
             fileName = "music/" + logicalId + ".mp3";
         }
 
-        LOGGER.info("[openFromSongpack]:" + fileName);
-
         return RMSongpackLoader.getInputStream(
             ReactiveMusicState.currentSongpack.getPath(),
             fileName,

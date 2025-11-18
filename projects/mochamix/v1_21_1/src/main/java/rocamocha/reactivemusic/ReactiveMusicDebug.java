@@ -73,7 +73,6 @@ public class ReactiveMusicDebug {
             // Don't clear categories when disabling debug mode - let individual category settings persist
             // This prevents lost messages during mode transitions
         }
-        LOGGER.info("Debug mode set to: {}, active categories: {}", enabled, enabledCategories.size());
     }
 
     public static void enableCategory(LogCategory category) {
@@ -123,11 +122,7 @@ public class ReactiveMusicDebug {
      * Health check and diagnostic methods
      */
     public static void logDiagnostics() {
-        LOGGER.info("=== Logging Diagnostics ===");
-        LOGGER.info("Debug mode: {}", debugMode);
-        LOGGER.info("Enabled categories: {}", enabledCategories);
-        LOGGER.info("Spam prevention categories: {}", spamPreventionCategories);
-        LOGGER.info("Change logger cache size: {}", CHANGE_LOGGER.categoryCache.size());
+        // Diagnostic logging removed
     }
 
     /**
