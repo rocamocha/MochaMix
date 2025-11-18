@@ -20,7 +20,6 @@ public final class RMSongpackEvent implements SongpackEvent {
 
 
     public static RMEventRecord register(RMEventRecord eventRecord) {
-        ReactiveMusicDebug.LOGGER.info("Registering [" + eventRecord.getPluginId().getId() + "] event: " + eventRecord.getEventId());
         return REGISTRY.computeIfAbsent(eventRecord.getEventId(), k -> {return eventRecord;});
     }
     

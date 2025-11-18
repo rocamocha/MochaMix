@@ -78,9 +78,6 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             chickenSoundPlayer = audioManager.create("mochamix:chicken_interaction", options);
             pigSoundPlayer = audioManager.create("mochamix:pig_interaction", options);
             sheepSoundPlayer = audioManager.create("mochamix:sheep_interaction", options);
-            
-            ReactiveMusicDebug.LOGGER.info("Created {} audio players for entity interactions", 6);
-            
         } catch (Exception e) {
             ReactiveMusicDebug.LOGGER.error("Failed to create audio players for EntityInteractionPlugin", e);
         }
@@ -96,28 +93,19 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             String entityType = entity.getType().toString();
             String playerName = player.getName().getString();
             
-            // Play audio and log interaction based on entity type
+            // Play audio based on entity type
             if (entity instanceof CowEntity) {
                 playEntitySound("cow", cowSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a cow", playerName);
             } else if (entity instanceof ChickenEntity) {
                 playEntitySound("chicken", chickenSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a chicken", playerName);
             } else if (entity instanceof PigEntity) {
                 playEntitySound("pig", pigSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a pig", playerName);
             } else if (entity instanceof SheepEntity) {
                 playEntitySound("sheep", sheepSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a sheep", playerName);
             } else if (entity instanceof AnimalEntity) {
                 playEntitySound("animal", animalSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked an animal: {}", playerName, entityType);
             } else if (entity instanceof HostileEntity) {
                 playEntitySound("hostile", hostileSoundPlayer, "interact");
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a hostile mob: {}", playerName, entityType);
-            } else if (entity instanceof MobEntity) {
-                // Generic mob that's not hostile or animal
-                ReactiveMusicDebug.LOGGER.info("Player {} right-clicked a mob: {}", playerName, entityType);
             }
             
             // Return PASS to allow other mods/vanilla to handle the event
@@ -133,10 +121,8 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             // Play different sounds for attacks vs right-clicks
             if (entity instanceof AnimalEntity) {
                 playEntitySound("animal", animalSoundPlayer, "attack");
-                ReactiveMusicDebug.LOGGER.info("Player {} attacked an animal: {}", playerName, entityType);
             } else if (entity instanceof HostileEntity) {
                 playEntitySound("hostile", hostileSoundPlayer, "attack");
-                ReactiveMusicDebug.LOGGER.info("Player {} attacked a hostile mob: {}", playerName, entityType);
             }
             
             // Return PASS to allow other mods/vanilla to handle the event
@@ -185,7 +171,6 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
      */
     private void playEntitySound(String soundType, ReactivePlayer audioPlayer, String subdirectory) {
         if (audioPlayer == null) {
-            ReactiveMusicDebug.LOGGER.warn("Audio player is null for sound type: {}", soundType);
             return;
         }
         
@@ -199,16 +184,12 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             // Get a random audio file from the directory
             String randomFile = getRandomAudioFile(directoryPath);
             if (randomFile == null) {
-                ReactiveMusicDebug.LOGGER.warn("No audio files found in directory: {}", directoryPath);
                 return;
             }
             
             // Use setFile to play the selected file
             audioPlayer.setFile(randomFile);
             audioPlayer.play();
-            
-            ReactiveMusicDebug.LOGGER.debug("Playing entity interaction sound: {}", randomFile);
-            
         } catch (Exception e) {
             ReactiveMusicDebug.LOGGER.error("Failed to play entity interaction sound for type: {}", soundType, e);
         }
@@ -230,10 +211,7 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             // Select a random file
             Random random = new Random();
             String selectedFile = audioFiles.get(random.nextInt(audioFiles.size()));
-            
-            ReactiveMusicDebug.LOGGER.debug("Selected random file: {} from {} options in {}", selectedFile, audioFiles.size(), directoryPath);
             return selectedFile;
-            
         } catch (Exception e) {
             ReactiveMusicDebug.LOGGER.error("Failed to get random audio file from directory: {}", directoryPath, e);
             return null;
@@ -252,7 +230,6 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
         try {
             // Get current songpack info
             if (ReactiveMusicState.currentSongpack == null) {
-                ReactiveMusicDebug.LOGGER.warn("No current songpack loaded");
                 return audioFiles;
             }
             
@@ -262,7 +239,6 @@ public class EntityInteractionPlugin extends ReactiveMusicPlugin {
             if (isEmbedded) {
                 // For embedded songpacks, we can't easily list files
                 // Fall back to trying common audio file names
-                ReactiveMusicDebug.LOGGER.debug("Embedded songpack detected, using fallback file names for: {}", directoryPath);
                 return getFallbackAudioFiles(directoryPath);
             }
             

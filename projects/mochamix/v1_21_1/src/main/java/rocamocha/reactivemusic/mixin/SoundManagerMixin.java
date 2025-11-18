@@ -27,8 +27,6 @@ public class SoundManagerMixin {
         //"battle.pvw.default"
         else if (path.contains("battle.pv")) {
             ReactiveMusic.trackedSoundsMuteMusic.add(soundInstance);
-
-            ReactiveMusicDebug.LOGGER.info("Detected cobblemon battle event, adding to list!");
         }
 
 

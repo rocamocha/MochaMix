@@ -142,7 +142,7 @@ public class RMSongpackLoader {
                 }
                 entry.forceChance = Float.parseFloat(forceChanceStr);
             } catch (NumberFormatException e) {
-                ReactiveMusicDebug.LOGGER.warn("Failed to parse forceChance value: " + forceChance + ", using default");
+                // Using default force chance
             }
         }
         if (entryMap.containsKey("stackable")) entry.stackable = (Boolean) entryMap.get("stackable");
@@ -211,8 +211,6 @@ public class RMSongpackLoader {
                 }
             }
         }
-
-        ReactiveMusicDebug.LOGGER.info("Took " + (System.currentTimeMillis() - startTime) + "ms to parse available songpacks, found " + availableSongpacks.size() + "!");
     }
 
     public static List<String> getYamlFiles(List<Path> paths) {
@@ -251,9 +249,7 @@ public class RMSongpackLoader {
             // Load as generic Map to capture all keys, then manually populate
             @SuppressWarnings("unchecked")
             Map<String, Object> configMap = yaml.load(configResource.inputStream);
-            ReactiveMusicDebug.LOGGER.info("YAML loaded successfully, config keys: " + (configMap != null ? configMap.keySet() : "null"));
             songpackZip.config = populateConfigFromMap(configMap);
-            ReactiveMusicDebug.LOGGER.info("Config populated successfully");
         } catch (Exception e) {
             songpackZip.config = new RMSongpackConfig();
             songpackZip.config.name = songpackPath != null ? songpackPath.getFileName().toString() : "Embedded";

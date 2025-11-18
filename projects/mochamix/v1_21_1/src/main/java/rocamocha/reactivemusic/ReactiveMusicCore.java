@@ -107,7 +107,6 @@ public final class ReactiveMusicCore {
             
             // if the new entry contains the same song as our current one, then do a "fake" swap to swap over to the new entry
 			if (wantsToSwitch && ReactiveMusicState.currentSong != null && newEntry.getSongs().contains(ReactiveMusicState.currentSong) && !queuedToStopMusic) {
-				ReactiveMusicDebug.LOGGER.info("doing fake swap to new event: " + newEntry.getEventString());
 				wantsToSwitch = false;
 				// if this happens, also clear the queued state since we essentially did a switch
 				queuedToPlayMusic = false;
@@ -217,13 +216,10 @@ public final class ReactiveMusicCore {
             // if this event was valid before and is invalid now
             if (validEntries.stream().noneMatch(e -> java.util.Objects.equals(e.getEventString(), entry.getEventString()))) {
                 
-                ReactiveMusicDebug.LOGGER.info("Triggering onInvalid() for songpack event plugins");
                 for (ReactiveMusicPlugin plugin : ReactiveMusic.PLUGINS) plugin.onInvalid(entry);
     
                 if (entry.shouldStopMusicOnInvalid()) {
-                    ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnInvalid: " + entry.getEventString());
                     if (randomChance  <= entry.getForceChance()) {
-                        ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnInvalid: " + entry.getEventString());
                         queuedToStopMusic = true;
                     }
                     break;
@@ -238,20 +234,15 @@ public final class ReactiveMusicCore {
                 boolean randSuccess = randomChance <= entry.getForceChance();
     
                 // if this event wasn't valid before and is now
-                ReactiveMusicDebug.LOGGER.info("Triggering onValid() for songpack event plugins");
                 for (ReactiveMusicPlugin plugin : ReactiveMusic.PLUGINS) plugin.onValid(entry);
     
                 if (entry.shouldStopMusicOnValid()) {
-                    ReactiveMusicDebug.LOGGER.info("trying forceStopMusicOnValid: " + entry.getEventString());
                     if (randSuccess) {
-                        ReactiveMusicDebug.LOGGER.info("doing forceStopMusicOnValid: " + entry.getEventString());
                         queuedToStopMusic = true;
                     }
                 }
                 if (entry.shouldStartMusicOnValid()) {
-                    ReactiveMusicDebug.LOGGER.info("trying forceStartMusicOnValid: " + entry.getEventString());
                     if (randSuccess) {
-                        ReactiveMusicDebug.LOGGER.info("doing forceStartMusicOnValid: " + entry.getEventString());
                         queuedToPlayMusic = true;
                     }
                 }

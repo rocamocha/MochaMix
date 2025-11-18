@@ -156,7 +156,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
     }
 
     @Override public void stop() {
-        LOGGER.info("Stopping player...");
         paused = false; // Clear pause state on stop
         if(player != null) {
             player.close();
@@ -167,7 +166,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
 		if (currentResource != null && currentResource.fileSystem != null) {
             try {
 				currentResource.close();
-                LOGGER.info("Resource closed!");
             } catch (Exception e) {
                 LOGGER.error("Failed to close file system/input stream " + e.getMessage());
             }
@@ -215,7 +213,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
             if (player != null) {
                 player.paused = true;
             }
-            LOGGER.info("Player paused: " + id);
         }
     }
     
@@ -226,7 +223,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
             if (player != null) {
                 player.paused = false;
             }
-            LOGGER.info("Player resumed: " + id);
         }
     }
     
@@ -234,10 +230,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         if (player != null && frames > 0) {
             // Set skip frames on the AdvancedPlayer to skip forward
             player.skipFrames = frames;
-            LOGGER.info("Skipping forward " + frames + " frames for player: " + id);
-        } else if (frames < 0) {
-            // Cannot rewind streaming playback
-            LOGGER.warn("Cannot rewind streaming MP3 playback for player: " + id);
         }
     }
     
@@ -253,7 +245,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         if (player != null && playing) {
             int currentPos = player.getFrames();
             int targetPos = Math.max(0, currentPos - frames);
-            LOGGER.info("Rewinding from frame " + currentPos + " to frame " + targetPos);
             startAtFrame = targetPos;
             
             // Stop current playback first
@@ -312,7 +303,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                             in = streamSupplier.get();
                             currentResource = null; // external stream, nothing to close here
                         } else if (fileId != null) {
-                            LOGGER.info(this.id + " -> playing from custom resource: " + fileId);
                             currentResource = openFromFile(fileId); // use a custom file found in the songpack
                             if (currentResource == null || currentResource.inputStream == null) {
                                 queued = false;
@@ -327,14 +317,12 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                             in = currentResource.inputStream; // like your original PlayerThread
                         }
 
-                        ReactiveMusicDebug.LOGGER.info("A new audio device is activating...");
                         audio = new FirstWritePrimerAudioDevice(250, () -> requestGainRecompute());
                         player = new AdvancedPlayer(in, audio);
                         
                         // Set initial skip position if rewinding
                         if (startAtFrame > 0) {
                             player.skipFrames = startAtFrame;
-                            LOGGER.info("Starting playback at frame " + startAtFrame);
                             startAtFrame = 0; // Reset for next play
                         }
                         
@@ -348,7 +336,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
                         }
                     } finally {
                         // Cleanup player & audio
-                        LOGGER.info("[runLoop]: Closing player: " + this.namespace + ":" + this.group);
                         closeQuiet(player);
                         player = null;
                         audio = null;
@@ -422,8 +409,6 @@ public final class RMPlayer implements ReactivePlayer, Closeable {
         } else {
             fileName = fileId + ".mp3";
         }
-
-        LOGGER.info("[openFromFile]: " + fileName);
 
         return RMSongpackLoader.getInputStream(
             ReactiveMusicState.currentSongpack.getPath(),

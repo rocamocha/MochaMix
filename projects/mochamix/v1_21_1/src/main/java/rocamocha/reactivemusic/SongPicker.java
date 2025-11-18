@@ -76,7 +76,6 @@ public final class SongPicker {
 
     public static void initialize() {
         // build string -> type map from the internal registry
-        ReactiveMusicDebug.LOGGER.info("Initializing the songpack event map...");
         ReactiveMusicState.songpackEventMap.clear();
         for (EventRecord eventRecord : SongpackEvent.values()) {
             ReactiveMusicState.songpackEventMap.put(eventRecord, false);

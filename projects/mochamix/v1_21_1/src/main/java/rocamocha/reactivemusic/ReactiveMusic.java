@@ -59,9 +59,6 @@ public class ReactiveMusic implements ModInitializer {
 		
 		private static void ScreenChange(MinecraftClient mc) {
 			Screen screen = mc.currentScreen;
-			if (screen != null && lastScreen != screen) {
-				ReactiveMusicDebug.LOGGER.info("currentScreen.getTitle(): " + screen.getTitle().toString());
-			}
 			lastScreen = screen;
 		}
 	}

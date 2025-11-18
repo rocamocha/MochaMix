@@ -48,9 +48,6 @@ public final class RMPlayerManager implements ReactivePlayerManager {
             // check if the primary gain supplier has stopped
             GainSupplier primaryGainSupplier = player.getGainSuppliers().get("reactivemusic");
             if (primaryGainSupplier.isFadingOut() && primaryGainSupplier.getFadePercent() == 0f) {
-                
-                LOGGER.info(player.id() + " has stopped on fadeout");
-                
                 // reached target – run arrival side effects
                 if (player.stopOnFadeOut()) player.stop();
                 if (player.resetOnFadeOut()) player.reset();
@@ -72,15 +69,6 @@ public final class RMPlayerManager implements ReactivePlayerManager {
                 if (next < 0f) next = 0f; else if (next > 1f) next = 1f;
                 
                 gainSupplier.setFadePercent(next);
-                if (fp != ft) {
-                    if (fp == 0 && step > 0) {
-                        ReactiveMusicState.LOGGER.info(player.id() + " is fading in via gain supplier [" + id + "]");
-                    }
-                    
-                    if (fp == 1 && step < 0) {
-                        ReactiveMusicState.LOGGER.info(player.id() + " is fading out via gain supplier [" + id + "]");
-                    }
-                }
             });
 
             player.requestGainRecompute();
