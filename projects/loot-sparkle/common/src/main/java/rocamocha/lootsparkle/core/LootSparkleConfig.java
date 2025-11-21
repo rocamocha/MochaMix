@@ -18,6 +18,7 @@ public class LootSparkleConfig {
     private static final String TREASURE_COMPASS_DURABILITY_KEY = "treasure_compass_durability";
     private static final String FAIRY_DUST_TICK_INTERVAL_KEY = "fairy_dust_tick_interval";
     private static final String HOSTILE_SPARKLE_ACTIVATION_RANGE_KEY = "hostile_sparkle_activation_range";
+    private static final String HOSTILE_SPARKLE_AUTO_ACTIVATION_ENABLED_KEY = "hostile_sparkle_auto_activation_enabled";
     private static final String HOSTILE_MOB_LEASH_RANGE_KEY = "hostile_mob_leash_range";
     private static final String HOSTILE_SPARKLE_MIN_DISTANCE_KEY = "hostile_sparkle_min_distance";
     private static final String HOSTILE_SPARKLE_TEXT_RENDER_RANGE_KEY = "hostile_sparkle_text_render_range";
@@ -25,7 +26,7 @@ public class LootSparkleConfig {
     private static final int DEFAULT_VERTICAL_RADIUS = 16;
     private static final int DEFAULT_TREASURE_COMPASS_DURABILITY = 480;
     private static final int DEFAULT_FAIRY_DUST_TICK_INTERVAL = 60;
-    private static final double DEFAULT_HOSTILE_SPARKLE_ACTIVATION_RANGE = 16.0;
+    private static final double DEFAULT_HOSTILE_SPARKLE_ACTIVATION_RANGE = 8.0;
     private static final double DEFAULT_HOSTILE_MOB_LEASH_RANGE = 32.0;
     private static final double DEFAULT_HOSTILE_SPARKLE_MIN_DISTANCE = 32.0;
     private static final double DEFAULT_HOSTILE_SPARKLE_TEXT_RENDER_RANGE = 24.0;
@@ -35,6 +36,7 @@ public class LootSparkleConfig {
     private static int treasureCompassDurability = DEFAULT_TREASURE_COMPASS_DURABILITY;
     private static int fairyDustTickInterval = DEFAULT_FAIRY_DUST_TICK_INTERVAL;
     private static double hostileSparkleActivationRange = DEFAULT_HOSTILE_SPARKLE_ACTIVATION_RANGE;
+    private static boolean hostileSparkleAutoActivationEnabled = true;
     private static double hostileMobLeashRange = DEFAULT_HOSTILE_MOB_LEASH_RANGE;
     private static double hostileSparkleMinDistance = DEFAULT_HOSTILE_SPARKLE_MIN_DISTANCE;
     private static double hostileSparkleTextRenderRange = DEFAULT_HOSTILE_SPARKLE_TEXT_RENDER_RANGE;
@@ -160,6 +162,11 @@ public class LootSparkleConfig {
                 hostileSparkleTextRenderRange = DEFAULT_HOSTILE_SPARKLE_TEXT_RENDER_RANGE;
             }
 
+            // Read hostile sparkle auto-activation toggle (default true)
+            String autoActivationStr = properties.getProperty(HOSTILE_SPARKLE_AUTO_ACTIVATION_ENABLED_KEY,
+                String.valueOf(true));
+            hostileSparkleAutoActivationEnabled = Boolean.parseBoolean(autoActivationStr);
+
             // Save the config (this will create the file with current values if it doesn't exist)
             saveConfig();
 
@@ -183,6 +190,7 @@ public class LootSparkleConfig {
             properties.setProperty(TREASURE_COMPASS_DURABILITY_KEY, String.valueOf(treasureCompassDurability));
             properties.setProperty(FAIRY_DUST_TICK_INTERVAL_KEY, String.valueOf(fairyDustTickInterval));
             properties.setProperty(HOSTILE_SPARKLE_ACTIVATION_RANGE_KEY, String.valueOf(hostileSparkleActivationRange));
+            properties.setProperty(HOSTILE_SPARKLE_AUTO_ACTIVATION_ENABLED_KEY, String.valueOf(hostileSparkleAutoActivationEnabled));
             properties.setProperty(HOSTILE_MOB_LEASH_RANGE_KEY, String.valueOf(hostileMobLeashRange));
             properties.setProperty(HOSTILE_SPARKLE_MIN_DISTANCE_KEY, String.valueOf(hostileSparkleMinDistance));
             properties.setProperty(HOSTILE_SPARKLE_TEXT_RENDER_RANGE_KEY, String.valueOf(hostileSparkleTextRenderRange));
@@ -194,6 +202,7 @@ public class LootSparkleConfig {
                 "treasure_compass_durability: Durability of the treasure compass item (0 = unbreakable)\n" +
                 "fairy_dust_tick_interval: How often (in ticks) the compass loses 1 durability when Fairy Dust is active (20 ticks = 1 second)\n" +
                 "hostile_sparkle_activation_range: Distance (in blocks) within which players activate hostile sparkles\n" +
+                "hostile_sparkle_auto_activation_enabled: If true, hostile sparkles auto-activate when a player is in range (default true)\n" +
                 "hostile_mob_leash_range: Maximum distance (in blocks) hostile mobs can wander from their sparkle before being teleported back\n" +
                 "hostile_sparkle_min_distance: Minimum distance (in blocks) that must be maintained between hostile sparkles\n" +
                 "hostile_sparkle_text_render_range: Maximum distance (in blocks) from player within which hostile sparkle HUD text is rendered";
@@ -246,6 +255,13 @@ public class LootSparkleConfig {
      */
     public static double getHostileSparkleActivationRange() {
         return hostileSparkleActivationRange;
+    }
+
+    /**
+     * Returns whether hostile sparkles auto-activate when in range
+     */
+    public static boolean isHostileSparkleAutoActivationEnabled() {
+        return hostileSparkleAutoActivationEnabled;
     }
 
     /**

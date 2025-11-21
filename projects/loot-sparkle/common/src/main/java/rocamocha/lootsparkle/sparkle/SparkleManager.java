@@ -475,6 +475,11 @@ public class SparkleManager {
         // Calculate aggregate inhabited time for chunks around this player
         long aggregateInhabitedTime = calculateAggregateInhabitedTime(world, randomPlayer.getBlockPos());
 
+        // Require at least one nearby player with Curse of Treasure within 48 blocks
+        if (!hasCursedPlayerWithinRadius(world, randomPlayer.getBlockPos(), 48.0)) {
+            return;
+        }
+
         // Calculate trial sparkle spawn probability based on aggregate inhabited time
         // Higher inhabited time = higher trial spawn rate (harder in explored areas)
         float trialSpawnProbability = calculateTrialSpawnProbability(aggregateInhabitedTime);
@@ -483,6 +488,45 @@ public class SparkleManager {
         if (world.getRandom().nextFloat() < trialSpawnProbability) {
             spawnHostileSparkle(world, randomPlayer.getBlockPos());
         }
+    }
+
+    private static boolean hasCursedPlayerWithinRadius(ServerWorld world, BlockPos center, double radius) {
+        double r2 = radius * radius;
+        for (ServerPlayerEntity p : world.getPlayers()) {
+            if (!p.isAlive() || p.isSpectator()) continue;
+            if (p.getBlockPos().getSquaredDistance(center) > r2) continue;
+            if (hasTreasureCurse(p)) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasTreasureCurse(ServerPlayerEntity player) {
+        java.util.function.Function<net.minecraft.item.ItemStack, Integer> levelFn = (stack) -> {
+            var ench = stack.getEnchantments();
+            for (var entry : ench.getEnchantments()) {
+                if (entry.getIdAsString().equals("loot-sparkle:curse_of_treasure")) {
+                    return ench.getLevel(entry);
+                }
+            }
+            return 0;
+        };
+
+        // Check compass in main hand, offhand, then hotbar
+        var main = player.getMainHandStack();
+        if (main.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+            if (levelFn.apply(main) > 0) return true;
+        }
+        var off = player.getOffHandStack();
+        if (off.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+            if (levelFn.apply(off) > 0) return true;
+        }
+        for (int slot = 0; slot < 9; slot++) {
+            var st = player.getInventory().getStack(slot);
+            if (st.getItem() == rocamocha.lootsparkle.core.LootSparkle.TREASURE_COMPASS) {
+                if (levelFn.apply(st) > 0) return true;
+            }
+        }
+        return false;
     }
 
     private static boolean hasTreasureCompass(ServerPlayerEntity player) {
@@ -1200,26 +1244,20 @@ public class SparkleManager {
      */
     private static void cleanupOrphanedEntitiesOnWorldLoad(ServerWorld world) {
         // Since sparkle state is not persisted, any custom sparkle entities in the world
-        // when it loads are orphaned and should be cleaned up
+        // when it loads are orphaned and should be cleaned up. Our target entities are
+        // instances of a subclass of FallingBlockEntity (not a custom registered type),
+        // so detect them by class rather than registry id.
 
-        // Find and remove orphaned TargetFallingBlockEntity instances
-        // These are custom entities that should only exist during challenge phases
-        List<net.minecraft.entity.Entity> entitiesToRemove = new ArrayList<>();
-        for (net.minecraft.entity.Entity entity : world.getEntitiesByType(
-            net.minecraft.entity.EntityType.get("loot-sparkle:target_falling_block").orElse(null),
-            entity -> true)) {
-            if (entity != null) {
-                entitiesToRemove.add(entity);
+        int removed = 0;
+        for (net.minecraft.entity.Entity entity : world.iterateEntities()) {
+            if (entity instanceof rocamocha.lootsparkle.trial.TargetFallingBlockEntity target) {
+                target.remove(net.minecraft.entity.Entity.RemovalReason.DISCARDED);
+                removed++;
             }
         }
 
-        // Remove the orphaned entities
-        for (net.minecraft.entity.Entity entity : entitiesToRemove) {
-            entity.remove(net.minecraft.entity.Entity.RemovalReason.DISCARDED);
-        }
-
-        if (!entitiesToRemove.isEmpty()) {
-            LootSparkle.LOGGER.info("Cleaned up {} orphaned sparkle entities on world load", entitiesToRemove.size());
+        if (removed > 0) {
+            LootSparkle.LOGGER.info("Cleaned up {} orphaned sparkle target entities on world load", removed);
         }
     }
 }

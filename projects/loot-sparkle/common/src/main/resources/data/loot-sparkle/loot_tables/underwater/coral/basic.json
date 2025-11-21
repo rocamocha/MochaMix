@@ -4,7 +4,36 @@
     {
       "rolls": 1,
       "entries": [
-        { "type": "minecraft:item", "name": "minecraft:coral_fan", "functions": [{"function":"minecraft:set_count","count": 1}] }
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:coral_fan",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:brain_coral_fan",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bubble_coral_fan",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 1
+            }
+          ]
+        }
       ]
     }
   ]

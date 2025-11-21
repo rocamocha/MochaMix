@@ -479,6 +479,11 @@ public class Sparkle {
         double distance = player.getPos().distanceTo(Vec3d.ofCenter(position));
         double activationRange = LootSparkleConfig.getHostileSparkleActivationRange();
 
+        // Respect config: allow disabling auto-activation
+        if (!LootSparkleConfig.isHostileSparkleAutoActivationEnabled()) {
+            return;
+        }
+
         if (distance <= activationRange) {
             activated = true;
             activatingPlayer = player;

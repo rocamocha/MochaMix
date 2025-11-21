@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Represents the tier/rarity of a sparkle, which determines loot quality and sources.
  * Notes:
- * - Underwater tiers (levels 9-13) have weight 0 so normal tier rolls never pick them; they are spawned by dedicated underwater logic.
+ * - Trial tiers (levels 6-8) and Underwater tiers (levels 9-13) have weight 0 so normal tier rolls never pick them; they are spawned by dedicated systems.
  * - Underwater base loot tables use the namespace path: loot-sparkle:underwater/<tier>/basic
  * - Trial tiers are handled by the trial system and use different base paths.
  */
@@ -44,14 +44,14 @@ public enum SparkleTier {
 
     
     // trial sparkle tiers
-    CURSED(6, "cursed", 8, List.of(
+    CURSED(6, "cursed", 0, List.of(
         "loot-sparkle:trials/cursed/basic"
     )),
-    BLIGHTED(7, "blighted", 4, List.of(
+    BLIGHTED(7, "blighted", 0, List.of(
         "loot-sparkle:trials/blighted/treasure",
         "loot-sparkle:trials/blighted/special"
     )),
-    DOOMED(8, "doomed", 1, List.of(
+    DOOMED(8, "doomed", 0, List.of(
         "loot-sparkle:trials/doomed/legendary",
         "loot-sparkle:trials/doomed/mythical"
     )),

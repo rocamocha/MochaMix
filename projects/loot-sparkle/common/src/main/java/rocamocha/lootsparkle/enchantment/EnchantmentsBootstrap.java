@@ -52,6 +52,11 @@ public class EnchantmentsBootstrap {
             var eldertideBuilder = EldertideResonanceEnchantment.builder(itemLookup);
             registry.register(eldertideKey, eldertideBuilder.build(eldertideKey.getValue()));
 
+            // Register Curse of Treasure enchantment
+            var curseKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("loot-sparkle", "curse_of_treasure"));
+            var curseBuilder = CurseOfTreasureEnchantment.builder(itemLookup);
+            registry.register(curseKey, curseBuilder.build(curseKey.getValue()));
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to bootstrap custom enchantments", e);
         }

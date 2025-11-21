@@ -13,35 +13,11 @@
 
 # Task:
 
-In the `loot-sparkle` mod, implement the following features:
+In the `loot-sparkle` mod, implement the following features / changes:
 
-## (a). Underwater Sparkle Tiers
-- Introduce five new tiers of underwater loot sparkles: `driftwood`, `kelp`, `coral`, `seabed`, and `cavern`.
-- The loot tables for these new tiers should be defined in JSON files located in the `data/loot-sparkle/loot_tables/underwater/<tier>/` directories (namespace matches mod id `loot-sparkle`).
-- Sparkles from these tiers will only spawn when the player has an active `Treasure Compass` item enchanted with the new `Diver's Crystal` enchantment. Some tiers will be locked behind specific enchantment levels:
-    - `driftwood` tier: an exception - will spawn even without the `Diver's Crystal` enchantment.
-    - `kelp` and `coral` tiers: requires `Diver's Crystal` level 1.
-    - `cavern` tier: requires `Diver's Crystal` level 2.
-    - `seabed` tier: requires `Diver's Crystal` level 3.
-- Underwater sparkles will be tracked and synchronized by the server per-player, in the same list as the normal sparkles, unlike the trial sparkle system, which synchronizes included sparkles globally.
-- Functionality of the `Fairy Dust` and `Shimmerseek` enchantments will exclude these new underwater tiers, while the `Eldertide Resonance` enchantment will specifically target them.
-- The new underwater sparkle tiers should be visually distinct from existing sparkle types, with unique particle effects and colors.
-- Underwater sparkles should only spawn when the player is submerged in water, adding an additional layer of immersion and challenge to the treasure hunting experience, with the exception of the `driftwood` tier, which can spawn while the player is on land.
-- Each tier will have different spawning behaviour:
-    - `driftwood` tier: spawns on the surface of water bodies.
-    - `kelp` tier: spawns among kelp forests, inside or near kelp blocks.
-    - `coral` tier: spawns near coral reefs, on top of or near coral blocks
-    - `cavern` tier: spawns in underwater caves and caverns, spawn candidates use sky visibility checks to ensure they are in enclosed spaces.
-    - `seabed` tier: spawns on the ocean floor, requiring a minimum depth of water above the spawn location.
-
-## (b). Eldertide Resonance Enchantment
-- A new enchantment called `Eldertide Resonance` with a maximum level of 3 that can be applied to tridents.
-- When a player holds a trident enchanted with `Eldertide Resonance`, and has a `Treasure Compass` enchanted with `Diver's Crystal`, it will function like the `Fairy Dust` and `Shimmerseek` enchantments but specifically for the new underwater sparkle tiers.
-- Level 1 will act like `Fairy Dust`, spawning a single guiding particle that color codes the nearest underwater sparkle.
-- Level 2 will function like `Fairy Dust` + `Shimmerseek`, spawning multiple guiding particles that color code all nearby underwater sparkles within a certain radius, with pathfinding behavior.
-- Level 3 will make it so that a new underwater sparkle is immediately spawned whenever an existing one expires, provided the player is underwater and has the `Treasure Compass` equipped - ensuring a continuous presence of underwater sparkles to hunt for. 
-
-## (c). Diver's Crystal Enchantment
-- A new enchantment called `Diver's Crystal` with a maximum level of 3 that can be applied to the modded `Treasure Compass` item.
-- This enchantment allows players to detect underwater loot sparkles of the new tiers when equipped.
-- This enchantment unlocks the spawning of underwater sparkles based on its level, as described in section (a).
+## Trial Sparkles
+- Create a new curse enchantment called "Curse of Treasure" that can be applied to the modded `Treasure Compass` item.
+- Trial Sparkle spawn candidates should check first within a 48-block radius for players with the "Curse of Treasure" enchantment.
+- When no players with the enchantment are found within range, the Trial Sparkle should not spawn at all.
+- Trial Sparkles' auto-activation range should be reduced to 8 blocks.
+- Auto-activation should be configurable via the mod's config file, with the default setting being enabled.

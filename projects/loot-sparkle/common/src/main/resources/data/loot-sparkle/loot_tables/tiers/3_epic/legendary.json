@@ -63,7 +63,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:totem_of_undying",
-          "weight": 15,
+          "weight": 1,
           "functions": [
             {
               "function": "minecraft:set_count",
@@ -74,7 +74,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:elytra",
-          "weight": 10,
+          "weight": 2,
           "functions": [
             {
               "function": "minecraft:set_count",
